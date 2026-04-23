@@ -1,3 +1,7 @@
+/* ===========================
+   MAIN MENU LAYOUT
+=========================== */
+
 .menu {
   position: absolute;
   top: 50%;
@@ -5,6 +9,10 @@
   transform: translate(-50%, -50%);
   text-align: center;
 }
+
+/* ===========================
+   MENU BUTTONS
+=========================== */
 
 .menu-btn {
   width: 260px;
@@ -18,9 +26,15 @@
   cursor: pointer;
   transition: 0.25s;
   opacity: 0;
-  animation: slideIn 0.5s ease forwards;
+  animation: slideInMenu 0.5s ease forwards;
 }
 
+.menu-btn:hover {
+  background: #666;
+  transform: scale(1.05);
+}
+
+/* Staggered animation delays */
 .menu-btn:nth-child(2) { animation-delay: 0.1s; }
 .menu-btn:nth-child(3) { animation-delay: 0.2s; }
 .menu-btn:nth-child(4) { animation-delay: 0.3s; }
@@ -28,35 +42,7 @@
 .menu-btn:nth-child(6) { animation-delay: 0.5s; }
 .menu-btn:nth-child(7) { animation-delay: 0.6s; }
 
-.menu-btn:hover {
-  background: #666;
-  transform: scale(1.05);
-}
-
-@keyframes slideIn {
+@keyframes slideInMenu {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
-.screen-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #111;
-  padding: 20px;
-  box-sizing: border-box;
-  overflow-y: auto;
-  animation: fadeScreen 0.4s ease forwards;
-}
-
-.hidden {
-  display: none;
-}
-
-@keyframes fadeScreen {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
