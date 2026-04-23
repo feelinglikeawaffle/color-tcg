@@ -39,6 +39,22 @@ p {
 }
 
 /* ===========================
+   MONEY DISPLAY
+=========================== */
+
+#money-display {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: #222;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 2px solid #444;
+  font-size: 20px;
+  z-index: 999;
+}
+
+/* ===========================
    SCREEN CONTAINER
 =========================== */
 
@@ -182,4 +198,45 @@ p {
   border-radius: 10px;
   border: 2px solid #444;
   margin-top: 20px;
+}
+
+/* ===========================
+   PACK OPENING
+=========================== */
+
+.pack-opening {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #111;
+  padding: 20px;
+  border-radius: 15px;
+  border: 2px solid #444;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease forwards;
+  text-align: center;
+}
+
+.pack-opening h2 {
+  margin-top: 0;
+}
+
+#pack-cards {
+  margin-top: 10px;
+}
+
+.pack-card {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  margin: 10px;
+  border: 3px solid #fff;
+  display: inline-block;
+  animation: popIn 0.4s ease forwards;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
