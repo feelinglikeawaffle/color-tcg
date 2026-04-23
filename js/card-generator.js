@@ -59,7 +59,6 @@ export function getRarity(hsl) {
 //  MASSIVE NAME GENERATOR
 // ===============================
 
-// Hue → base color family
 const hueNames = [
   { min: 0,   max: 15,  name: "Crimson" },
   { min: 15,  max: 45,  name: "Amber" },
@@ -72,7 +71,6 @@ const hueNames = [
   { min: 330, max: 360, name: "Scarlet" }
 ];
 
-// Rarity → adjective pool
 const rarityAdjectives = {
   Common: ["Dull", "Muted", "Soft", "Plain", "Dusty"],
   Uncommon: ["Bright", "Fresh", "Clean", "Pure", "Smooth"],
@@ -81,27 +79,17 @@ const rarityAdjectives = {
   Legendary: ["Mythic", "Celestial", "Eternal", "Transcendent", "Divine"]
 };
 
-// Extra descriptors for uniqueness
 const descriptors = [
   "Flare", "Bloom", "Echo", "Pulse", "Shade", "Gleam",
   "Whisper", "Nova", "Drift", "Spirit", "Wave", "Burst",
   "Dream", "Frost", "Flame", "Storm", "Glow", "Dust"
 ];
 
-// ===============================
-//  UNIQUE NAME GENERATOR
-// ===============================
-
 export function generateName(hsl, rarity) {
   const hueName = hueNames.find(h => hsl.h >= h.min && hsl.h < h.max).name;
-
   const adjList = rarityAdjectives[rarity];
   const adj = adjList[Math.floor(Math.random() * adjList.length)];
-
   const desc = descriptors[Math.floor(Math.random() * descriptors.length)];
-
-  // Final name format:
-  // "Luminous Azure Bloom"
   return `${adj} ${hueName} ${desc}`;
 }
 
