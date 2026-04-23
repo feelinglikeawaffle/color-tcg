@@ -94,3 +94,18 @@ body {
   border: 2px solid #444;
   margin-top: 20px;
 }
+
+/* Screen slide animations */
+@keyframes slideIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(40px); opacity: 0; }
+}
+
+.screen {
+  animation: slideIn 0.35s ease forwards;
+}
