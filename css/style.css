@@ -126,3 +126,11 @@ body {
   background: #444;
   transform: translateX(-3px);
 }
+
+.active-screen {
+  animation: slideIn 0.35s ease forwards;
+}
+
+.closing {
+  animation: slideOut 0.3s ease forwards;
+}
