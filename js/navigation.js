@@ -1,6 +1,7 @@
 const container = document.getElementById("screen-container");
 const buttons = document.querySelectorAll(".menu-btn");
 
+// Load screens when menu buttons are clicked
 buttons.forEach(btn => {
   btn.addEventListener("click", () => {
     const screen = btn.dataset.screen;
@@ -8,14 +9,16 @@ buttons.forEach(btn => {
   });
 });
 
-async function loadScreen(name) {
+// Load a screen file into the container
+export async function loadScreen(name) {
   const html = await fetch(`screens/${name}.html`).then(r => r.text());
   container.innerHTML = html;
   container.classList.remove("hidden");
   container.classList.add("active-screen");
 }
 
-function goBack() {
+// Back button function (must be global)
+window.goBack = function () {
   container.classList.add("closing");
 
   setTimeout(() => {
@@ -24,4 +27,4 @@ function goBack() {
     container.classList.remove("closing");
     container.innerHTML = "";
   }, 300);
-}
+};
