@@ -1,19 +1,13 @@
-import {
-  updateMoneyDisplay,
-  spendMoney,
-  addToCollection,
-  collection
-} from "./game-state.js";
-
+import { updateMoneyDisplay, spendMoney, addToCollection, collection } from "./game-state.js";
 import { generateCard } from "./card-generator.js";
 
 const container = document.getElementById("screen-container");
 const buttons = document.querySelectorAll(".menu-btn");
 
-// init money display
+// Initialize money display
 updateMoneyDisplay();
 
-// menu buttons → load screens
+// MENU BUTTONS → LOAD SCREENS
 buttons.forEach(btn => {
   btn.addEventListener("click", () => {
     const screen = btn.dataset.screen;
@@ -21,7 +15,7 @@ buttons.forEach(btn => {
   });
 });
 
-// load a screen file into the container
+// LOAD SCREEN HTML
 export async function loadScreen(name) {
   const html = await fetch(`screens/${name}.html`).then(r => r.text());
   container.innerHTML = html;
@@ -31,7 +25,7 @@ export async function loadScreen(name) {
   document.dispatchEvent(new Event("screenLoaded"));
 }
 
-// global back function
+// GLOBAL BACK BUTTON
 window.goBack = function () {
   container.classList.add("closing");
 
@@ -43,7 +37,7 @@ window.goBack = function () {
   }, 300);
 };
 
-// handle pack buy clicks
+// PACK BUY BUTTONS
 document.addEventListener("click", e => {
   if (e.target.classList.contains("pack-buy")) {
     const pack = e.target.closest(".pack").dataset.pack;
@@ -51,7 +45,7 @@ document.addEventListener("click", e => {
   }
 });
 
-// buy pack → spend money → open pack
+// BUY PACK
 function buyPack(type) {
   const cost = type === "basic" ? 100 : 150;
 
@@ -63,12 +57,11 @@ function buyPack(type) {
   openPack(type);
 }
 
-// generate cards for pack
+// OPEN PACK → GENERATE CARDS
 function openPack(type) {
-  const count = 5;
   const cards = [];
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < 5; i++) {
     const card = generateCard();
     cards.push(card);
     addToCollection(card);
@@ -77,7 +70,7 @@ function openPack(type) {
   showPackOpening(cards);
 }
 
-// pack opening popup
+// PACK OPENING POPUP
 function showPackOpening(cards) {
   const div = document.createElement("div");
   div.className = "pack-opening";
@@ -101,7 +94,7 @@ function showPackOpening(cards) {
   });
 }
 
-// when a screen loads, populate collection if it's the collection screen
+// POPULATE COLLECTION SCREEN
 document.addEventListener("screenLoaded", () => {
   const grid = document.getElementById("collection-grid");
   if (!grid) return;
