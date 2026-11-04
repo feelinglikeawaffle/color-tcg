@@ -89,6 +89,50 @@
             animation: holoSweep 4s ease infinite;
         }
 
+        /* NEW FINISH EFFECTS */
+        .effect-holographic {
+            background: linear-gradient(115deg, rgba(255,0,128,0.3), rgba(0,255,255,0.3), rgba(255,255,0,0.3), rgba(0,255,0,0.3));
+            background-size: 200% 200%;
+            animation: holoSweep 3s ease infinite;
+        }
+
+        .effect-darkmatter {
+            background: radial-gradient(circle at 50% 50%, #1e1b4b, #090514, #000000);
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .effect-glitch {
+            background: linear-gradient(90deg, rgba(255,0,85,0.3) 0%, rgba(0,234,255,0.3) 50%, rgba(157,0,255,0.3) 100%);
+            background-size: 200% 100%;
+            animation: holoSweep 1.5s ease infinite;
+        }
+
+        .effect-solarflare {
+            background: radial-gradient(circle, rgba(251,146,60,0.6) 0%, rgba(225,29,72,0.6) 70%, rgba(120,53,15,0.8) 100%);
+            animation: holoSweep 3s ease infinite;
+        }
+
+        .effect-aurora {
+            background: linear-gradient(135deg, rgba(52,211,153,0.5), rgba(56,189,248,0.5), rgba(168,85,247,0.5));
+            background-size: 300% 300%;
+            animation: holoSweep 5s ease infinite;
+        }
+
+        .effect-astral {
+            background: radial-gradient(ellipse at top, #312e81, #1e1b4b, #020617);
+            border-color: #a855f7 !important;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+        }
+
+        .effect-quantum {
+            background: linear-gradient(45deg, #0f172a, #38bdf8, #c084fc, #0f172a);
+            background-size: 400% 400%;
+            animation: holoSweep 2s ease infinite;
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.6);
+        }
+
         /* Floating Income Popups */
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0) scale(1); }
@@ -165,6 +209,18 @@
                         <div id="income-display" class="font-mono text-lg font-bold text-purple-600 tracking-tight">+$0.00<span class="text-xs font-sans text-slate-400 font-normal">/s</span></div>
                     </div>
                 </div>
+
+                <div class="h-7 w-px bg-purple-100"></div>
+
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-gem"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Codex Bonus</div>
+                        <div id="codex-bonus-display" class="font-mono text-lg font-bold text-amber-600 tracking-tight">1.00x</div>
+                    </div>
+                </div>
                 <!-- Container for floating +$ floating popups -->
                 <div id="income-popups-container" class="absolute inset-0 pointer-events-none"></div>
             </div>
@@ -226,11 +282,15 @@
                     <button onclick="batchSellCommons()" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-bold text-xs border border-rose-200 transition-all active:scale-95 flex items-center gap-1.5">
                         <i class="fa-solid fa-trash-can"></i> Sell Duplicates/Commons
                     </button>
+                    <button onclick="batchSellFiltered()" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl font-bold text-xs border border-amber-200 transition-all active:scale-95 flex items-center gap-1.5">
+                        <i class="fa-solid fa-coins"></i> Sell Filtered
+                    </button>
                     <select id="sort-by" onchange="renderInventory()" class="bg-white/80 border border-purple-100 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all cursor-pointer font-medium">
                         <option value="rarity-desc">Rarity (High to Low)</option>
                         <option value="rarity-asc">Rarity (Low to High)</option>
                         <option value="income-desc">Income (Highest First)</option>
                         <option value="income-asc">Income (Lowest First)</option>
+                        <option value="multiplier-desc">Multiplier (Highest First)</option>
                         <option value="newest">Newest First</option>
                     </select>
                 </div>
@@ -258,17 +318,26 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
                         <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-book-open text-purple-500"></i> Color Codex Binder
+                            <i class="fa-solid fa-book-open text-purple-500"></i> Color Codex & Master Set Bonuses
                         </h2>
-                        <p class="text-xs text-slate-500">Track all unique color hues you've discovered across the spectrum.</p>
+                        <p class="text-xs text-slate-500">Complete color hue families to earn permanent income multipliers!</p>
                     </div>
-                    <div class="text-xs font-mono bg-purple-100 text-purple-700 px-3 py-1.5 rounded-xl font-bold">
-                        Discovered: <span id="codex-discovered-count">0</span> Unique Hex Shades
+                    <div class="flex gap-2">
+                        <div class="text-xs font-mono bg-purple-100 text-purple-700 px-3 py-1.5 rounded-xl font-bold">
+                            Discovered: <span id="codex-discovered-count">0</span> Hex Shades
+                        </div>
+                        <div class="text-xs font-mono bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl font-bold">
+                            Sets Completed: <span id="codex-sets-completed">0/12</span>
+                        </div>
                     </div>
                 </div>
 
-                <div id="codex-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 pt-2">
-                    <!-- Dynamic Palette Swatches -->
+                <!-- Hue Family Progress Cards -->
+                <div id="codex-families-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2"></div>
+
+                <div class="border-t border-purple-100 pt-4">
+                    <h3 class="text-sm font-bold text-slate-700 mb-2">Discovered Swatches Palette</h3>
+                    <div id="codex-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 pt-2 max-h-96 overflow-y-auto pr-1"></div>
                 </div>
             </div>
         </section>
@@ -385,68 +454,51 @@
 
     <script>
         // WEB AUDIO SFX SYNTH
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSfx(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                const now = audioCtx.currentTime;
-
-                if (type === 'click') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(500, now);
-                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.04);
-                    gain.gain.setValueAtTime(0.08, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.04);
-                    osc.start(now); osc.stop(now + 0.04);
-                } else if (type === 'flip') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(300, now);
-                    osc.frequency.exponentialRampToValueAtTime(700, now + 0.08);
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-                    osc.start(now); osc.stop(now + 0.08);
-                } else if (type === 'rare') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, now);
-                    osc.frequency.setValueAtTime(659.25, now + 0.08);
-                    osc.frequency.setValueAtTime(783.99, now + 0.16);
-                    gain.gain.setValueAtTime(0.15, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
-                    osc.start(now); osc.stop(now + 0.3);
-                } else if (type === 'cash') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(880, now);
-                    osc.frequency.setValueAtTime(1200, now + 0.06);
-                    gain.gain.setValueAtTime(0.08, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
-                    osc.start(now); osc.stop(now + 0.15);
-                }
-            } catch(e) {}
-        }
+        // ... existing audioCtx code ...
 
         // GAME DATA & CONFIGURATION
         const RARITIES = {
-            Common: { name: 'Common', multiplier: 1, color: '#94a3b8', bg: 'bg-slate-100 text-slate-600', chance: 60 },
+            Common: { name: 'Common', multiplier: 1, color: '#94a3b8', bg: 'bg-slate-100 text-slate-600', chance: 50 },
             Uncommon: { name: 'Uncommon', multiplier: 2.5, color: '#34d399', bg: 'bg-emerald-100 text-emerald-700', chance: 25 },
-            Rare: { name: 'Rare', multiplier: 7, color: '#60a5fa', bg: 'bg-blue-100 text-blue-700', chance: 10 },
-            Epic: { name: 'Epic', multiplier: 20, color: '#c084fc', bg: 'bg-purple-100 text-purple-700', chance: 4 },
-            Legendary: { name: 'Legendary', multiplier: 65, color: '#facc15', bg: 'bg-amber-100 text-amber-700', chance: 0.9 },
-            Mythic: { name: 'Mythic', multiplier: 220, color: '#f472b6', bg: 'bg-pink-100 text-pink-700', chance: 0.09 },
-            Divine: { name: 'Divine', multiplier: 1000, color: '#38bdf8', bg: 'bg-sky-100 text-sky-700', chance: 0.01 }
+            Rare: { name: 'Rare', multiplier: 7, color: '#60a5fa', bg: 'bg-blue-100 text-blue-700', chance: 12 },
+            Epic: { name: 'Epic', multiplier: 20, color: '#c084fc', bg: 'bg-purple-100 text-purple-700', chance: 7 },
+            Legendary: { name: 'Legendary', multiplier: 65, color: '#facc15', bg: 'bg-amber-100 text-amber-700', chance: 3.5 },
+            Mythic: { name: 'Mythic', multiplier: 220, color: '#f472b6', bg: 'bg-pink-100 text-pink-700', chance: 1.5 },
+            Divine: { name: 'Divine', multiplier: 1000, color: '#38bdf8', bg: 'bg-sky-100 text-sky-700', chance: 0.6 },
+            'Split Gradient': { name: 'Split Gradient', multiplier: 2500, color: '#e879f9', bg: 'bg-fuchsia-100 text-fuchsia-700', chance: 0.3 },
+            'Ultra Mega Split': { name: 'Ultra Mega Split', multiplier: 8000, color: '#fb7185', bg: 'bg-rose-100 text-rose-700 font-black', chance: 0.1 }
         };
 
         const VARIANTS = {
-            Standard: { name: 'Standard', multiplier: 1, prob: 0.80 },
+            Standard: { name: 'Standard', multiplier: 1, prob: 0.65 },
             Shiny: { name: 'Shiny', multiplier: 5.0, prob: 0.10 },
-            'Cosmic Sparkle': { name: 'Cosmic Sparkle', multiplier: 12.0, prob: 0.05 },
-            'Neon Pulse': { name: 'Neon Pulse', multiplier: 25.0, prob: 0.03 },
-            'Golden Foil': { name: 'Golden Foil', multiplier: 60.0, prob: 0.015 },
-            'Prismatic Gloss': { name: 'Prismatic Gloss', multiplier: 150.0, prob: 0.005 }
+            'Cosmic Sparkle': { name: 'Cosmic Sparkle', multiplier: 12.0, prob: 0.06 },
+            'Neon Pulse': { name: 'Neon Pulse', multiplier: 25.0, prob: 0.04 },
+            'Golden Foil': { name: 'Golden Foil', multiplier: 60.0, prob: 0.03 },
+            'Prismatic Gloss': { name: 'Prismatic Gloss', multiplier: 150.0, prob: 0.02 },
+            'Holographic': { name: 'Holographic', multiplier: 300.0, prob: 0.015 },
+            'Dark Matter': { name: 'Dark Matter', multiplier: 600.0, prob: 0.01 },
+            'Glitch Matrix': { name: 'Glitch Matrix', multiplier: 1200.0, prob: 0.008 },
+            'Solar Flare': { name: 'Solar Flare', multiplier: 2500.0, prob: 0.005 },
+            'Aurora Borealis': { name: 'Aurora Borealis', multiplier: 4500.0, prob: 0.003 },
+            'Astral Veil': { name: 'Astral Veil', multiplier: 7500.0, prob: 0.002 },
+            'Quantum Shift': { name: 'Quantum Shift', multiplier: 12000.0, prob: 0.001 }
         };
+
+        const COLOR_FAMILIES = [
+            { name: 'Reds & Crimson', hueMin: 345, hueMax: 15, bonus: 0.25 },
+            { name: 'Oranges & Coral', hueMin: 15, hueMax: 45, bonus: 0.25 },
+            { name: 'Yellows & Gold', hueMin: 45, hueMax: 70, bonus: 0.25 },
+            { name: 'Limes & Chartreuse', hueMin: 70, hueMax: 110, bonus: 0.25 },
+            { name: 'Greens & Emerald', hueMin: 110, hueMax: 150, bonus: 0.25 },
+            { name: 'Teals & Mint', hueMin: 150, hueMax: 180, bonus: 0.25 },
+            { name: 'Cyans & Sky', hueMin: 180, hueMax: 210, bonus: 0.25 },
+            { name: 'Blues & Sapphire', hueMin: 210, hueMax: 250, bonus: 0.25 },
+            { name: 'Purples & Violet', hueMin: 250, hueMax: 290, bonus: 0.25 },
+            { name: 'Magentas & Pink', hueMin: 290, hueMax: 325, bonus: 0.25 },
+            { name: 'Rose & Blush', hueMin: 325, hueMax: 345, bonus: 0.25 },
+            { name: 'Monochrome Grays', isMonochrome: true, bonus: 0.50 }
+        ];
 
         const PACKS = [
             { id: 'starter', name: 'Pastel Starter', description: 'Soft subtle hues and foundation palette samples.', price: 10, cardsCount: 3, icon: 'fa-paint-roller', rarityBoost: 1.0, shinyBoost: 1.0 },
@@ -454,11 +506,22 @@
             { id: 'neon', name: 'Neon Fluorescent', description: 'High-energy shades with guaranteed shiny variants.', price: 400, cardsCount: 4, icon: 'fa-wand-magic-sparkles', rarityBoost: 2.8, shinyBoost: 2.2 },
             { id: 'spectrum', name: 'Spectrum Elite', description: 'Curated premium pigments with superior income yield.', price: 2200, cardsCount: 5, icon: 'fa-eye-dropper', rarityBoost: 5.5, shinyBoost: 4.0 },
             { id: 'cosmic', name: 'Cosmic Hex Pack', description: 'Deep cosmic tone swatches with boosted Mythic rates.', price: 12000, cardsCount: 5, icon: 'fa-cubes', rarityBoost: 12.0, shinyBoost: 8.0 },
-            { id: 'divine', name: 'Divine Chromatic', description: 'Ultra-exclusive sample pack containing celestial hues.', price: 85000, cardsCount: 6, icon: 'fa-crown', rarityBoost: 30.0, shinyBoost: 18.0 }
+            { id: 'divine', name: 'Divine Chromatic', description: 'Ultra-exclusive sample pack containing celestial hues.', price: 85000, cardsCount: 6, icon: 'fa-crown', rarityBoost: 30.0, shinyBoost: 18.0 },
+            // 10 NEW EXPONENTIAL PACKS
+            { id: 'spectral', name: 'Spectral Palette', description: 'Prismatic pigments infused with extra-dimensional sheen.', price: 500000, cardsCount: 6, icon: 'fa-rainbow', rarityBoost: 75.0, shinyBoost: 40.0 },
+            { id: 'hyperneon', name: 'Hyperdrive Neon', description: 'Electrified photon hues that multiply passive income.', price: 3000000, cardsCount: 6, icon: 'fa-bolt-lightning', rarityBoost: 180.0, shinyBoost: 100.0 },
+            { id: 'zenith', name: 'Zenith Chroma', description: 'Pure zenith pigments yielding incredible split-color odds.', price: 20000000, cardsCount: 7, icon: 'fa-star-of-david', rarityBoost: 450.0, shinyBoost: 250.0 },
+            { id: 'void', name: 'Void Spectrum', description: 'Abyssal dark shades mixed with radiant quantum foils.', price: 150000000, cardsCount: 7, icon: 'fa-circle-radiation', rarityBoost: 1200.0, shinyBoost: 600.0 },
+            { id: 'infinity', name: 'Infinity Prism', description: 'Infinite range of split gradients and high-multiplier swatches.', price: 1000000000, cardsCount: 8, icon: 'fa-infinity', rarityBoost: 3000.0, shinyBoost: 1500.0 },
+            { id: 'celestial', name: 'Celestial Gradient', description: 'Starlight hues woven into multi-tone gradient samples.', price: 8000000000, cardsCount: 8, icon: 'fa-sun', rarityBoost: 8000.0, shinyBoost: 4000.0 },
+            { id: 'singularity', name: 'Singularity Dye', description: 'Gravitational color compression with massive multipliers.', price: 60000000000, cardsCount: 8, icon: 'fa-meteor', rarityBoost: 20000.0, shinyBoost: 10000.0 },
+            { id: 'supernova', name: 'Supernova Tint', description: 'Explosive brightness levels that blast revenue per second.', price: 500000000000, cardsCount: 9, icon: 'fa-burst', rarityBoost: 50000.0, shinyBoost: 25000.0 },
+            { id: 'dimensional', name: 'Dimensional Hue', description: 'Multiverse paint formulas featuring ultra mega split variants.', price: 4000000000000, cardsCount: 9, icon: 'fa-atom', rarityBoost: 150000.0, shinyBoost: 75000.0 },
+            { id: 'quantum', name: 'Quantum Colorway', description: 'The absolute apex of TCG paint swatches. Infinite power.', price: 35000000000000, cardsCount: 10, icon: 'fa-gem', rarityBoost: 500000.0, shinyBoost: 250000.0 }
         ];
 
-        const PREFIXES = ['Pastel', 'Soft', 'Velvet', 'Silk', 'Muted', 'Blush', 'Frosted', 'Satin', 'Lunar', 'Mint', 'Cotton', 'Glacier', 'Rose', 'Cosmic', 'Aura'];
-        const NOUNS = ['Bloom', 'Mist', 'Glow', 'ECHO', 'Spark', 'Tide', 'Petal', 'Breeze', 'Haze', 'Sands', 'Cloud', 'Pulse', 'Dusk', 'Dawn', 'Frost'];
+        const PREFIXES = ['Pastel', 'Soft', 'Velvet', 'Silk', 'Muted', 'Blush', 'Frosted', 'Satin', 'Lunar', 'Mint', 'Cotton', 'Glacier', 'Rose', 'Cosmic', 'Aura', 'Quantum', 'Hyper', 'Void', 'Astral', 'Nebula', 'Solar'];
+        const NOUNS = ['Bloom', 'Mist', 'Glow', 'Echo', 'Spark', 'Tide', 'Petal', 'Breeze', 'Haze', 'Sands', 'Cloud', 'Pulse', 'Dusk', 'Dawn', 'Frost', 'Matrix', 'Singularity', 'Flare', 'Veil', 'Core'];
 
         let gameState = {
             currency: 25.00,
@@ -469,52 +532,82 @@
             lastTickTimestamp: Date.now()
         };
 
-        function generateRandomHex() {
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * 16)];
-            return color;
-        }
-
-        function generateProceduralName(hex) {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            return `${PREFIXES[(r + g) % PREFIXES.length]} ${NOUNS[(g + b) % NOUNS.length]}`;
-        }
-
-        function rollRarity(boost = 1.0) {
-            const roll = Math.random() * 100;
-            const keys = Object.keys(RARITIES).reverse();
-            for (let key of keys) {
-                let chance = RARITIES[key].chance * boost;
-                if (key === 'Common') chance = 100;
-                if (roll <= chance) return key;
+        function hexToHSL(hex) {
+            let r = parseInt(hex.slice(1, 3), 16) / 255;
+            let g = parseInt(hex.slice(3, 5), 16) / 255;
+            let b = parseInt(hex.slice(5, 7), 16) / 255;
+            let max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) {
+                h = s = 0;
+            } else {
+                let d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
             }
-            return 'Common';
+            return { h: h * 360, s: s * 100, l: l * 100 };
         }
 
-        function rollVariant(boost = 1.0) {
-            const roll = Math.random();
-            let cum = 0;
-            const keys = Object.keys(VARIANTS).reverse();
-            for (let key of keys) {
-                cum += VARIANTS[key].prob * boost;
-                if (roll <= cum) return key;
-            }
-            return 'Standard';
+        function calculateCodexMultiplier() {
+            let totalBonus = 1.0;
+            const uniqueHexes = Array.from(new Set(gameState.inventory.map(c => c.hex)));
+
+            COLOR_FAMILIES.forEach(family => {
+                let count = 0;
+                uniqueHexes.forEach(hex => {
+                    if (hex.includes('deg')) return; // skip split gradients for hue family checks
+                    const hsl = hexToHSL(hex);
+                    if (family.isMonochrome) {
+                        if (hsl.s < 12) count++;
+                    } else if (family.hueMin > family.hueMax) {
+                        if (hsl.h >= family.hueMin || hsl.h <= family.hueMax) count++;
+                    } else {
+                        if (hsl.h >= family.hueMin && hsl.h <= family.hueMax) count++;
+                    }
+                });
+                if (count >= 5) {
+                    totalBonus += family.bonus;
+                }
+            });
+            return totalBonus;
         }
 
         function createPaintCard(rarityBoost = 1.0, shinyBoost = 1.0) {
-            const hex = generateRandomHex();
             const rarity = rollRarity(rarityBoost);
             const variant = rollVariant(shinyBoost);
-            const name = generateProceduralName(hex);
+            let hex, name;
+            let hexesList = [];
+
+            if (rarity === 'Split Gradient' || rarity === 'Ultra Mega Split') {
+                const hex1 = generateRandomHex();
+                const hex2 = generateRandomHex();
+                if (rarity === 'Ultra Mega Split') {
+                    const hex3 = generateRandomHex();
+                    hexesList = [hex1, hex2, hex3];
+                    hex = `linear-gradient(135deg, ${hex1}, ${hex2}, ${hex3})`;
+                    name = `Tri-Split ${generateProceduralName(hex1)}`;
+                } else {
+                    hexesList = [hex1, hex2];
+                    hex = `linear-gradient(135deg, ${hex1}, ${hex2})`;
+                    name = `Dual-Split ${generateProceduralName(hex1)}`;
+                }
+            } else {
+                hex = generateRandomHex();
+                hexesList = [hex];
+                name = generateProceduralName(hex);
+            }
+
             const incomePerSec = 0.05 * RARITIES[rarity].multiplier * VARIANTS[variant].multiplier;
 
             return {
                 id: 'card_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                 hex: hex,
+                hexesList: hexesList,
                 name: name,
                 rarity: rarity,
                 variant: variant,
@@ -525,7 +618,8 @@
         }
 
         function calculateTotalIncomePerSecond() {
-            return gameState.inventory.reduce((sum, card) => sum + card.incomePerSec, 0);
+            const baseIncome = gameState.inventory.reduce((sum, card) => sum + card.incomePerSec, 0);
+            return baseIncome * calculateCodexMultiplier();
         }
 
         function gameTick() {
@@ -540,8 +634,7 @@
                 gameState.lifetimeRevenue += earned;
                 updateEconomyUI();
             }
-            
-            // Real-time update store button states if store tab is visible
+
             const storeTab = document.getElementById('tab-store');
             if (storeTab && !storeTab.classList.contains('hidden')) {
                 updateStoreButtonStates();
@@ -552,65 +645,46 @@
             document.getElementById('currency-display').innerText = `$${gameState.currency.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             const totalIncome = calculateTotalIncomePerSecond();
             document.getElementById('income-display').innerHTML = `+$${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span class="text-xs font-sans text-slate-400 font-normal">/s</span>`;
-        }
-
-        function updateStoreButtonStates() {
-            PACKS.forEach(pack => {
-                const btn = document.getElementById(`buy-btn-${pack.id}`);
-                if (!btn) return;
-                const canAfford = gameState.currency >= pack.price;
-                btn.disabled = !canAfford;
-                if (canAfford) {
-                    btn.className = "px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200 active:scale-95";
-                } else {
-                    btn.className = "px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 bg-slate-200 text-slate-400 cursor-not-allowed";
-                }
-            });
-        }
-
-        function handle3DTilt(e, element) {
-            const rect = element.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-            const cardInner = element.querySelector('.card-3d-inner');
-            if (cardInner) {
-                cardInner.style.transform = `rotateY(${x / 12}deg) rotateX(${-y / 12}deg) scale(1.02)`;
-            }
-        }
-
-        function reset3DTilt(element) {
-            const cardInner = element.querySelector('.card-3d-inner');
-            if (cardInner) {
-                cardInner.style.transform = `rotateY(0deg) rotateX(0deg) scale(1)`;
-            }
+            document.getElementById('codex-bonus-display').innerText = `${calculateCodexMultiplier().toFixed(2)}x`;
         }
 
         function renderCardHTML(card, isClickable = true) {
-            const rarityInfo = RARITIES[card.rarity];
+            const rarityInfo = RARITIES[card.rarity] || RARITIES['Common'];
             let effectClass = '';
             let variantBadge = '';
 
             if (card.variant === 'Shiny') effectClass = 'effect-shiny';
             else if (card.variant === 'Cosmic Sparkle') effectClass = 'effect-cosmic';
             else if (card.variant === 'Golden Foil') effectClass = 'effect-golden';
+            else if (card.variant === 'Holographic') effectClass = 'effect-holographic';
+            else if (card.variant === 'Dark Matter') effectClass = 'effect-darkmatter';
+            else if (card.variant === 'Glitch Matrix') effectClass = 'effect-glitch';
+            else if (card.variant === 'Solar Flare') effectClass = 'effect-solarflare';
+            else if (card.variant === 'Aurora Borealis') effectClass = 'effect-aurora';
+            else if (card.variant === 'Astral Veil') effectClass = 'effect-astral';
+            else if (card.variant === 'Quantum Shift') effectClass = 'effect-quantum';
 
             if (card.variant !== 'Standard') {
-                const mult = VARIANTS[card.variant].multiplier;
-                variantBadge = `<span class="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-md">${card.variant.toUpperCase()} (${mult}x)</span>`;
+                const mult = VARIANTS[card.variant] ? VARIANTS[card.variant].multiplier : 1;
+                variantBadge = `<span class="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-md">${card.variant.toUpperCase()} (${mult}x)</span>`;
             }
+
+            const isGradient = card.hex.includes('gradient');
+            const bgStyle = isGradient ? `background: ${card.hex};` : `background-color: ${card.hex};`;
+            const displayHex = isGradient ? (card.rarity === 'Ultra Mega Split' ? 'TRI-SPLIT' : 'DUO-SPLIT') : card.hex;
 
             return `
                 <div onmousemove="handle3DTilt(event, this)" onmouseleave="reset3DTilt(this)" onclick="${isClickable ? `openCardModal('${card.id}')` : ''}" class="card-3d-wrapper cursor-pointer group">
                     <div class="card-3d-inner bg-white/80 rounded-2xl p-3 border border-purple-100 shadow-sm hover:shadow-xl relative overflow-hidden ${effectClass}">
-                        <div class="w-full h-32 rounded-xl mb-2.5 shadow-inner relative flex items-end p-2 transition-transform duration-300 group-hover:scale-[1.02]" style="background-color: ${card.hex};">
+                        <div class="w-full h-32 rounded-xl mb-2.5 shadow-inner relative flex items-end p-2 transition-transform duration-300 group-hover:scale-[1.02]" style="${bgStyle}">
                             <div class="absolute top-2 right-2">${variantBadge}</div>
-                            <span class="bg-slate-900/60 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-mono text-white font-bold tracking-wider">${card.hex}</span>
+                            <span class="bg-slate-900/60 backdrop-blur-md px-2 py-0.5 rounded-lg text-[9px] font-mono text-white font-bold tracking-wider">${displayHex}</span>
                         </div>
                         <div class="space-y-1">
                             <div class="text-xs font-bold text-slate-800 truncate" title="${card.name}">${card.name}</div>
                             <div class="flex items-center justify-between text-[10px]">
                                 <span class="px-2 py-0.5 rounded-md font-bold ${rarityInfo.bg}">${card.rarity}</span>
-                                <span class="font-mono text-emerald-600 font-bold">+$${card.incomePerSec.toFixed(2)}/s</span>
+                                <span class="font-mono text-emerald-600 font-bold">+$${card.incomePerSec.toLocaleString()}/s</span>
                             </div>
                         </div>
                     </div>
@@ -618,262 +692,26 @@
             `;
         }
 
-        function renderInventory() {
-            const grid = document.getElementById('inventory-grid');
-            const emptyState = document.getElementById('inventory-empty');
+        function batchSellFiltered() {
             const search = document.getElementById('filter-search').value.toLowerCase();
             const rarityFilter = document.getElementById('filter-rarity').value;
             const variantFilter = document.getElementById('filter-variant').value;
-            const sortBy = document.getElementById('sort-by').value;
 
-            let filtered = gameState.inventory.filter(card => {
+            let earned = 0;
+            let soldCount = 0;
+
+            gameState.inventory = gameState.inventory.filter(card => {
                 const matchesSearch = card.name.toLowerCase().includes(search) || card.hex.toLowerCase().includes(search);
                 const matchesRarity = rarityFilter === 'ALL' || card.rarity === rarityFilter;
                 const matchesVariant = variantFilter === 'ALL' || card.variant === variantFilter;
-                return matchesSearch && matchesRarity && matchesVariant;
-            });
-
-            filtered.sort((a, b) => {
-                const rarityOrder = Object.keys(RARITIES);
-                if (sortBy === 'rarity-desc') return rarityOrder.indexOf(b.rarity) - rarityOrder.indexOf(a.rarity);
-                if (sortBy === 'rarity-asc') return rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity);
-                if (sortBy === 'income-desc') return b.incomePerSec - a.incomePerSec;
-                if (sortBy === 'income-asc') return a.incomePerSec - b.incomePerSec;
-                if (sortBy === 'newest') return b.id.localeCompare(a.id);
-                return 0;
-            });
-
-            document.getElementById('inventory-count').innerText = gameState.inventory.length;
-
-            if (filtered.length === 0) {
-                grid.innerHTML = '';
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                grid.innerHTML = filtered.map(card => renderCardHTML(card, true)).join('');
-            }
-        }
-
-        function renderCodex() {
-            const grid = document.getElementById('codex-grid');
-            const uniqueCardsMap = new Map();
-
-            gameState.inventory.forEach(card => {
-                if (!uniqueCardsMap.has(card.hex)) {
-                    uniqueCardsMap.set(card.hex, card);
-                }
-            });
-
-            document.getElementById('codex-discovered-count').innerText = uniqueCardsMap.size;
-
-            grid.innerHTML = Array.from(uniqueCardsMap.values()).map(card => `
-                <div class="flex flex-col items-center gap-1 group">
-                    <div class="w-full aspect-square rounded-xl shadow-inner border border-purple-100 transition-transform duration-200 group-hover:scale-110" style="background-color: ${card.hex};"></div>
-                    <span class="text-[9px] font-mono text-slate-500 font-semibold">${card.hex}</span>
-                </div>
-            `).join('');
-        }
-
-        function renderStorePacks() {
-            const grid = document.getElementById('packs-grid');
-            grid.innerHTML = PACKS.map(pack => {
-                const canAfford = gameState.currency >= pack.price;
-                return `
-                    <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 relative group">
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-start">
-                                <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl font-bold shadow-inner">
-                                    <i class="fa-solid ${pack.icon}"></i>
-                                </div>
-                                <span class="bg-white/80 text-slate-600 text-[10px] px-2.5 py-1 rounded-full font-mono font-bold border border-purple-100">
-                                    ${pack.cardsCount} Swatches
-                                </span>
-                            </div>
-
-                            <div>
-                                <h3 class="text-base font-bold text-slate-800 group-hover:text-purple-600 transition-colors">${pack.name}</h3>
-                                <p class="text-xs text-slate-500 mt-1">${pack.description}</p>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 pt-4 border-t border-purple-100/80 flex items-center justify-between">
-                            <div>
-                                <div class="text-[9px] text-slate-400 font-bold uppercase">Price</div>
-                                <div class="text-lg font-mono font-bold text-emerald-600">$${pack.price.toLocaleString()}</div>
-                            </div>
-                            <button id="buy-btn-${pack.id}" onclick="buyPack('${pack.id}')" ${!canAfford ? 'disabled' : ''} class="px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${canAfford ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200 active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}">
-                                <i class="fa-solid fa-bag-shopping"></i> Purchase
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderStats() {
-            document.getElementById('stat-total-cards').innerText = gameState.inventory.length;
-            const uniqueHexes = new Set(gameState.inventory.map(c => c.hex)).size;
-            document.getElementById('stat-unique-hexes').innerText = uniqueHexes;
-            document.getElementById('stat-lifetime-revenue').innerText = `$${gameState.lifetimeRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            document.getElementById('stat-packs-opened').innerText = gameState.packsOpened;
-
-            const breakdownContainer = document.getElementById('rarity-breakdown-list');
-            const total = gameState.inventory.length || 1;
-
-            breakdownContainer.innerHTML = Object.keys(RARITIES).map(rarityKey => {
-                const count = gameState.inventory.filter(c => c.rarity === rarityKey).length;
-                const percentage = ((count / total) * 100).toFixed(1);
-                const rarityInfo = RARITIES[rarityKey];
-
-                return `
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs font-semibold">
-                            <span style="color: ${rarityInfo.color}">${rarityKey}</span>
-                            <span class="font-mono text-slate-400">${count} (${percentage}%)</span>
-                        </div>
-                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-500" style="width: ${percentage}%; background-color: ${rarityInfo.color};"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        let currentDrawnCards = [];
-
-        function buyPack(packId) {
-            const pack = PACKS.find(p => p.id === packId);
-            if (!pack || gameState.currency < pack.price) return;
-
-            gameState.currency -= pack.price;
-            gameState.packsOpened++;
-            playSfx('cash');
-            updateEconomyUI();
-            renderStorePacks();
-
-            currentDrawnCards = [];
-            for (let i = 0; i < pack.cardsCount; i++) {
-                currentDrawnCards.push(createPaintCard(pack.rarityBoost, pack.shinyBoost));
-            }
-
-            const modal = document.getElementById('pack-modal');
-            const container = document.getElementById('revealed-cards-container');
-            const doneBtn = document.getElementById('pack-modal-done-btn');
-
-            document.getElementById('pack-modal-title').innerText = `${pack.name.toUpperCase()} REVEAL`;
-            doneBtn.classList.add('hidden');
-            container.innerHTML = '';
-            modal.classList.remove('hidden');
-
-            currentDrawnCards.forEach((card, index) => {
-                const cardWrapper = document.createElement('div');
-                cardWrapper.className = 'w-44 h-64 card-3d-wrapper cursor-pointer animate-in fade-in zoom-in duration-300';
-                cardWrapper.style.animationDelay = `${index * 120}ms`;
-
-                cardWrapper.innerHTML = `
-                    <div id="flip-card-${index}" onclick="flipCard(${index})" class="w-full h-full relative transition-transform duration-700 rounded-2xl shadow-2xl" style="transform-style: preserve-3d;">
-                        <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-purple-200 to-pink-200 border-2 border-white rounded-2xl flex flex-col items-center justify-center p-4 text-center">
-                            <div class="w-12 h-12 rounded-2xl bg-white/80 text-purple-500 flex items-center justify-center text-xl mb-2 shadow-sm">
-                                <i class="fa-solid fa-paint-roller"></i>
-                            </div>
-                            <span class="text-[10px] font-extrabold text-purple-700 tracking-wider uppercase">REVEAL</span>
-                        </div>
-                        <div class="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl">
-                            ${renderCardHTML(card, false)}
-                        </div>
-                    </div>
-                `;
-                container.appendChild(cardWrapper);
-            });
-        }
-
-        function flipCard(index) {
-            const cardInner = document.getElementById(`flip-card-${index}`);
-            if (cardInner.classList.contains('rotate-y-180')) return;
-
-            const card = currentDrawnCards[index];
-            cardInner.classList.add('rotate-y-180');
-
-            if (['Legendary', 'Mythic', 'Divine'].includes(card.rarity)) {
-                playSfx('rare');
-                confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
-            } else {
-                playSfx('flip');
-            }
-
-            const allFlipped = currentDrawnCards.every((_, i) => {
-                const el = document.getElementById(`flip-card-${i}`);
-                return el && el.classList.contains('rotate-y-180');
-            });
-
-            if (allFlipped) {
-                document.getElementById('pack-modal-done-btn').classList.remove('hidden');
-            }
-        }
-
-        function closePackModal() {
-            gameState.inventory.push(...currentDrawnCards);
-            currentDrawnCards = [];
-            document.getElementById('pack-modal').classList.add('hidden');
-            saveGameData();
-            renderInventory();
-            updateEconomyUI();
-        }
-
-        function openCardModal(cardId) {
-            const card = gameState.inventory.find(c => c.id === cardId);
-            if (!card) return;
-
-            gameState.selectedCardId = cardId;
-            const rarityInfo = RARITIES[card.rarity];
-
-            document.getElementById('modal-card-preview').innerHTML = `<div class="w-44">${renderCardHTML(card, false)}</div>`;
-            document.getElementById('modal-hex-code').innerText = card.hex;
-            document.getElementById('modal-hex-code').style.color = card.hex;
-            document.getElementById('modal-rarity').innerText = card.rarity;
-            document.getElementById('modal-rarity').style.color = rarityInfo.color;
-            document.getElementById('modal-variant').innerText = card.variant;
-            document.getElementById('modal-income').innerText = `+$${card.incomePerSec.toFixed(2)} / s`;
-            document.getElementById('modal-sell-price').innerText = `$${card.sellValue.toFixed(2)}`;
-
-            document.getElementById('modal-sell-btn').onclick = () => sellCard(card.id);
-            document.getElementById('card-modal').classList.remove('hidden');
-            playSfx('click');
-        }
-
-        function closeCardModal() {
-            document.getElementById('card-modal').classList.add('hidden');
-            gameState.selectedCardId = null;
-        }
-
-        function sellCard(cardId) {
-            const index = gameState.inventory.findIndex(c => c.id === cardId);
-            if (index === -1) return;
-
-            const card = gameState.inventory[index];
-            gameState.currency += card.sellValue;
-            gameState.inventory.splice(index, 1);
-
-            playSfx('cash');
-            closeCardModal();
-            saveGameData();
-            renderInventory();
-            updateEconomyUI();
-        }
-
-        function batchSellCommons() {
-            const initialCount = gameState.inventory.length;
-            let earned = 0;
-
-            gameState.inventory = gameState.inventory.filter(card => {
-                if (card.rarity === 'Common') {
+                if (matchesSearch && matchesRarity && matchesVariant) {
                     earned += card.sellValue;
+                    soldCount++;
                     return false;
                 }
                 return true;
             });
 
-            const soldCount = initialCount - gameState.inventory.length;
             if (soldCount > 0) {
                 gameState.currency += earned;
                 playSfx('cash');
@@ -883,43 +721,77 @@
             }
         }
 
-        function switchTab(tab) {
-            ['inventory', 'codex', 'store', 'stats'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
-                const btn = document.getElementById(`tab-${t}-btn`);
-                btn.className = 'px-4 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-300 hover:bg-white/80';
-            });
+        function renderCodex() {
+            const grid = document.getElementById('codex-grid');
+            const familiesList = document.getElementById('codex-families-list');
 
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`tab-${tab}-btn`);
-            activeBtn.className = 'px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 bg-purple-500 text-white shadow-md shadow-purple-200';
+            const uniqueHexes = Array.from(new Set(gameState.inventory.flatMap(c => c.hexesList || [c.hex])));
 
-            playSfx('click');
+            document.getElementById('codex-discovered-count').innerText = uniqueHexes.length;
 
-            if (tab === 'inventory') renderInventory();
-            if (tab === 'codex') renderCodex();
-            if (tab === 'store') renderStorePacks();
-            if (tab === 'stats') renderStats();
+            let completedSetsCount = 0;
+
+            familiesList.innerHTML = COLOR_FAMILIES.map(family => {
+                let count = 0;
+                uniqueHexes.forEach(hex => {
+                    if (hex.includes('deg')) return;
+                    const hsl = hexToHSL(hex);
+                    if (family.isMonochrome) {
+                        if (hsl.s < 12) count++;
+                    } else if (family.hueMin > family.hueMax) {
+                        if (hsl.h >= family.hueMin || hsl.h <= family.hueMax) count++;
+                    } else {
+                        if (hsl.h >= family.hueMin && hsl.h <= family.hueMax) count++;
+                    }
+                });
+
+                const target = 5;
+                const isCompleted = count >= target;
+                if (isCompleted) completedSetsCount++;
+                const progressPct = Math.min(100, (count / target) * 100);
+
+                return `
+                    <div class="bg-white/80 p-3.5 rounded-2xl border ${isCompleted ? 'border-amber-300 bg-amber-50/40' : 'border-purple-100'} shadow-sm space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold ${isCompleted ? 'text-amber-700' : 'text-slate-700'}">${family.name}</span>
+                            <span class="font-mono text-[10px] font-bold ${isCompleted ? 'text-amber-600' : 'text-purple-600'}">+${(family.bonus * 100)}% Passive Income</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex-grow">
+                                <div class="h-full ${isCompleted ? 'bg-amber-400' : 'bg-purple-400'} rounded-full transition-all" style="width: ${progressPct}%"></div>
+                            </div>
+                            <span class="text-[10px] font-mono font-bold text-slate-400">${count}/${target}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('codex-sets-completed').innerText = `${completedSetsCount}/${COLOR_FAMILIES.length}`;
+
+            grid.innerHTML = uniqueHexes.map(hex => `
+                <div class="flex flex-col items-center gap-1 group">
+                    <div class="w-full aspect-square rounded-xl shadow-inner border border-purple-100 transition-transform duration-200 group-hover:scale-110" style="background-color: ${hex};"></div>
+                    <span class="text-[8px] font-mono text-slate-500 font-semibold">${hex}</span>
+                </div>
+            `).join('');
         }
 
-        function closeOfflineModal() {
-            document.getElementById('offline-modal').classList.add('hidden');
-        }
-
-        function saveGameData() {
-            try {
-                localStorage.setItem('hex_pastel_tcg_save', JSON.stringify(gameState));
-            } catch(e) {}
-        }
-
+        // Migration safety when loading save data
         function loadGameData() {
             try {
                 const data = localStorage.getItem('hex_pastel_tcg_save');
                 if (data) {
                     const parsed = JSON.parse(data);
+                    // Preserve old inventory cards and inject missing properties smoothly
+                    if (parsed.inventory && Array.isArray(parsed.inventory)) {
+                        parsed.inventory = parsed.inventory.map(c => ({
+                            ...c,
+                            hexesList: c.hexesList || [c.hex],
+                            variant: c.variant || 'Standard'
+                        }));
+                    }
                     gameState = { ...gameState, ...parsed };
 
-                    // Calculate offline revenue
                     const now = Date.now();
                     const offlineSec = (now - (gameState.lastTickTimestamp || now)) / 1000;
                     if (offlineSec > 5) {
@@ -928,7 +800,7 @@
                         if (offlineEarned > 0.05) {
                             gameState.currency += offlineEarned;
                             gameState.lifetimeRevenue += offlineEarned;
-                            document.getElementById('offline-amount').innerText = offlineEarned.toFixed(2);
+                            document.getElementById('offline-amount').innerText = offlineEarned.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                             document.getElementById('offline-modal').classList.remove('hidden');
                         }
                     }
