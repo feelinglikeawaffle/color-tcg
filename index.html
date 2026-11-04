@@ -170,382 +170,82 @@
             box-shadow: 0 0 30px rgba(250, 204, 21, 0.8);
         }
 
+        /* 10 NEW ULTRA VISUAL SHADERS / SECRET FINISHES */
+        .effect-quantum-glitch {
+            background: linear-gradient(135deg, #00f2fe, #4facfe, #000000, #ff0844, #ffb199);
+            background-size: 400% 400%;
+            animation: holoSweep 1s ease infinite, pulseGlow 1.5s infinite;
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.9);
+            border-color: #00f2fe !important;
+        }
+
+        .effect-hyper-plasma {
+            background: radial-gradient(circle, #ff007f 0%, #7928ca 40%, #00dfd8 100%);
+            background-size: 300% 300%;
+            animation: rotateBg 2.5s linear infinite;
+            box-shadow: 0 0 25px rgba(255, 0, 127, 0.8);
+            border-color: #ff007f !important;
+        }
+
+        .effect-cosmic-void {
+            background: radial-gradient(circle at 50% 50%, #05050d 20%, #2e0854 60%, #11001c 100%);
+            box-shadow: inset 0 0 25px #a855f7, 0 0 25px rgba(168, 85, 247, 0.6);
+            border-color: #d8b4fe !important;
+        }
+
+        .effect-supernova-core {
+            background: linear-gradient(45deg, #ff4e50, #f9d423, #ff007f, #e100ff);
+            background-size: 300% 300%;
+            animation: holoSweep 0.8s ease infinite alternate;
+            box-shadow: 0 0 30px #f9d423;
+            border-color: #f9d423 !important;
+        }
+
+        .effect-temporal-rift {
+            background: repeating-linear-gradient(45deg, #0f172a, #0f172a 10px, #38bdf8 10px, #38bdf8 20px);
+            background-size: 200% 200%;
+            animation: holoSweep 2s linear infinite;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.7);
+        }
+
+        .effect-astral-nebula {
+            background: radial-gradient(ellipse at top left, #a855f7, #ec4899, #3b82f6, #10b981);
+            background-size: 250% 250%;
+            animation: holoSweep 3s ease infinite;
+            box-shadow: 0 0 30px rgba(236, 72, 153, 0.8);
+        }
+
+        .effect-dimensional-glitch {
+            background: linear-gradient(90deg, #ff0055, #00ffff, #00ff00, #ff0055);
+            background-size: 300% 100%;
+            animation: holoSweep 0.6s steps(4) infinite;
+            box-shadow: 0 0 25px #00ffff;
+        }
+
+        .effect-celestial-aether {
+            background: radial-gradient(circle, #ffffff 0%, #e0e7ff 30%, #818cf8 70%, #312e81 100%);
+            animation: pulseGlow 1.2s ease-in-out infinite;
+            box-shadow: 0 0 35px rgba(255, 255, 255, 0.9);
+            border-color: #ffffff !important;
+        }
+
+        .effect-omnipotent-aura {
+            background: linear-gradient(135deg, #facc15, #ec4899, #8b5cf6, #06b6d4, #10b981, #facc15);
+            background-size: 500% 500%;
+            animation: holoSweep 1.5s linear infinite, rotateBg 3s linear infinite;
+            box-shadow: 0 0 40px rgba(250, 204, 21, 0.9);
+            border-color: #facc15 !important;
+        }
+
+        .effect-big-bang-essence {
+            background: radial-gradient(circle at 50% 50%, #ffffff 0%, #ff0055 25%, #7928ca 50%, #000000 85%);
+            animation: pulseGlow 0.8s ease-in-out infinite, rotateBg 2s linear infinite;
+            box-shadow: 0 0 50px rgba(255, 0, 85, 1);
+            border-color: #ff0055 !important;
+        }
+
         /* Floating Income Popups */
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-30px) scale(1.1); }
-        }
-
-        .income-float {
-            animation: floatUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            pointer-events: none;
-        }
-
-        /* Custom Scrollbars */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(240, 235, 250, 0.5); }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-purple-200 selection:text-purple-900">
-
-    <!-- HEADER / STATS BAR -->
-    <header class="glass-header sticky top-0 z-30 px-4 py-3.5 shadow-sm">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <!-- Branding -->
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-300 via-pink-300 to-indigo-300 flex items-center justify-center text-purple-700 text-xl font-black shadow-inner">
-                    <i class="fa-solid fa-palette"></i>
-                </div>
-                <div>
-                    <h1 class="font-black text-xl tracking-tight text-slate-800">
-                        HEX<span class="text-purple-500">PASTEL</span> TCG
-                    </h1>
-                    <p class="text-[11px] text-slate-500 font-mono tracking-wide">INFINITE COLOR COLLECTOR</p>
-                </div>
-            </div>
-
-            <!-- Currency & Income Display -->
-            <div class="flex items-center gap-4 sm:gap-6 bg-white/80 px-5 py-2.5 rounded-2xl border border-purple-100/90 shadow-sm relative overflow-hidden">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
-                        <i class="fa-solid fa-dollar-sign"></i>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Balance</div>
-                        <div id="currency-display" class="font-mono text-base sm:text-lg font-bold text-slate-800 tracking-tight">$0.00</div>
-                    </div>
-                </div>
-
-                <div class="h-7 w-px bg-purple-100"></div>
-
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-sm font-bold">
-                        <i class="fa-solid fa-bolt"></i>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Income Rate</div>
-                        <div id="income-display" class="font-mono text-base sm:text-lg font-bold text-purple-600 tracking-tight">+$0.00<span class="text-xs font-sans text-slate-400 font-normal">/s</span></div>
-                    </div>
-                </div>
-
-                <div class="h-7 w-px bg-purple-100"></div>
-
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-sm font-bold">
-                        <i class="fa-solid fa-gem"></i>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Codex Bonus</div>
-                        <div id="codex-bonus-display" class="font-mono text-base sm:text-lg font-bold text-amber-600 tracking-tight">1.00x</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Header Action Controls -->
-            <div class="flex items-center gap-2">
-                <nav class="flex items-center gap-1 bg-white/70 p-1.5 rounded-2xl border border-purple-100 shadow-sm">
-                    <button id="tab-inventory-btn" onclick="switchTab('inventory')" class="px-3.5 py-2 rounded-xl font-bold text-xs transition-all duration-200 bg-purple-500 text-white shadow-md shadow-purple-200">
-                        <i class="fa-solid fa-boxes-stacked mr-1"></i>Inventory (<span id="inventory-count">0</span>)
-                    </button>
-                    <button id="tab-codex-btn" onclick="switchTab('codex')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-200 hover:bg-white/80">
-                        <i class="fa-solid fa-book-open mr-1"></i>Codex
-                    </button>
-                    <button id="tab-store-btn" onclick="switchTab('store')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-200 hover:bg-white/80">
-                        <i class="fa-solid fa-store mr-1"></i>Store
-                    </button>
-                    <button id="tab-stats-btn" onclick="switchTab('stats')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-200 hover:bg-white/80">
-                        <i class="fa-solid fa-chart-line mr-1"></i>Stats
-                    </button>
-                </nav>
-                <button onclick="confirmResetGame()" title="Reset Save Data" class="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-500 border border-rose-200 flex items-center justify-center text-xs transition-colors shadow-sm">
-                    <i class="fa-solid fa-rotate-left"></i>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- MAIN CONTENT AREA -->
-    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
-
-        <!-- TAB 1: INVENTORY VIEW -->
-        <section id="tab-inventory" class="block space-y-6">
-            <!-- Controls Toolbar -->
-            <div class="glass-panel p-4 rounded-3xl flex flex-wrap gap-3 justify-between items-center">
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                        <input type="text" id="filter-search" oninput="renderInventory()" placeholder="Search Hex or Shade..." class="bg-white/80 border border-purple-100 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all w-44 sm:w-56 font-mono">
-                    </div>
-
-                    <select id="filter-rarity" onchange="renderInventory()" class="bg-white/80 border border-purple-100 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all cursor-pointer font-medium">
-                        <option value="ALL">All Rarities</option>
-                        <option value="Common">Common</option>
-                        <option value="Uncommon">Uncommon</option>
-                        <option value="Rare">Rare</option>
-                        <option value="Epic">Epic</option>
-                        <option value="Legendary">Legendary</option>
-                        <option value="Mythic">Mythic</option>
-                        <option value="Divine">Divine</option>
-                        <option value="Split Gradient">Split Gradient</option>
-                        <option value="Ultra Mega Split">Ultra Mega Split</option>
-                        <option value="Quad-Color Split">Quad-Color Split</option>
-                        <option value="Hyper-Spectrum">Hyper-Spectrum</option>
-                    </select>
-
-                    <select id="filter-variant" onchange="renderInventory()" class="bg-white/80 border border-purple-100 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all cursor-pointer font-medium">
-                        <option value="ALL">All Finishes</option>
-                        <option value="Standard">Standard</option>
-                        <option value="Shiny">Shiny Holographic</option>
-                        <option value="Cosmic Sparkle">Cosmic Sparkle</option>
-                        <option value="Neon Pulse">Neon Pulse</option>
-                        <option value="Golden Foil">Golden Foil</option>
-                        <option value="Liquid Mercury">Liquid Mercury</option>
-                        <option value="Diamond Shimmer">Diamond Shimmer</option>
-                        <option value="Cyberpunk Matrix">Cyberpunk Matrix</option>
-                        <option value="Void Singularity">Void Singularity</option>
-                        <option value="Obsidian Gloss">Obsidian Gloss</option>
-                        <option value="Galactic Supernova">Galactic Supernova</option>
-                        <option value="Starlight Dream">Starlight Dream</option>
-                        <option value="Chrono Distortion">Chrono Distortion</option>
-                        <option value="Infinite Prism Spark">Infinite Prism Spark</option>
-                        <option value="Godray Aurora">Godray Aurora</option>
-                    </select>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <button onclick="batchSellCommons()" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-bold text-xs border border-rose-200 transition-all active:scale-95 flex items-center gap-1.5">
-                        <i class="fa-solid fa-trash-can"></i> Sell Duplicates/Commons
-                    </button>
-                    <button onclick="batchSellFiltered()" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl font-bold text-xs border border-amber-200 transition-all active:scale-95 flex items-center gap-1.5">
-                        <i class="fa-solid fa-coins"></i> Sell Filtered
-                    </button>
-                    <select id="sort-by" onchange="renderInventory()" class="bg-white/80 border border-purple-100 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all cursor-pointer font-medium">
-                        <option value="rarity-desc">Rarity (High to Low)</option>
-                        <option value="rarity-asc">Rarity (Low to High)</option>
-                        <option value="income-desc">Income (Highest First)</option>
-                        <option value="income-asc">Income (Lowest First)</option>
-                        <option value="multiplier-desc">Multiplier (Highest First)</option>
-                        <option value="newest">Newest First</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Cards Grid -->
-            <div id="inventory-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
-
-            <!-- Empty State -->
-            <div id="inventory-empty" class="hidden text-center py-20 glass-panel rounded-3xl">
-                <div class="w-16 h-16 rounded-3xl bg-purple-100 text-purple-400 flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-                    <i class="fa-solid fa-paintbrush"></i>
-                </div>
-                <h3 class="text-base font-bold text-slate-700">No Paint Samples Found</h3>
-                <p class="text-xs text-slate-400 max-w-xs mx-auto mt-1 mb-6">Open booster packs in the store to build your infinite color collection!</p>
-                <button onclick="switchTab('store')" class="px-6 py-2.5 bg-purple-500 hover:bg-purple-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-purple-200">
-                    Visit Booster Store
-                </button>
-            </div>
-        </section>
-
-        <!-- TAB 2: CODEX / PALETTE BINDER -->
-        <section id="tab-codex" class="hidden space-y-6">
-            <div class="glass-panel p-6 rounded-3xl space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <div>
-                        <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-book-open text-purple-500"></i> Color Codex & Set Bonuses
-                        </h2>
-                        <p class="text-xs text-slate-500">Complete color hue families to unlock permanent income multipliers!</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <div class="text-xs font-mono bg-purple-100 text-purple-700 px-3 py-1.5 rounded-xl font-bold">
-                            Discovered: <span id="codex-discovered-count">0</span> Shades
-                        </div>
-                        <div class="text-xs font-mono bg-amber-100 text-amber-700 px-3 py-1.5 rounded-xl font-bold">
-                            Sets Completed: <span id="codex-sets-completed">0/12</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Hue Family Progress Cards -->
-                <div id="codex-families-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-2"></div>
-
-                <div class="border-t border-purple-100 pt-4">
-                    <h3 class="text-sm font-bold text-slate-700 mb-2">Discovered Swatches Palette</h3>
-                    <div id="codex-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 pt-2 max-h-96 overflow-y-auto pr-1"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 3: PACK STORE VIEW -->
-        <section id="tab-store" class="hidden space-y-6">
-            <div class="text-center max-w-xl mx-auto space-y-2 mb-6">
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">BOOSTER PACK BOUTIQUE</h2>
-                <p class="text-xs text-slate-500">Acquire rare pigment boosters to exponentially expand your passive revenue streams.</p>
-            </div>
-
-            <div id="packs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        </section>
-
-        <!-- TAB 4: STATS VIEW -->
-        <section id="tab-stats" class="hidden space-y-6">
-            <div class="glass-panel p-6 rounded-3xl space-y-6">
-                <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-pie text-purple-500"></i> Collection Analytics
-                </h2>
-
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 shadow-sm">
-                        <div class="text-[10px] text-slate-400 font-bold uppercase">Total Swatches</div>
-                        <div id="stat-total-cards" class="text-xl font-bold text-slate-800 mt-1 font-mono">0</div>
-                    </div>
-                    <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 shadow-sm">
-                        <div class="text-[10px] text-slate-400 font-bold uppercase">Unique Hexes</div>
-                        <div id="stat-unique-hexes" class="text-xl font-bold text-purple-600 mt-1 font-mono">0</div>
-                    </div>
-                    <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 shadow-sm">
-                        <div class="text-[10px] text-slate-400 font-bold uppercase">Lifetime Earnings</div>
-                        <div id="stat-lifetime-revenue" class="text-xl font-bold text-emerald-600 mt-1 font-mono">$0.00</div>
-                    </div>
-                    <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 shadow-sm">
-                        <div class="text-[10px] text-slate-400 font-bold uppercase">Packs Unsealed</div>
-                        <div id="stat-packs-opened" class="text-xl font-bold text-amber-500 mt-1 font-mono">0</div>
-                    </div>
-                </div>
-
-                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider">Rarity Distribution</h3>
-                <div id="rarity-breakdown-list" class="space-y-2.5"></div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- OFFLINE EARNINGS MODAL -->
-    <div id="offline-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl animate-in fade-in zoom-in duration-300">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-300 to-pink-300 text-purple-700 flex items-center justify-center text-2xl mx-auto shadow-inner">
-                <i class="fa-solid fa-moon"></i>
-            </div>
-            <div>
-                <h3 class="text-lg font-black text-slate-800">Welcome Back!</h3>
-                <p class="text-xs text-slate-500 mt-1">Your paint samples produced income while you were away.</p>
-            </div>
-            <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 font-mono text-2xl font-black text-emerald-500">
-                +$<span id="offline-amount">0.00</span>
-            </div>
-            <button onclick="closeOfflineModal()" class="w-full py-3 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-purple-200">
-                Collect Earnings
-            </button>
-        </div>
-    </div>
-
-    <!-- CARD DETAIL MODAL -->
-    <div id="card-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative animate-in fade-in zoom-in duration-200">
-            <button onclick="closeCardModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 w-7 h-7 rounded-full bg-white/80 flex items-center justify-center transition-colors shadow-sm">
-                <i class="fa-solid fa-xmark text-xs"></i>
-            </button>
-
-            <div id="modal-card-preview" class="flex justify-center pt-2"></div>
-
-            <div class="space-y-2 bg-white/80 p-3.5 rounded-2xl border border-purple-100 font-mono text-xs">
-                <div class="flex justify-between py-1 border-b border-purple-50">
-                    <span class="text-slate-400">Color Hex:</span>
-                    <span id="modal-hex-code" class="font-bold truncate max-w-[180px]">#FFFFFF</span>
-                </div>
-                <div class="flex justify-between py-1 border-b border-purple-50">
-                    <span class="text-slate-400">Rarity:</span>
-                    <span id="modal-rarity" class="font-bold">Common</span>
-                </div>
-                <div class="flex justify-between py-1 border-b border-purple-50">
-                    <span class="text-slate-400">Finish:</span>
-                    <span id="modal-variant" class="text-purple-600 font-bold">Standard</span>
-                </div>
-                <div class="flex justify-between py-1">
-                    <span class="text-slate-400">Yield:</span>
-                    <span id="modal-income" class="text-emerald-600 font-bold">+$0.10 / s</span>
-                </div>
-            </div>
-
-            <button id="modal-sell-btn" class="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-2xl font-bold text-xs transition-colors flex items-center justify-center gap-2">
-                <i class="fa-solid fa-coins"></i> Sell Swatch for <span id="modal-sell-price">$0.00</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- PACK OPENING MODAL -->
-    <div id="pack-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xl hidden flex flex-col items-center justify-center p-4">
-        <div class="text-center space-y-1 mb-6">
-            <h2 id="pack-modal-title" class="text-xl font-black text-white tracking-wider">UNSEALING PACK</h2>
-            <p class="text-xs text-slate-300">Click unopened swatches to reveal paint sample finishes</p>
-        </div>
-
-        <div id="revealed-cards-container" class="flex flex-wrap justify-center items-center gap-5 max-w-5xl my-2"></div>
-
-        <button id="pack-modal-done-btn" onclick="closePackModal()" class="mt-8 px-8 py-3 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg hover:opacity-95 transition-opacity hidden">
-            Collect Swatches
-        </button>
-    </div>
-
-    <script>
-        // WEB AUDIO SFX SYNTH
-        let audioCtx = null;
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
-        function playSfx(type) {
-            try {
-                initAudio();
-                if (!audioCtx) return;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                if (type === 'click') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.05);
-                } else if (type === 'reveal') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.15);
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.15);
-                } else if (type === 'cash') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.2);
-                }
-            } catch (e) {}
-        }
-
-        // GAME CONFIGURATION
-        const RARITIES = {
-            Common: { name: 'Common', multiplier: 1, color: '#94a3b8', bg: 'bg-slate-100 text-slate-600', chance: 45 },
-            Uncommon: { name: 'Uncommon', multiplier: 2.5, color: '#34d399', bg: 'bg-emerald-100 text-emerald-700', chance: 24 },
-            Rare: { name: 'Rare', multiplier: 7, color: '#60a5fa', bg: 'bg-blue-100 text-blue-700', chance: 14 },
-            Epic: { name: 'Epic', multiplier: 20, color: '#c084fc', bg: 'bg-purple-100 text-purple-700', chance: 8 },
-            Legendary: { name: 'Legendary', multiplier: 65, color: '#facc15', bg: 'bg-amber-100 text-amber-700', chance: 4 },
-            Mythic: { name: 'Mythic', multiplier: 220, color: '#f472b6', bg: 'bg-pink-100 text-pink-700', chance: 2 },
-            Divine: { name: 'Divine', multiplier: 1000, color: '#38bdf8', bg: 'bg-sky-100 text-sky-700', chance: 1.2 },
-            'Split Gradient': { name: 'Split Gradient', multiplier: 2500, color: '#e879f9', bg: 'bg-fuchsia-100 text-fuchsia-700', chance: 0.8 },
-            'Ultra Mega Split': { name: 'Ultra Mega Split', multiplier: 8000, color: '#fb7185', bg: 'bg-rose-100 text-rose-700 font-black', chance: 0.5 },
-            'Quad-Color Split': { name: 'Quad-Color Split', multiplier: 25000, color: '#a855f7', bg: 'bg-purple-200 text-purple-900 font-black', chance: 0.3 },
-            'Hyper-Spectrum': { name: 'Hyper-Spectrum', multiplier: 100000, color: '#06b6d4', bg: 'bg-cyan-200 text-cyan-900 font-black', chance: 0.2 }
-        };
-
+<!-- ... existing code me ... -->
         const VARIANTS = {
             Standard: { name: 'Standard', multiplier: 1, prob: 0.55 },
             Shiny: { name: 'Shiny', multiplier: 5.0, prob: 0.12 },
@@ -561,7 +261,18 @@
             'Starlight Dream': { name: 'Starlight Dream', multiplier: 45000.0, prob: 0.005 },
             'Chrono Distortion': { name: 'Chrono Distortion', multiplier: 100000.0, prob: 0.003 },
             'Infinite Prism Spark': { name: 'Infinite Prism Spark', multiplier: 250000.0, prob: 0.002 },
-            'Godray Aurora': { name: 'Godray Aurora', multiplier: 1000000.0, prob: 0.001 }
+            'Godray Aurora': { name: 'Godray Aurora', multiplier: 1000000.0, prob: 0.001 },
+            // 10 NEW ULTRA VISUAL FINISHES WITH CRAZY MULTIPLIERS
+            'Quantum Glitch': { name: 'Quantum Glitch', multiplier: 2500000.0, prob: 0.0008 },
+            'Hyper Plasma': { name: 'Hyper Plasma', multiplier: 6000000.0, prob: 0.0006 },
+            'Cosmic Void-Shine': { name: 'Cosmic Void-Shine', multiplier: 12000000.0, prob: 0.0004 },
+            'Supernova Flare': { name: 'Supernova Flare', multiplier: 25000000.0, prob: 0.00025 },
+            'Temporal Rift': { name: 'Temporal Rift', multiplier: 45000000.0, prob: 0.00015 },
+            'Astral Nebula': { name: 'Astral Nebula', multiplier: 65000000.0, prob: 0.0001 },
+            'Dimensional Matrix': { name: 'Dimensional Matrix', multiplier: 80000000.0, prob: 0.00008 },
+            'Celestial Aether': { name: 'Celestial Aether', multiplier: 90000000.0, prob: 0.00005 },
+            'Omnipotent Aura': { name: 'Omnipotent Aura', multiplier: 95000000.0, prob: 0.00003 },
+            'Big Bang Essence': { name: 'Big Bang Essence', multiplier: 100000000.0, prob: 0.00001 }
         };
 
         const COLOR_FAMILIES = [
@@ -602,7 +313,19 @@
             { id: 'omniverse_spec', name: 'Omniverse Spectrum', description: 'Multiverse pigment formulas yielding godlike revenue.', price: 35000000000000000000000, cardsCount: 10, icon: 'fa-atom', rarityBoost: 25000000.0, shinyBoost: 12000000.0 },
             { id: 'eternity_hue', name: 'Eternity Hue', description: 'Timeless chromatic swatches with Godray Aurora odds.', price: 1000000000000000000000000, cardsCount: 10, icon: 'fa-hourglass-start', rarityBoost: 80000000.0, shinyBoost: 40000000.0 },
             { id: 'absolute_zero', name: 'Absolute Zero Pigment', description: 'Frozen photon particles emitting maximum yield energy.', price: 50000000000000000000000000, cardsCount: 12, icon: 'fa-snowflake', rarityBoost: 250000000.0, shinyBoost: 120000000.0 },
-            { id: 'big_bang_chroma', name: 'Big Bang Chroma', description: 'The genesis of all color in the universe. Infinite power.', price: 1000000000000000000000000000, cardsCount: 12, icon: 'fa-meteor', rarityBoost: 1000000000.0, shinyBoost: 500000000.0 }
+            { id: 'big_bang_chroma', name: 'Big Bang Chroma', description: 'The genesis of all color in the universe. Infinite power.', price: 1000000000000000000000000000, cardsCount: 12, icon: 'fa-meteor', rarityBoost: 1000000000.0, shinyBoost: 500000000.0 },
+
+            // 10 HIDDEN MILESTONE SECRET PACKS
+            { id: 'secret_first_step', name: 'Secret: Collector Starter', description: 'Unlocked by opening 5 total booster packs.', price: 500, cardsCount: 5, icon: 'fa-key', rarityBoost: 10.0, shinyBoost: 10.0, secret: true, unlockType: 'packs', unlockValue: 5 },
+            { id: 'secret_pack_hoarder', name: 'Secret: Pack Enthusiast', description: 'Unlocked by opening 25 total booster packs.', price: 50000, cardsCount: 6, icon: 'fa-box-open', rarityBoost: 50.0, shinyBoost: 30.0, secret: true, unlockType: 'packs', unlockValue: 25 },
+            { id: 'secret_swatch_master', name: 'Secret: Swatch Hoarder', description: 'Unlocked by collecting at least 50 total swatches.', price: 5000000, cardsCount: 7, icon: 'fa-layer-group', rarityBoost: 200.0, shinyBoost: 100.0, secret: true, unlockType: 'swatches', unlockValue: 50 },
+            { id: 'secret_hue_explorer', name: 'Secret: Hue Pioneer', description: 'Unlocked by discovering 20 unique hex codes in Codex.', price: 500000000, cardsCount: 7, icon: 'fa-compass', rarityBoost: 1000.0, shinyBoost: 500.0, secret: true, unlockType: 'codex', unlockValue: 20 },
+            { id: 'secret_millionaire', name: 'Secret: Color Tycoon', description: 'Unlocked by earning a total of $1,000,000 lifetime revenue.', price: 10000000000, cardsCount: 8, icon: 'fa-sack-dollar', rarityBoost: 5000.0, shinyBoost: 2500.0, secret: true, unlockType: 'revenue', unlockValue: 1000000 },
+            { id: 'secret_set_master', name: 'Secret: Codex Perfectionist', description: 'Unlocked by completing 3 full Codex set bonuses.', price: 500000000000, cardsCount: 8, icon: 'fa-certificate', rarityBoost: 20000.0, shinyBoost: 10000.0, secret: true, unlockType: 'codexSets', unlockValue: 3 },
+            { id: 'secret_split_collector', name: 'Secret: Prism Split Specialist', description: 'Unlocked by owning at least 3 Split Gradient cards.', price: 10000000000000, cardsCount: 9, icon: 'fa-sliders', rarityBoost: 100000.0, shinyBoost: 50000.0, secret: true, unlockType: 'splits', unlockValue: 3 },
+            { id: 'secret_billionaire', name: 'Secret: Chromatic Empire', description: 'Unlocked by reaching $1,000,000,000 lifetime revenue.', price: 1000000000000000, cardsCount: 9, icon: 'fa-vault', rarityBoost: 1000000.0, shinyBoost: 500000.0, secret: true, unlockType: 'revenue', unlockValue: 1000000000 },
+            { id: 'secret_finish_hunter', name: 'Secret: Ultra Foil Virtuoso', description: 'Unlocked by pulling any finish with 1,000x+ multiplier.', price: 5000000000000000000, cardsCount: 10, icon: 'fa-gem', rarityBoost: 10000000.0, shinyBoost: 5000000.0, secret: true, unlockType: 'highFinish', unlockValue: 1000 },
+            { id: 'secret_god_chroma', name: 'Secret: Transcendent God Pack', description: 'Unlocked by opening 100 packs and having $10T lifetime revenue.', price: 10000000000000000000000, cardsCount: 12, icon: 'fa-dharmachakra', rarityBoost: 100000000.0, shinyBoost: 50000000.0, secret: true, unlockType: 'godTier', unlockValue: 100 }
         ];
 
         const PREFIXES = ['Pastel', 'Soft', 'Velvet', 'Silk', 'Muted', 'Blush', 'Frosted', 'Satin', 'Lunar', 'Mint', 'Cotton', 'Glacier', 'Rose', 'Cosmic', 'Aura', 'Quantum', 'Hyper', 'Void', 'Astral', 'Nebula', 'Solar', 'Omni', 'Infinite'];
@@ -904,6 +627,17 @@
                 case 'Chrono Distortion': return 'effect-chrono';
                 case 'Infinite Prism Spark': return 'effect-prism';
                 case 'Godray Aurora': return 'effect-godray';
+                // NEW VISUAL EFFECT CLASSES
+                case 'Quantum Glitch': return 'effect-quantum-glitch';
+                case 'Hyper Plasma': return 'effect-hyper-plasma';
+                case 'Cosmic Void-Shine': return 'effect-cosmic-void';
+                case 'Supernova Flare': return 'effect-supernova-core';
+                case 'Temporal Rift': return 'effect-temporal-rift';
+                case 'Astral Nebula': return 'effect-astral-nebula';
+                case 'Dimensional Matrix': return 'effect-dimensional-glitch';
+                case 'Celestial Aether': return 'effect-celestial-aether';
+                case 'Omnipotent Aura': return 'effect-omnipotent-aura';
+                case 'Big Bang Essence': return 'effect-big-bang-essence';
                 default: return '';
             }
         }
@@ -958,8 +692,17 @@
 
             const rarityOrder = Object.keys(RARITIES);
             filtered.sort((a, b) => {
-                if (sortBy === 'rarity-desc') return rarityOrder.indexOf(b.rarity) - rarityOrder.indexOf(a.rarity);
-                if (sortBy === 'rarity-asc') return rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity);
+                // SORT BY RARITY INCLUDES FINISH MULTIPLIERS FOR TOTAL CARD POWER
+                if (sortBy === 'rarity-desc') {
+                    const powerA = (rarityOrder.indexOf(a.rarity) + 1) * (VARIANTS[a.variant]?.multiplier || 1);
+                    const powerB = (rarityOrder.indexOf(b.rarity) + 1) * (VARIANTS[b.variant]?.multiplier || 1);
+                    return powerB - powerA;
+                }
+                if (sortBy === 'rarity-asc') {
+                    const powerA = (rarityOrder.indexOf(a.rarity) + 1) * (VARIANTS[a.variant]?.multiplier || 1);
+                    const powerB = (rarityOrder.indexOf(b.rarity) + 1) * (VARIANTS[b.variant]?.multiplier || 1);
+                    return powerA - powerB;
+                }
                 if (sortBy === 'income-desc') return b.incomePerSec - a.incomePerSec;
                 if (sortBy === 'income-asc') return a.incomePerSec - b.incomePerSec;
                 if (sortBy === 'multiplier-desc') return (VARIANTS[b.variant]?.multiplier || 1) - (VARIANTS[a.variant]?.multiplier || 1);
@@ -975,18 +718,72 @@
             }
         }
 
+        function isSecretPackUnlocked(pack) {
+            if (!pack.secret) return true;
+
+            const uniqueHexes = Array.from(new Set(gameState.inventory.flatMap(c => c.hexesList || [c.hex])));
+            const splitCards = gameState.inventory.filter(c => c.rarity.includes('Split') || c.rarity.includes('Spectrum')).length;
+            const maxFinishMult = gameState.inventory.reduce((max, c) => Math.max(max, VARIANTS[c.variant]?.multiplier || 1), 1);
+
+            let completedSetsCount = 0;
+            COLOR_FAMILIES.forEach(family => {
+                let count = 0;
+                uniqueHexes.forEach(hex => {
+                    if (typeof hex !== 'string' || !hex.startsWith('#')) return;
+                    const hsl = hexToHSL(hex);
+                    if (family.isMonochrome) { if (hsl.s < 12) count++; }
+                    else if (family.hueMin > family.hueMax) { if (hsl.h >= family.hueMin || hsl.h <= family.hueMax) count++; }
+                    else { if (hsl.h >= family.hueMin && hsl.h <= family.hueMax) count++; }
+                });
+                if (count >= 5) completedSetsCount++;
+            });
+
+            switch (pack.unlockType) {
+                case 'packs': return gameState.packsOpened >= pack.unlockValue;
+                case 'swatches': return gameState.inventory.length >= pack.unlockValue;
+                case 'codex': return uniqueHexes.length >= pack.unlockValue;
+                case 'revenue': return gameState.lifetimeRevenue >= pack.unlockValue;
+                case 'codexSets': return completedSetsCount >= pack.unlockValue;
+                case 'splits': return splitCards >= pack.unlockValue;
+                case 'highFinish': return maxFinishMult >= pack.unlockValue;
+                case 'godTier': return gameState.packsOpened >= 100 && gameState.lifetimeRevenue >= 10000000000000;
+                default: return false;
+            }
+        }
+
         function renderStore() {
             const grid = document.getElementById('packs-grid');
             grid.innerHTML = PACKS.map(pack => {
+                const unlocked = isSecretPackUnlocked(pack);
+                if (pack.secret && !unlocked) {
+                    return `
+                        <div class="glass-panel p-5 rounded-3xl space-y-3 opacity-60 border-dashed border-2 border-purple-200">
+                            <div class="flex items-center justify-between">
+                                <div class="w-12 h-12 rounded-2xl bg-slate-200 text-slate-400 flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-lock"></i>
+                                </div>
+                                <span class="font-mono text-[10px] font-bold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-xl">SECRET PACK</span>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-slate-500 text-base">Locked Secret Booster</h3>
+                                <p class="text-xs text-slate-400 mt-1">${pack.description}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 const canAfford = gameState.currency >= pack.price;
                 return `
-                    <div class="glass-panel p-5 rounded-3xl space-y-4 flex flex-col justify-between hover:border-purple-300 transition-all shadow-sm hover:shadow-md">
+                    <div class="glass-panel p-5 rounded-3xl space-y-4 flex flex-col justify-between hover:border-purple-300 transition-all shadow-sm hover:shadow-md ${pack.secret ? 'bg-gradient-to-br from-amber-50/50 to-purple-50/50 border-amber-200' : ''}">
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
-                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-200 to-pink-200 text-purple-600 flex items-center justify-center text-xl shadow-inner">
+                                <div class="w-12 h-12 rounded-2xl ${pack.secret ? 'bg-gradient-to-tr from-amber-300 to-pink-300 text-amber-800' : 'bg-gradient-to-tr from-purple-200 to-pink-200 text-purple-600'} flex items-center justify-center text-xl shadow-inner">
                                     <i class="fa-solid ${pack.icon}"></i>
                                 </div>
-                                <span class="font-mono text-xs font-black bg-purple-50 text-purple-600 border border-purple-100 px-3 py-1 rounded-xl">${pack.cardsCount} Swatches</span>
+                                <div class="flex gap-1">
+                                    ${pack.secret ? '<span class="font-mono text-[9px] font-black bg-amber-200 text-amber-800 px-2 py-0.5 rounded-lg">SECRET</span>' : ''}
+                                    <span class="font-mono text-xs font-black bg-purple-50 text-purple-600 border border-purple-100 px-3 py-1 rounded-xl">${pack.cardsCount} Swatches</span>
+                                </div>
                             </div>
                             <div>
                                 <h3 class="font-black text-slate-800 text-base">${pack.name}</h3>
