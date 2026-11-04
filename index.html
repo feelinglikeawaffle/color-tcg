@@ -1,28 +1,953 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Color TCG</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/menu.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Spectrum - Pastel Paint Sample TCG</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for Pack Reveals -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        pastelBg: '#f3f0f7',
+                        pastelCard: 'rgba(255, 255, 255, 0.75)',
+                        pastelBorder: 'rgba(226, 218, 238, 0.8)',
+                        pastelAccent: '#8b5cf6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Ambient Pastel Mesh Gradient Background */
+        body {
+            background: radial-gradient(circle at 10% 20%, rgb(240, 235, 255) 0%, rgb(255, 235, 245) 45.5%, rgb(235, 250, 255) 90%);
+            background-attachment: fixed;
+            color: #334155;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px 0 rgba(190, 180, 210, 0.15);
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(226, 218, 238, 0.6);
+        }
+
+        /* Card 3D Tilt & Smooth Transition Styles */
+        .card-3d-wrapper {
+            perspective: 1000px;
+        }
+
+        .card-3d-inner {
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+        }
+
+        /* Holographic & Shiny Shimmer Effects */
+        @keyframes holoSweep {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .effect-shiny {
+            background: linear-gradient(135deg, rgba(255,182,193,0.5) 0%, rgba(255,253,208,0.5) 25%, rgba(173,216,230,0.5) 50%, rgba(221,160,221,0.5) 75%, rgba(255,182,193,0.5) 100%);
+            background-size: 300% 300%;
+            animation: holoSweep 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        .effect-cosmic {
+            background: radial-gradient(circle, rgba(238,174,202,0.6) 0%, rgba(148,187,233,0.6) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .effect-golden {
+            background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            background-size: 200% 200%;
+            animation: holoSweep 4s ease infinite;
+        }
+
+        /* Floating Income Popups */
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-30px) scale(1.1); }
+        }
+
+        .income-float {
+            animation: floatUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(240, 235, 250, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+    </style>
 </head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-purple-200 selection:text-purple-900">
 
-<body>
-  <div id="money-display">💰 1,000</div>
+    <!-- HEADER / STATS BAR -->
+    <header class="glass-header sticky top-0 z-30 px-4 py-3.5 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <!-- Branding -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-300 via-pink-300 to-indigo-300 flex items-center justify-center text-purple-700 text-xl font-black shadow-inner">
+                    <i class="fa-solid fa-palette"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-xl tracking-tight text-slate-800">
+                        HEX<span class="text-purple-500">PASTEL</span> TCG
+                    </h1>
+                    <p class="text-[11px] text-slate-500 font-mono tracking-wide">PAINT SAMPLE COLLECTOR</p>
+                </div>
+            </div>
 
-  <div class="menu">
-    <h1 class="title">COLOR TCG</h1>
+            <!-- Currency & Income Display -->
+            <div class="flex items-center gap-6 bg-white/70 px-5 py-2 rounded-2xl border border-purple-100/80 shadow-sm relative overflow-hidden">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Balance</div>
+                        <div id="currency-display" class="font-mono text-lg font-bold text-slate-800 tracking-tight">$0.00</div>
+                    </div>
+                </div>
 
-    <button class="menu-btn" data-screen="collection">PLAY</button>
-    <button class="menu-btn" data-screen="stockshop">STOCK SHOP</button>
-    <button class="menu-btn" data-screen="mystore">MY STORE</button>
-    <button class="menu-btn" data-screen="stores">STORES</button>
-    <button class="menu-btn" data-screen="settings">SETTINGS</button>
-    <button class="menu-btn" data-screen="profile">PROFILE</button>
-  </div>
+                <div class="h-7 w-px bg-purple-100"></div>
 
-  <div id="screen-container" class="screen-container hidden"></div>
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Income Rate</div>
+                        <div id="income-display" class="font-mono text-lg font-bold text-purple-600 tracking-tight">+$0.00<span class="text-xs font-sans text-slate-400 font-normal">/s</span></div>
+                    </div>
+                </div>
+                <!-- Container for floating +$ floating popups -->
+                <div id="income-popups-container" class="absolute inset-0 pointer-events-none"></div>
+            </div>
 
-  <script type="module" src="js/navigation.js"></script>
+            <!-- Navigation Tabs -->
+            <nav class="flex items-center gap-1.5 bg-white/60 p-1.5 rounded-2xl border border-purple-100 shadow-sm">
+                <button id="tab-inventory-btn" onclick="switchTab('inventory')" class="px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 bg-purple-500 text-white shadow-md shadow-purple-200">
+                    <i class="fa-solid fa-boxes-stacked mr-1.5"></i>Inventory (<span id="inventory-count">0</span>)
+                </button>
+                <button id="tab-codex-btn" onclick="switchTab('codex')" class="px-4 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-300 hover:bg-white/80">
+                    <i class="fa-solid fa-book-open mr-1.5"></i>Codex
+                </button>
+                <button id="tab-store-btn" onclick="switchTab('store')" class="px-4 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-300 hover:bg-white/80">
+                    <i class="fa-solid fa-store mr-1.5"></i>Store
+                </button>
+                <button id="tab-stats-btn" onclick="switchTab('stats')" class="px-4 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-300 hover:bg-white/80">
+                    <i class="fa-solid fa-chart-line mr-1.5"></i>Stats
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
+
+        <!-- TAB 1: INVENTORY VIEW -->
+        <section id="tab-inventory" class="block space-y-6">
+            <!-- Controls Toolbar -->
+            <div class="glass-panel p-4 rounded-3xl flex flex-wrap gap-3 justify-between items-center">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="filter-search" oninput="renderInventory()" placeholder="Search Hex or Shade..." class="bg-white/80 border border-purple-100 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all w-44 sm:w-56 font-mono">
+                    </div>
+
+                    <select id="filter-rarity" onchange="renderInventory()" class="bg-white/80 border border-purple-100 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all cursor-pointer font-medium">
+                        <option value="ALL">All Rarities</option>
+                        <option value="Common">Common</option>
+                        <option value="Uncommon">Uncommon</option>
+                        <option value="Rare">Rare</option>
+                        <option value="Epic">Epic</option>
+                        <option value="Legendary">Legendary</option>
+                        <option value="Mythic">Mythic</option>
+                        <option value="Divine">Divine</option>
+                    </select>
+
+                    <select id="filter-variant" onchange="renderInventory()" class="bg-white/80 border border-purple-100 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all cursor-pointer font-medium">
+                        <option value="ALL">All Finishes</option>
+                        <option value="Standard">Standard</option>
+                        <option value="Shiny">Shiny Holographic</option>
+                        <option value="Cosmic Sparkle">Cosmic Sparkle</option>
+                        <option value="Neon Pulse">Neon Pulse</option>
+                        <option value="Golden Foil">Golden Foil</option>
+                        <option value="Prismatic Gloss">Prismatic Gloss</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="batchSellCommons()" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-bold text-xs border border-rose-200 transition-all active:scale-95 flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i> Sell Duplicates/Commons
+                    </button>
+                    <select id="sort-by" onchange="renderInventory()" class="bg-white/80 border border-purple-100 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all cursor-pointer font-medium">
+                        <option value="rarity-desc">Rarity (High to Low)</option>
+                        <option value="rarity-asc">Rarity (Low to High)</option>
+                        <option value="income-desc">Income (Highest First)</option>
+                        <option value="income-asc">Income (Lowest First)</option>
+                        <option value="newest">Newest First</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Cards Grid -->
+            <div id="inventory-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
+
+            <!-- Empty State -->
+            <div id="inventory-empty" class="hidden text-center py-20 glass-panel rounded-3xl">
+                <div class="w-16 h-16 rounded-3xl bg-purple-100 text-purple-400 flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+                    <i class="fa-solid fa-paintbrush"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-700">No Paint Samples Found</h3>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto mt-1 mb-6">Open booster packs in the store to build your infinite color collection!</p>
+                <button onclick="switchTab('store')" class="px-6 py-2.5 bg-purple-500 hover:bg-purple-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-purple-200">
+                    Visit Booster Store
+                </button>
+            </div>
+        </section>
+
+        <!-- TAB 2: CODEX / PALETTE BINDER -->
+        <section id="tab-codex" class="hidden space-y-6">
+            <div class="glass-panel p-6 rounded-3xl space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-book-open text-purple-500"></i> Color Codex Binder
+                        </h2>
+                        <p class="text-xs text-slate-500">Track all unique color hues you've discovered across the spectrum.</p>
+                    </div>
+                    <div class="text-xs font-mono bg-purple-100 text-purple-700 px-3 py-1.5 rounded-xl font-bold">
+                        Discovered: <span id="codex-discovered-count">0</span> Unique Hex Shades
+                    </div>
+                </div>
+
+                <div id="codex-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 pt-2">
+                    <!-- Dynamic Palette Swatches -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: PACK STORE VIEW -->
+        <section id="tab-store" class="hidden space-y-6">
+            <div class="text-center max-w-xl mx-auto space-y-2 mb-6">
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight">BOOSTER PACK BOUTIQUE</h2>
+                <p class="text-xs text-slate-500">Acquire rare pigment boosters to expand your passive revenue streams.</p>
+            </div>
+
+            <div id="packs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- TAB 4: STATS VIEW -->
+        <section id="tab-stats" class="hidden space-y-6">
+            <div class="glass-panel p-6 rounded-3xl space-y-6">
+                <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-purple-500"></i> Collection Analytics
+                </h2>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 shadow-sm">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase">Total Swatches</div>
+                        <div id="stat-total-cards" class="text-xl font-bold text-slate-800 mt-1 font-mono">0</div>
+                    </div>
+                    <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 shadow-sm">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase">Unique Shades</div>
+                        <div id="stat-unique-hexes" class="text-xl font-bold text-purple-600 mt-1 font-mono">0</div>
+                    </div>
+                    <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 shadow-sm">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase">Lifetime Earnings</div>
+                        <div id="stat-lifetime-revenue" class="text-xl font-bold text-emerald-600 mt-1 font-mono">$0.00</div>
+                    </div>
+                    <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 shadow-sm">
+                        <div class="text-[10px] text-slate-400 font-bold uppercase">Packs Unsealed</div>
+                        <div id="stat-packs-opened" class="text-xl font-bold text-amber-500 mt-1 font-mono">0</div>
+                    </div>
+                </div>
+
+                <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider">Rarity Distribution</h3>
+                <div id="rarity-breakdown-list" class="space-y-2.5"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- OFFLINE EARNINGS MODAL -->
+    <div id="offline-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-300 to-pink-300 text-purple-700 flex items-center justify-center text-2xl mx-auto shadow-inner">
+                <i class="fa-solid fa-moon"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-black text-slate-800">Welcome Back!</h3>
+                <p class="text-xs text-slate-500 mt-1">Your paint samples continued producing income while you were away.</p>
+            </div>
+            <div class="bg-white/80 p-4 rounded-2xl border border-purple-100 font-mono text-2xl font-black text-emerald-500">
+                +$<span id="offline-amount">0.00</span>
+            </div>
+            <button onclick="closeOfflineModal()" class="w-full py-3 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-2xl text-xs transition-all shadow-md shadow-purple-200">
+                Collect Earnings
+            </button>
+        </div>
+    </div>
+
+    <!-- CARD DETAIL MODAL -->
+    <div id="card-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <button onclick="closeCardModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 w-7 h-7 rounded-full bg-white/80 flex items-center justify-center transition-colors shadow-sm">
+                <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+
+            <div id="modal-card-preview" class="flex justify-center pt-2"></div>
+
+            <div class="space-y-2 bg-white/80 p-3.5 rounded-2xl border border-purple-100 font-mono text-xs">
+                <div class="flex justify-between py-1 border-b border-purple-50">
+                    <span class="text-slate-400">Color Hex:</span>
+                    <span id="modal-hex-code" class="font-bold">#FFFFFF</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-purple-50">
+                    <span class="text-slate-400">Rarity:</span>
+                    <span id="modal-rarity" class="font-bold">Common</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-purple-50">
+                    <span class="text-slate-400">Finish:</span>
+                    <span id="modal-variant" class="text-purple-600 font-bold">Standard</span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-slate-400">Yield:</span>
+                    <span id="modal-income" class="text-emerald-600 font-bold">+$0.10 / s</span>
+                </div>
+            </div>
+
+            <button id="modal-sell-btn" class="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-2xl font-bold text-xs transition-colors flex items-center justify-center gap-2">
+                <i class="fa-solid fa-coins"></i> Sell Swatch for <span id="modal-sell-price">$0.00</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- PACK OPENING MODAL -->
+    <div id="pack-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xl hidden flex flex-col items-center justify-center p-4">
+        <div class="text-center space-y-1 mb-6">
+            <h2 id="pack-modal-title" class="text-xl font-black text-white tracking-wider">UNSEALING PACK</h2>
+            <p class="text-xs text-slate-300">Click unopened swatches to reveal paint sample finishes</p>
+        </div>
+
+        <div id="revealed-cards-container" class="flex flex-wrap justify-center items-center gap-5 max-w-5xl my-2"></div>
+
+        <button id="pack-modal-done-btn" onclick="closePackModal()" class="mt-8 px-8 py-3 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg hover:opacity-95 transition-opacity hidden">
+            Collect Swatches
+        </button>
+    </div>
+
+    <script>
+        // WEB AUDIO SFX SYNTH
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(500, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.04);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.04);
+                    osc.start(now); osc.stop(now + 0.04);
+                } else if (type === 'flip') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(700, now + 0.08);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now); osc.stop(now + 0.08);
+                } else if (type === 'rare') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    osc.frequency.setValueAtTime(783.99, now + 0.16);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now); osc.stop(now + 0.3);
+                } else if (type === 'cash') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.setValueAtTime(1200, now + 0.06);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now); osc.stop(now + 0.15);
+                }
+            } catch(e) {}
+        }
+
+        // GAME DATA & CONFIGURATION
+        const RARITIES = {
+            Common: { name: 'Common', multiplier: 1, color: '#94a3b8', bg: 'bg-slate-100 text-slate-600', chance: 60 },
+            Uncommon: { name: 'Uncommon', multiplier: 2.5, color: '#34d399', bg: 'bg-emerald-100 text-emerald-700', chance: 25 },
+            Rare: { name: 'Rare', multiplier: 7, color: '#60a5fa', bg: 'bg-blue-100 text-blue-700', chance: 10 },
+            Epic: { name: 'Epic', multiplier: 20, color: '#c084fc', bg: 'bg-purple-100 text-purple-700', chance: 4 },
+            Legendary: { name: 'Legendary', multiplier: 65, color: '#facc15', bg: 'bg-amber-100 text-amber-700', chance: 0.9 },
+            Mythic: { name: 'Mythic', multiplier: 220, color: '#f472b6', bg: 'bg-pink-100 text-pink-700', chance: 0.09 },
+            Divine: { name: 'Divine', multiplier: 1000, color: '#38bdf8', bg: 'bg-sky-100 text-sky-700', chance: 0.01 }
+        };
+
+        const VARIANTS = {
+            Standard: { name: 'Standard', multiplier: 1, prob: 0.80 },
+            Shiny: { name: 'Shiny', multiplier: 5.0, prob: 0.10 },
+            'Cosmic Sparkle': { name: 'Cosmic Sparkle', multiplier: 12.0, prob: 0.05 },
+            'Neon Pulse': { name: 'Neon Pulse', multiplier: 25.0, prob: 0.03 },
+            'Golden Foil': { name: 'Golden Foil', multiplier: 60.0, prob: 0.015 },
+            'Prismatic Gloss': { name: 'Prismatic Gloss', multiplier: 150.0, prob: 0.005 }
+        };
+
+        const PACKS = [
+            { id: 'starter', name: 'Pastel Starter', description: 'Soft subtle hues and foundation palette samples.', price: 10, cardsCount: 3, icon: 'fa-paint-roller', rarityBoost: 1.0, shinyBoost: 1.0 },
+            { id: 'vibrant', name: 'Chroma Palette', description: 'Saturated secondary colors with elevated rare chances.', price: 80, cardsCount: 4, icon: 'fa-fill-drip', rarityBoost: 1.6, shinyBoost: 1.4 },
+            { id: 'neon', name: 'Neon Fluorescent', description: 'High-energy shades with guaranteed shiny variants.', price: 400, cardsCount: 4, icon: 'fa-wand-magic-sparkles', rarityBoost: 2.8, shinyBoost: 2.2 },
+            { id: 'spectrum', name: 'Spectrum Elite', description: 'Curated premium pigments with superior income yield.', price: 2200, cardsCount: 5, icon: 'fa-eye-dropper', rarityBoost: 5.5, shinyBoost: 4.0 },
+            { id: 'cosmic', name: 'Cosmic Hex Pack', description: 'Deep cosmic tone swatches with boosted Mythic rates.', price: 12000, cardsCount: 5, icon: 'fa-cubes', rarityBoost: 12.0, shinyBoost: 8.0 },
+            { id: 'divine', name: 'Divine Chromatic', description: 'Ultra-exclusive sample pack containing celestial hues.', price: 85000, cardsCount: 6, icon: 'fa-crown', rarityBoost: 30.0, shinyBoost: 18.0 }
+        ];
+
+        const PREFIXES = ['Pastel', 'Soft', 'Velvet', 'Silk', 'Muted', 'Blush', 'Frosted', 'Satin', 'Lunar', 'Mint', 'Cotton', 'Glacier', 'Rose', 'Cosmic', 'Aura'];
+        const NOUNS = ['Bloom', 'Mist', 'Glow', 'ECHO', 'Spark', 'Tide', 'Petal', 'Breeze', 'Haze', 'Sands', 'Cloud', 'Pulse', 'Dusk', 'Dawn', 'Frost'];
+
+        let gameState = {
+            currency: 25.00,
+            lifetimeRevenue: 0.00,
+            inventory: [],
+            packsOpened: 0,
+            selectedCardId: null,
+            lastTickTimestamp: Date.now()
+        };
+
+        function generateRandomHex() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * 16)];
+            return color;
+        }
+
+        function generateProceduralName(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `${PREFIXES[(r + g) % PREFIXES.length]} ${NOUNS[(g + b) % NOUNS.length]}`;
+        }
+
+        function rollRarity(boost = 1.0) {
+            const roll = Math.random() * 100;
+            const keys = Object.keys(RARITIES).reverse();
+            for (let key of keys) {
+                let chance = RARITIES[key].chance * boost;
+                if (key === 'Common') chance = 100;
+                if (roll <= chance) return key;
+            }
+            return 'Common';
+        }
+
+        function rollVariant(boost = 1.0) {
+            const roll = Math.random();
+            let cum = 0;
+            const keys = Object.keys(VARIANTS).reverse();
+            for (let key of keys) {
+                cum += VARIANTS[key].prob * boost;
+                if (roll <= cum) return key;
+            }
+            return 'Standard';
+        }
+
+        function createPaintCard(rarityBoost = 1.0, shinyBoost = 1.0) {
+            const hex = generateRandomHex();
+            const rarity = rollRarity(rarityBoost);
+            const variant = rollVariant(shinyBoost);
+            const name = generateProceduralName(hex);
+            const incomePerSec = 0.05 * RARITIES[rarity].multiplier * VARIANTS[variant].multiplier;
+
+            return {
+                id: 'card_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                hex: hex,
+                name: name,
+                rarity: rarity,
+                variant: variant,
+                incomePerSec: parseFloat(incomePerSec.toFixed(2)),
+                sellValue: parseFloat((incomePerSec * 40).toFixed(2)),
+                acquiredAt: new Date().toLocaleDateString()
+            };
+        }
+
+        function calculateTotalIncomePerSecond() {
+            return gameState.inventory.reduce((sum, card) => sum + card.incomePerSec, 0);
+        }
+
+        function gameTick() {
+            const now = Date.now();
+            const deltaSec = (now - gameState.lastTickTimestamp) / 1000;
+            gameState.lastTickTimestamp = now;
+
+            const income = calculateTotalIncomePerSecond();
+            if (income > 0) {
+                const earned = income * deltaSec;
+                gameState.currency += earned;
+                gameState.lifetimeRevenue += earned;
+                updateEconomyUI();
+            }
+            
+            // Real-time update store button states if store tab is visible
+            const storeTab = document.getElementById('tab-store');
+            if (storeTab && !storeTab.classList.contains('hidden')) {
+                updateStoreButtonStates();
+            }
+        }
+
+        function updateEconomyUI() {
+            document.getElementById('currency-display').innerText = `$${gameState.currency.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            const totalIncome = calculateTotalIncomePerSecond();
+            document.getElementById('income-display').innerHTML = `+$${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span class="text-xs font-sans text-slate-400 font-normal">/s</span>`;
+        }
+
+        function updateStoreButtonStates() {
+            PACKS.forEach(pack => {
+                const btn = document.getElementById(`buy-btn-${pack.id}`);
+                if (!btn) return;
+                const canAfford = gameState.currency >= pack.price;
+                btn.disabled = !canAfford;
+                if (canAfford) {
+                    btn.className = "px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200 active:scale-95";
+                } else {
+                    btn.className = "px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 bg-slate-200 text-slate-400 cursor-not-allowed";
+                }
+            });
+        }
+
+        function handle3DTilt(e, element) {
+            const rect = element.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            const cardInner = element.querySelector('.card-3d-inner');
+            if (cardInner) {
+                cardInner.style.transform = `rotateY(${x / 12}deg) rotateX(${-y / 12}deg) scale(1.02)`;
+            }
+        }
+
+        function reset3DTilt(element) {
+            const cardInner = element.querySelector('.card-3d-inner');
+            if (cardInner) {
+                cardInner.style.transform = `rotateY(0deg) rotateX(0deg) scale(1)`;
+            }
+        }
+
+        function renderCardHTML(card, isClickable = true) {
+            const rarityInfo = RARITIES[card.rarity];
+            let effectClass = '';
+            let variantBadge = '';
+
+            if (card.variant === 'Shiny') effectClass = 'effect-shiny';
+            else if (card.variant === 'Cosmic Sparkle') effectClass = 'effect-cosmic';
+            else if (card.variant === 'Golden Foil') effectClass = 'effect-golden';
+
+            if (card.variant !== 'Standard') {
+                const mult = VARIANTS[card.variant].multiplier;
+                variantBadge = `<span class="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-md">${card.variant.toUpperCase()} (${mult}x)</span>`;
+            }
+
+            return `
+                <div onmousemove="handle3DTilt(event, this)" onmouseleave="reset3DTilt(this)" onclick="${isClickable ? `openCardModal('${card.id}')` : ''}" class="card-3d-wrapper cursor-pointer group">
+                    <div class="card-3d-inner bg-white/80 rounded-2xl p-3 border border-purple-100 shadow-sm hover:shadow-xl relative overflow-hidden ${effectClass}">
+                        <div class="w-full h-32 rounded-xl mb-2.5 shadow-inner relative flex items-end p-2 transition-transform duration-300 group-hover:scale-[1.02]" style="background-color: ${card.hex};">
+                            <div class="absolute top-2 right-2">${variantBadge}</div>
+                            <span class="bg-slate-900/60 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-mono text-white font-bold tracking-wider">${card.hex}</span>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="text-xs font-bold text-slate-800 truncate" title="${card.name}">${card.name}</div>
+                            <div class="flex items-center justify-between text-[10px]">
+                                <span class="px-2 py-0.5 rounded-md font-bold ${rarityInfo.bg}">${card.rarity}</span>
+                                <span class="font-mono text-emerald-600 font-bold">+$${card.incomePerSec.toFixed(2)}/s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('inventory-grid');
+            const emptyState = document.getElementById('inventory-empty');
+            const search = document.getElementById('filter-search').value.toLowerCase();
+            const rarityFilter = document.getElementById('filter-rarity').value;
+            const variantFilter = document.getElementById('filter-variant').value;
+            const sortBy = document.getElementById('sort-by').value;
+
+            let filtered = gameState.inventory.filter(card => {
+                const matchesSearch = card.name.toLowerCase().includes(search) || card.hex.toLowerCase().includes(search);
+                const matchesRarity = rarityFilter === 'ALL' || card.rarity === rarityFilter;
+                const matchesVariant = variantFilter === 'ALL' || card.variant === variantFilter;
+                return matchesSearch && matchesRarity && matchesVariant;
+            });
+
+            filtered.sort((a, b) => {
+                const rarityOrder = Object.keys(RARITIES);
+                if (sortBy === 'rarity-desc') return rarityOrder.indexOf(b.rarity) - rarityOrder.indexOf(a.rarity);
+                if (sortBy === 'rarity-asc') return rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity);
+                if (sortBy === 'income-desc') return b.incomePerSec - a.incomePerSec;
+                if (sortBy === 'income-asc') return a.incomePerSec - b.incomePerSec;
+                if (sortBy === 'newest') return b.id.localeCompare(a.id);
+                return 0;
+            });
+
+            document.getElementById('inventory-count').innerText = gameState.inventory.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                grid.innerHTML = filtered.map(card => renderCardHTML(card, true)).join('');
+            }
+        }
+
+        function renderCodex() {
+            const grid = document.getElementById('codex-grid');
+            const uniqueCardsMap = new Map();
+
+            gameState.inventory.forEach(card => {
+                if (!uniqueCardsMap.has(card.hex)) {
+                    uniqueCardsMap.set(card.hex, card);
+                }
+            });
+
+            document.getElementById('codex-discovered-count').innerText = uniqueCardsMap.size;
+
+            grid.innerHTML = Array.from(uniqueCardsMap.values()).map(card => `
+                <div class="flex flex-col items-center gap-1 group">
+                    <div class="w-full aspect-square rounded-xl shadow-inner border border-purple-100 transition-transform duration-200 group-hover:scale-110" style="background-color: ${card.hex};"></div>
+                    <span class="text-[9px] font-mono text-slate-500 font-semibold">${card.hex}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderStorePacks() {
+            const grid = document.getElementById('packs-grid');
+            grid.innerHTML = PACKS.map(pack => {
+                const canAfford = gameState.currency >= pack.price;
+                return `
+                    <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between shadow-sm hover:shadow-xl transition-all duration-300 relative group">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-start">
+                                <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl font-bold shadow-inner">
+                                    <i class="fa-solid ${pack.icon}"></i>
+                                </div>
+                                <span class="bg-white/80 text-slate-600 text-[10px] px-2.5 py-1 rounded-full font-mono font-bold border border-purple-100">
+                                    ${pack.cardsCount} Swatches
+                                </span>
+                            </div>
+
+                            <div>
+                                <h3 class="text-base font-bold text-slate-800 group-hover:text-purple-600 transition-colors">${pack.name}</h3>
+                                <p class="text-xs text-slate-500 mt-1">${pack.description}</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-purple-100/80 flex items-center justify-between">
+                            <div>
+                                <div class="text-[9px] text-slate-400 font-bold uppercase">Price</div>
+                                <div class="text-lg font-mono font-bold text-emerald-600">$${pack.price.toLocaleString()}</div>
+                            </div>
+                            <button id="buy-btn-${pack.id}" onclick="buyPack('${pack.id}')" ${!canAfford ? 'disabled' : ''} class="px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${canAfford ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200 active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}">
+                                <i class="fa-solid fa-bag-shopping"></i> Purchase
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStats() {
+            document.getElementById('stat-total-cards').innerText = gameState.inventory.length;
+            const uniqueHexes = new Set(gameState.inventory.map(c => c.hex)).size;
+            document.getElementById('stat-unique-hexes').innerText = uniqueHexes;
+            document.getElementById('stat-lifetime-revenue').innerText = `$${gameState.lifetimeRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('stat-packs-opened').innerText = gameState.packsOpened;
+
+            const breakdownContainer = document.getElementById('rarity-breakdown-list');
+            const total = gameState.inventory.length || 1;
+
+            breakdownContainer.innerHTML = Object.keys(RARITIES).map(rarityKey => {
+                const count = gameState.inventory.filter(c => c.rarity === rarityKey).length;
+                const percentage = ((count / total) * 100).toFixed(1);
+                const rarityInfo = RARITIES[rarityKey];
+
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <span style="color: ${rarityInfo.color}">${rarityKey}</span>
+                            <span class="font-mono text-slate-400">${count} (${percentage}%)</span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500" style="width: ${percentage}%; background-color: ${rarityInfo.color};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        let currentDrawnCards = [];
+
+        function buyPack(packId) {
+            const pack = PACKS.find(p => p.id === packId);
+            if (!pack || gameState.currency < pack.price) return;
+
+            gameState.currency -= pack.price;
+            gameState.packsOpened++;
+            playSfx('cash');
+            updateEconomyUI();
+            renderStorePacks();
+
+            currentDrawnCards = [];
+            for (let i = 0; i < pack.cardsCount; i++) {
+                currentDrawnCards.push(createPaintCard(pack.rarityBoost, pack.shinyBoost));
+            }
+
+            const modal = document.getElementById('pack-modal');
+            const container = document.getElementById('revealed-cards-container');
+            const doneBtn = document.getElementById('pack-modal-done-btn');
+
+            document.getElementById('pack-modal-title').innerText = `${pack.name.toUpperCase()} REVEAL`;
+            doneBtn.classList.add('hidden');
+            container.innerHTML = '';
+            modal.classList.remove('hidden');
+
+            currentDrawnCards.forEach((card, index) => {
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = 'w-44 h-64 card-3d-wrapper cursor-pointer animate-in fade-in zoom-in duration-300';
+                cardWrapper.style.animationDelay = `${index * 120}ms`;
+
+                cardWrapper.innerHTML = `
+                    <div id="flip-card-${index}" onclick="flipCard(${index})" class="w-full h-full relative transition-transform duration-700 rounded-2xl shadow-2xl" style="transform-style: preserve-3d;">
+                        <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-purple-200 to-pink-200 border-2 border-white rounded-2xl flex flex-col items-center justify-center p-4 text-center">
+                            <div class="w-12 h-12 rounded-2xl bg-white/80 text-purple-500 flex items-center justify-center text-xl mb-2 shadow-sm">
+                                <i class="fa-solid fa-paint-roller"></i>
+                            </div>
+                            <span class="text-[10px] font-extrabold text-purple-700 tracking-wider uppercase">REVEAL</span>
+                        </div>
+                        <div class="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl">
+                            ${renderCardHTML(card, false)}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(cardWrapper);
+            });
+        }
+
+        function flipCard(index) {
+            const cardInner = document.getElementById(`flip-card-${index}`);
+            if (cardInner.classList.contains('rotate-y-180')) return;
+
+            const card = currentDrawnCards[index];
+            cardInner.classList.add('rotate-y-180');
+
+            if (['Legendary', 'Mythic', 'Divine'].includes(card.rarity)) {
+                playSfx('rare');
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+            } else {
+                playSfx('flip');
+            }
+
+            const allFlipped = currentDrawnCards.every((_, i) => {
+                const el = document.getElementById(`flip-card-${i}`);
+                return el && el.classList.contains('rotate-y-180');
+            });
+
+            if (allFlipped) {
+                document.getElementById('pack-modal-done-btn').classList.remove('hidden');
+            }
+        }
+
+        function closePackModal() {
+            gameState.inventory.push(...currentDrawnCards);
+            currentDrawnCards = [];
+            document.getElementById('pack-modal').classList.add('hidden');
+            saveGameData();
+            renderInventory();
+            updateEconomyUI();
+        }
+
+        function openCardModal(cardId) {
+            const card = gameState.inventory.find(c => c.id === cardId);
+            if (!card) return;
+
+            gameState.selectedCardId = cardId;
+            const rarityInfo = RARITIES[card.rarity];
+
+            document.getElementById('modal-card-preview').innerHTML = `<div class="w-44">${renderCardHTML(card, false)}</div>`;
+            document.getElementById('modal-hex-code').innerText = card.hex;
+            document.getElementById('modal-hex-code').style.color = card.hex;
+            document.getElementById('modal-rarity').innerText = card.rarity;
+            document.getElementById('modal-rarity').style.color = rarityInfo.color;
+            document.getElementById('modal-variant').innerText = card.variant;
+            document.getElementById('modal-income').innerText = `+$${card.incomePerSec.toFixed(2)} / s`;
+            document.getElementById('modal-sell-price').innerText = `$${card.sellValue.toFixed(2)}`;
+
+            document.getElementById('modal-sell-btn').onclick = () => sellCard(card.id);
+            document.getElementById('card-modal').classList.remove('hidden');
+            playSfx('click');
+        }
+
+        function closeCardModal() {
+            document.getElementById('card-modal').classList.add('hidden');
+            gameState.selectedCardId = null;
+        }
+
+        function sellCard(cardId) {
+            const index = gameState.inventory.findIndex(c => c.id === cardId);
+            if (index === -1) return;
+
+            const card = gameState.inventory[index];
+            gameState.currency += card.sellValue;
+            gameState.inventory.splice(index, 1);
+
+            playSfx('cash');
+            closeCardModal();
+            saveGameData();
+            renderInventory();
+            updateEconomyUI();
+        }
+
+        function batchSellCommons() {
+            const initialCount = gameState.inventory.length;
+            let earned = 0;
+
+            gameState.inventory = gameState.inventory.filter(card => {
+                if (card.rarity === 'Common') {
+                    earned += card.sellValue;
+                    return false;
+                }
+                return true;
+            });
+
+            const soldCount = initialCount - gameState.inventory.length;
+            if (soldCount > 0) {
+                gameState.currency += earned;
+                playSfx('cash');
+                saveGameData();
+                renderInventory();
+                updateEconomyUI();
+            }
+        }
+
+        function switchTab(tab) {
+            ['inventory', 'codex', 'store', 'stats'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${t}-btn`);
+                btn.className = 'px-4 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-300 hover:bg-white/80';
+            });
+
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tab}-btn`);
+            activeBtn.className = 'px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 bg-purple-500 text-white shadow-md shadow-purple-200';
+
+            playSfx('click');
+
+            if (tab === 'inventory') renderInventory();
+            if (tab === 'codex') renderCodex();
+            if (tab === 'store') renderStorePacks();
+            if (tab === 'stats') renderStats();
+        }
+
+        function closeOfflineModal() {
+            document.getElementById('offline-modal').classList.add('hidden');
+        }
+
+        function saveGameData() {
+            try {
+                localStorage.setItem('hex_pastel_tcg_save', JSON.stringify(gameState));
+            } catch(e) {}
+        }
+
+        function loadGameData() {
+            try {
+                const data = localStorage.getItem('hex_pastel_tcg_save');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    gameState = { ...gameState, ...parsed };
+
+                    // Calculate offline revenue
+                    const now = Date.now();
+                    const offlineSec = (now - (gameState.lastTickTimestamp || now)) / 1000;
+                    if (offlineSec > 5) {
+                        const income = calculateTotalIncomePerSecond();
+                        const offlineEarned = income * offlineSec;
+                        if (offlineEarned > 0.05) {
+                            gameState.currency += offlineEarned;
+                            gameState.lifetimeRevenue += offlineEarned;
+                            document.getElementById('offline-amount').innerText = offlineEarned.toFixed(2);
+                            document.getElementById('offline-modal').classList.remove('hidden');
+                        }
+                    }
+                    gameState.lastTickTimestamp = now;
+                } else {
+                    gameState.inventory.push(createPaintCard(1.0, 1.0));
+                    gameState.inventory.push(createPaintCard(1.0, 1.0));
+                }
+            } catch(e) {}
+        }
+
+        window.onload = function() {
+            loadGameData();
+            updateEconomyUI();
+            renderInventory();
+
+            setInterval(saveGameData, 10000);
+            setInterval(gameTick, 100);
+        };
+    </script>
 </body>
 </html>
