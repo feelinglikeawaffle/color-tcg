@@ -933,6 +933,7 @@
                         }
                         if (parsed.automation && typeof parsed.automation === 'object') {
                             gameState.automation = Object.assign(gameState.automation, parsed.automation);
+                            gameState.automation.selectedPackId = PACKS.some(p => p.id === gameState.automation.selectedPackId && !p.secret) ? gameState.automation.selectedPackId : 'starter';
                             gameState.automation.queue = Array.isArray(parsed.automation.queue) ? parsed.automation.queue.filter(id => PACKS.some(p => p.id === id && !p.secret)).slice(0, 500) : [];
                             gameState.automation.machines = parsed.automation.machines || {};
                             gameState.automation.lastRun = parsed.automation.lastRun || {};
