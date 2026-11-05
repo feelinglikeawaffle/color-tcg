@@ -354,6 +354,16 @@
                         <option value="Ultra Mega Split">Ultra Mega Split</option>
                         <option value="Quad-Color Split">Quad-Color Split</option>
                         <option value="Hyper-Spectrum">Hyper-Spectrum</option>
+                        <option value="Chromatic Relic">Chromatic Relic</option>
+                        <option value="Prismatic Ascendant">Prismatic Ascendant</option>
+                        <option value="Ethereal Spectrum">Ethereal Spectrum</option>
+                        <option value="Astral Sovereign">Astral Sovereign</option>
+                        <option value="Quantum Monarch">Quantum Monarch</option>
+                        <option value="Eternal Prism">Eternal Prism</option>
+                        <option value="Omniversal Crown">Omniversal Crown</option>
+                        <option value="Transcendent Hue">Transcendent Hue</option>
+                        <option value="Absolute Spectrum">Absolute Spectrum</option>
+                        <option value="Genesis Chroma">Genesis Chroma</option>
                     </select>
 
                     <select id="filter-variant" onchange="renderInventory()" class="bg-white/80 px-3 py-2 rounded-xl text-xs font-bold border border-purple-100 text-slate-700 focus:outline-none">
@@ -406,14 +416,14 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-purple-50 pb-4">
                     <div>
                         <h2 class="font-black text-slate-800 text-lg">Chromatic Codex Album</h2>
-                        <p class="text-xs text-slate-500">Collect 5 unique hex codes per color family to unlock permanent global income multipliers!</p>
+                        <p class="text-xs text-slate-500">Collect 10 unique colors in a family for your first +0.25x bonus, then every 5 more colors earns another +0.25x. Bonuses stack forever across all 12 families.</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="glass-panel px-3 py-1.5 rounded-xl text-xs font-bold text-purple-700">
                             Discovered Swatches: <span id="codex-discovered-count" class="font-mono font-black text-purple-900">0</span>
                         </div>
                         <div class="glass-panel px-3 py-1.5 rounded-xl text-xs font-bold text-amber-700">
-                            Sets Completed: <span id="codex-sets-completed" class="font-mono font-black text-amber-900">0/12</span>
+                            Milestones Earned: <span id="codex-sets-completed" class="font-mono font-black text-amber-900">0</span>
                         </div>
                     </div>
                 </div>
@@ -557,7 +567,17 @@
             'Split Gradient': { name: 'Split Gradient', multiplier: 350.0, chance: 0.006, bg: 'bg-indigo-100 text-indigo-800' },
             'Ultra Mega Split': { name: 'Ultra Mega Split', multiplier: 1000.0, chance: 0.0025, bg: 'bg-pink-100 text-pink-800' },
             'Quad-Color Split': { name: 'Quad-Color Split', multiplier: 3000.0, chance: 0.001, bg: 'bg-fuchsia-100 text-fuchsia-800' },
-            'Hyper-Spectrum': { name: 'Hyper-Spectrum', multiplier: 8000.0, chance: 0.0005, bg: 'bg-cyan-100 text-cyan-800' }
+            'Hyper-Spectrum': { name: 'Hyper-Spectrum', multiplier: 8000.0, chance: 0.0005, bg: 'bg-cyan-100 text-cyan-800' },
+            'Chromatic Relic': { name: 'Chromatic Relic', multiplier: 12000.0, chance: 0, bg: 'bg-violet-100 text-violet-900', secretOnly: true },
+            'Prismatic Ascendant': { name: 'Prismatic Ascendant', multiplier: 30000.0, chance: 0, bg: 'bg-fuchsia-100 text-fuchsia-900', secretOnly: true },
+            'Ethereal Spectrum': { name: 'Ethereal Spectrum', multiplier: 75000.0, chance: 0, bg: 'bg-sky-100 text-sky-900', secretOnly: true },
+            'Astral Sovereign': { name: 'Astral Sovereign', multiplier: 180000.0, chance: 0, bg: 'bg-indigo-100 text-indigo-900', secretOnly: true },
+            'Quantum Monarch': { name: 'Quantum Monarch', multiplier: 450000.0, chance: 0, bg: 'bg-cyan-100 text-cyan-900', secretOnly: true },
+            'Eternal Prism': { name: 'Eternal Prism', multiplier: 1200000.0, chance: 0, bg: 'bg-amber-100 text-amber-900', secretOnly: true },
+            'Omniversal Crown': { name: 'Omniversal Crown', multiplier: 4000000.0, chance: 0, bg: 'bg-pink-100 text-pink-900', secretOnly: true },
+            'Transcendent Hue': { name: 'Transcendent Hue', multiplier: 15000000.0, chance: 0, bg: 'bg-rose-100 text-rose-900', secretOnly: true },
+            'Absolute Spectrum': { name: 'Absolute Spectrum', multiplier: 100000000.0, chance: 0, bg: 'bg-orange-100 text-orange-900', secretOnly: true },
+            'Genesis Chroma': { name: 'Genesis Chroma', multiplier: 1000000000.0, chance: 0, bg: 'bg-yellow-100 text-yellow-900', secretOnly: true }
         };
 
         // VARIANTS / FINISHES CONFIG
@@ -601,7 +621,7 @@
             { name: 'Purples & Violet', hueMin: 250, hueMax: 290, bonus: 0.25 },
             { name: 'Magentas & Pink', hueMin: 290, hueMax: 325, bonus: 0.25 },
             { name: 'Rose & Blush', hueMin: 325, hueMax: 345, bonus: 0.25 },
-            { name: 'Monochrome Grays', isMonochrome: true, bonus: 0.50 }
+            { name: 'Monochrome Grays', isMonochrome: true, bonus: 0.25 }
         ];
 
         const PACKS = [
@@ -629,16 +649,16 @@
             { id: 'big_bang_chroma', name: 'Big Bang Chroma', description: 'The genesis of all color in the universe. Infinite power.', price: 1000000000000000000000000000, cardsCount: 12, icon: 'fa-meteor', rarityBoost: 1000000000.0, shinyBoost: 500000000.0 },
 
             // SECRET MILESTONE PACKS (VARIABLE CARDS & HEAVILY BOOSTED SPECIAL FINISH ODDS)
-            { id: 'secret_first_step', name: 'Secret: Collector Starter', description: 'Gamble! Unseals 1-15 cards with massive special finish multipliers.', price: 500, cardsCount: '1-15', icon: 'fa-key', rarityBoost: 30.0, shinyBoost: 100.0, secret: true, unlockType: 'packs', unlockValue: 5 },
-            { id: 'secret_pack_hoarder', name: 'Secret: Pack Enthusiast', description: 'Gamble! Drops 1-15 cards featuring heavily boosted ultra-rarities.', price: 50000, cardsCount: '1-15', icon: 'fa-box-open', rarityBoost: 150.0, shinyBoost: 400.0, secret: true, unlockType: 'packs', unlockValue: 25 },
-            { id: 'secret_swatch_master', name: 'Secret: Swatch Hoarder', description: 'Gamble! Yields 1-15 swatches with hyper finish variant multipliers.', price: 5000000, cardsCount: '1-15', icon: 'fa-layer-group', rarityBoost: 600.0, shinyBoost: 1500.0, secret: true, unlockType: 'swatches', unlockValue: 50 },
-            { id: 'secret_hue_explorer', name: 'Secret: Hue Pioneer', description: 'Gamble! Yields 1-15 cards with celestial & quantum foil odds.', price: 500000000, cardsCount: '1-15', icon: 'fa-compass', rarityBoost: 3000.0, shinyBoost: 8000.0, secret: true, unlockType: 'codex', unlockValue: 20 },
-            { id: 'secret_millionaire', name: 'Secret: Color Tycoon', description: 'Gamble! Yields 1-15 cards infused with extreme income multipliers.', price: 10000000000, cardsCount: '1-15', icon: 'fa-sack-dollar', rarityBoost: 15000.0, shinyBoost: 40000.0, secret: true, unlockType: 'revenue', unlockValue: 1000000 },
-            { id: 'secret_set_master', name: 'Secret: Codex Perfectionist', description: 'Gamble! Yields 1-15 swatches guaranteed to pull special finishes.', price: 500000000000, cardsCount: '1-15', icon: 'fa-certificate', rarityBoost: 60000.0, shinyBoost: 150000.0, secret: true, unlockType: 'codexSets', unlockValue: 3 },
-            { id: 'secret_split_collector', name: 'Secret: Prism Split Specialist', description: 'Gamble! Drops 1-15 multi-split cards with cosmic foil boosts.', price: 10000000000000, cardsCount: '1-15', icon: 'fa-sliders', rarityBoost: 300000.0, shinyBoost: 800000.0, secret: true, unlockType: 'splits', unlockValue: 3 },
-            { id: 'secret_billionaire', name: 'Secret: Chromatic Empire', description: 'Gamble! Drops 1-15 cards with astronomical passive income rates.', price: 1000000000000000, cardsCount: '1-15', icon: 'fa-vault', rarityBoost: 3000000.0, shinyBoost: 8000000.0, secret: true, unlockType: 'revenue', unlockValue: 1000000000 },
-            { id: 'secret_finish_hunter', name: 'Secret: Ultra Foil Virtuoso', description: 'Gamble! Unseals 1-15 cards with high Godray & Temporal Rift odds.', price: 5000000000000000000, cardsCount: '1-15', icon: 'fa-gem', rarityBoost: 30000000.0, shinyBoost: 80000000.0, secret: true, unlockType: 'highFinish', unlockValue: 1000 },
-            { id: 'secret_god_chroma', name: 'Secret: Transcendent God Pack', description: 'Gamble! Drops 1-15 cards with Big Bang Essence finish chances.', price: 10000000000000000000000, cardsCount: '1-15', icon: 'fa-dharmachakra', rarityBoost: 300000000.0, shinyBoost: 800000000.0, secret: true, unlockType: 'godTier', unlockValue: 100 }
+            { id: 'secret_first_step', name: 'Secret: Collector Starter', description: 'Gamble! Unseals 1-15 cards with massive special finish multipliers.', price: 500, cardsCount: '1-15', icon: 'fa-key', rarityBoost: 30.0, shinyBoost: 100.0, secret: true, exclusiveRarity: 'Chromatic Relic', exclusiveRarityChance: 0.1, unlockType: 'packs', unlockValue: 5 },
+            { id: 'secret_pack_hoarder', name: 'Secret: Pack Enthusiast', description: 'Gamble! Drops 1-15 cards featuring heavily boosted ultra-rarities.', price: 50000, cardsCount: '1-15', icon: 'fa-box-open', rarityBoost: 150.0, shinyBoost: 400.0, secret: true, exclusiveRarity: 'Prismatic Ascendant', exclusiveRarityChance: 0.12, unlockType: 'packs', unlockValue: 25 },
+            { id: 'secret_swatch_master', name: 'Secret: Swatch Hoarder', description: 'Gamble! Yields 1-15 swatches with hyper finish variant multipliers.', price: 5000000, cardsCount: '1-15', icon: 'fa-layer-group', rarityBoost: 600.0, shinyBoost: 1500.0, secret: true, exclusiveRarity: 'Ethereal Spectrum', exclusiveRarityChance: 0.14, unlockType: 'swatches', unlockValue: 50 },
+            { id: 'secret_hue_explorer', name: 'Secret: Hue Pioneer', description: 'Gamble! Yields 1-15 cards with celestial & quantum foil odds.', price: 500000000, cardsCount: '1-15', icon: 'fa-compass', rarityBoost: 3000.0, shinyBoost: 8000.0, secret: true, exclusiveRarity: 'Astral Sovereign', exclusiveRarityChance: 0.16, unlockType: 'codex', unlockValue: 20 },
+            { id: 'secret_millionaire', name: 'Secret: Color Tycoon', description: 'Gamble! Yields 1-15 cards infused with extreme income multipliers.', price: 10000000000, cardsCount: '1-15', icon: 'fa-sack-dollar', rarityBoost: 15000.0, shinyBoost: 40000.0, secret: true, exclusiveRarity: 'Quantum Monarch', exclusiveRarityChance: 0.18, unlockType: 'revenue', unlockValue: 1000000 },
+            { id: 'secret_set_master', name: 'Secret: Codex Perfectionist', description: 'Gamble! Yields 1-15 swatches guaranteed to pull special finishes.', price: 500000000000, cardsCount: '1-15', icon: 'fa-certificate', rarityBoost: 60000.0, shinyBoost: 150000.0, secret: true, exclusiveRarity: 'Eternal Prism', exclusiveRarityChance: 0.2, unlockType: 'codexSets', unlockValue: 3 },
+            { id: 'secret_split_collector', name: 'Secret: Prism Split Specialist', description: 'Gamble! Drops 1-15 multi-split cards with cosmic foil boosts.', price: 10000000000000, cardsCount: '1-15', icon: 'fa-sliders', rarityBoost: 300000.0, shinyBoost: 800000.0, secret: true, exclusiveRarity: 'Omniversal Crown', exclusiveRarityChance: 0.22, unlockType: 'splits', unlockValue: 3 },
+            { id: 'secret_billionaire', name: 'Secret: Chromatic Empire', description: 'Gamble! Drops 1-15 cards with astronomical passive income rates.', price: 1000000000000000, cardsCount: '1-15', icon: 'fa-vault', rarityBoost: 3000000.0, shinyBoost: 8000000.0, secret: true, exclusiveRarity: 'Transcendent Hue', exclusiveRarityChance: 0.25, unlockType: 'revenue', unlockValue: 1000000000 },
+            { id: 'secret_finish_hunter', name: 'Secret: Ultra Foil Virtuoso', description: 'Gamble! Unseals 1-15 cards with high Godray & Temporal Rift odds.', price: 5000000000000000000, cardsCount: '1-15', icon: 'fa-gem', rarityBoost: 30000000.0, shinyBoost: 80000000.0, secret: true, exclusiveRarity: 'Absolute Spectrum', exclusiveRarityChance: 0.3, unlockType: 'highFinish', unlockValue: 1000 },
+            { id: 'secret_god_chroma', name: 'Secret: Transcendent God Pack', description: 'Gamble! Drops 1-15 cards with Big Bang Essence finish chances.', price: 10000000000000000000000, cardsCount: '1-15', icon: 'fa-dharmachakra', rarityBoost: 300000000.0, shinyBoost: 800000000.0, secret: true, exclusiveRarity: 'Genesis Chroma', exclusiveRarityChance: 0.35, unlockType: 'godTier', unlockValue: 100 }
         ];
 
         const PREFIXES = ['Pastel', 'Soft', 'Velvet', 'Silk', 'Muted', 'Blush', 'Frosted', 'Satin', 'Lunar', 'Mint', 'Cotton', 'Glacier', 'Rose', 'Cosmic', 'Aura', 'Quantum', 'Hyper', 'Void', 'Astral', 'Nebula', 'Solar', 'Omni', 'Infinite'];
@@ -794,7 +814,7 @@
         }
 
         function rollRarity(boost = 1.0) {
-            const keys = Object.keys(RARITIES);
+            const keys = Object.keys(RARITIES).filter(k => !RARITIES[k].secretOnly);
             let totalWeight = 0;
             const weights = keys.map(k => {
                 let weight = RARITIES[k].chance;
@@ -829,8 +849,9 @@
             return 'Standard';
         }
 
-        function createPaintCard(rarityBoost = 1.0, shinyBoost = 1.0) {
-            const rarity = rollRarity(rarityBoost);
+        function createPaintCard(rarityBoost = 1.0, shinyBoost = 1.0, secretRarity = null, secretRarityChance = 0) {
+            const canRollSecretRarity = secretRarity && RARITIES[secretRarity]?.secretOnly && Math.random() < Math.max(0, Math.min(1, secretRarityChance));
+            const rarity = canRollSecretRarity ? secretRarity : rollRarity(rarityBoost);
             const variant = rollVariant(shinyBoost);
             let hex, name;
             let hexesList = [];
@@ -900,6 +921,27 @@
             return { h: h * 360, s: s * 100, l: l * 100 };
         }
 
+        // First Codex milestone: 10 colors. Every additional 5 colors earns another.
+        function getCodexMilestones(count) {
+            return count < 10 ? 0 : 1 + Math.floor((count - 10) / 5);
+        }
+
+        function getCodexFamilyColorCount(family, uniqueHexes) {
+            let count = 0;
+            uniqueHexes.forEach(hex => {
+                if (typeof hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(hex)) return;
+                const hsl = hexToHSL(hex);
+                if (family.isMonochrome) {
+                    if (hsl.s < 12) count++;
+                } else if (family.hueMin > family.hueMax) {
+                    if (hsl.h >= family.hueMin || hsl.h <= family.hueMax) count++;
+                } else if (hsl.h >= family.hueMin && hsl.h <= family.hueMax) {
+                    count++;
+                }
+            });
+            return count;
+        }
+
         function calculateCodexMultiplier() {
             let totalBonus = 1.0;
             if (!Array.isArray(gameState.inventory)) return totalBonus;
@@ -907,21 +949,8 @@
             const uniqueHexes = Array.from(new Set(gameState.inventory.flatMap(c => c.hexesList || [c.hex])));
 
             COLOR_FAMILIES.forEach(family => {
-                let count = 0;
-                uniqueHexes.forEach(hex => {
-                    if (typeof hex !== 'string' || !hex.startsWith('#')) return;
-                    const hsl = hexToHSL(hex);
-                    if (family.isMonochrome) {
-                        if (hsl.s < 12) count++;
-                    } else if (family.hueMin > family.hueMax) {
-                        if (hsl.h >= family.hueMin || hsl.h <= family.hueMax) count++;
-                    } else {
-                        if (hsl.h >= family.hueMin && hsl.h <= family.hueMax) count++;
-                    }
-                });
-                if (count >= 5) {
-                    totalBonus += family.bonus;
-                }
+                const count = getCodexFamilyColorCount(family, uniqueHexes);
+                totalBonus += getCodexMilestones(count) * 0.25;
             });
             return totalBonus;
         }
@@ -1097,15 +1126,7 @@
 
             let completedSetsCount = 0;
             COLOR_FAMILIES.forEach(family => {
-                let count = 0;
-                uniqueHexes.forEach(hex => {
-                    if (typeof hex !== 'string' || !hex.startsWith('#')) return;
-                    const hsl = hexToHSL(hex);
-                    if (family.isMonochrome) { if (hsl.s < 12) count++; }
-                    else if (family.hueMin > family.hueMax) { if (hsl.h >= family.hueMin || hsl.h <= family.hueMax) count++; }
-                    else { if (hsl.h >= family.hueMin && hsl.h <= family.hueMax) count++; }
-                });
-                if (count >= 5) completedSetsCount++;
+                completedSetsCount += getCodexMilestones(getCodexFamilyColorCount(family, uniqueHexes));
             });
 
             switch (pack.unlockType) {
@@ -1160,6 +1181,7 @@
                             <div>
                                 <h3 class="font-black text-slate-800 text-base">${pack.name}</h3>
                                 <p class="text-xs text-slate-500 mt-1 leading-relaxed">${pack.description}</p>
+                                ${pack.secret && pack.exclusiveRarity ? `<p class="text-[10px] font-bold text-amber-700 mt-2">Exclusive: ${pack.exclusiveRarity} · ${Math.round(pack.exclusiveRarityChance * 100)}% chance per card</p>` : ''}
                             </div>
                         </div>
 
@@ -1206,42 +1228,33 @@
             let completedSetsCount = 0;
 
             familiesList.innerHTML = COLOR_FAMILIES.map(family => {
-                let count = 0;
-                uniqueHexes.forEach(hex => {
-                    if (typeof hex !== 'string' || !hex.startsWith('#')) return;
-                    const hsl = hexToHSL(hex);
-                    if (family.isMonochrome) {
-                        if (hsl.s < 12) count++;
-                    } else if (family.hueMin > family.hueMax) {
-                        if (hsl.h >= family.hueMin || hsl.h <= family.hueMax) count++;
-                    } else {
-                        if (hsl.h >= family.hueMin && hsl.h <= family.hueMax) count++;
-                    }
-                });
-
-                const target = 5;
-                const isCompleted = count >= target;
-                if (isCompleted) completedSetsCount++;
-                const progressPct = Math.min(100, (count / target) * 100);
+                const count = getCodexFamilyColorCount(family, uniqueHexes);
+                const milestones = getCodexMilestones(count);
+                completedSetsCount += milestones;
+                const nextTarget = 10 + (milestones * 5);
+                const progressStart = milestones === 0 ? 0 : 10 + ((milestones - 1) * 5);
+                const progressPct = Math.max(0, Math.min(100, ((count - progressStart) / (nextTarget - progressStart)) * 100));
+                const earnedBonus = milestones * 0.25;
 
                 return `
-                    <div class="bg-white/80 p-3.5 rounded-2xl border ${isCompleted ? 'border-amber-300 bg-amber-50/40' : 'border-purple-100'} shadow-sm space-y-2">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold ${isCompleted ? 'text-amber-700' : 'text-slate-700'}">${family.name}</span>
-                            <span class="font-mono text-[10px] font-bold ${isCompleted ? 'text-amber-600' : 'text-purple-600'}">+${(family.bonus * 100)}% Passive Income</span>
+                    <div class="bg-white/80 p-3.5 rounded-2xl border ${milestones > 0 ? 'border-amber-300 bg-amber-50/40' : 'border-purple-100'} shadow-sm space-y-2">
+                        <div class="flex justify-between items-center text-xs gap-2">
+                            <span class="font-bold ${milestones > 0 ? 'text-amber-700' : 'text-slate-700'}">${family.name}</span>
+                            <span class="font-mono text-[10px] font-bold ${milestones > 0 ? 'text-amber-600' : 'text-purple-600'}">${milestones} milestone${milestones === 1 ? '' : 's'} · +${earnedBonus.toFixed(2)}x</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex-grow">
-                                <div class="h-full ${isCompleted ? 'bg-amber-400' : 'bg-purple-400'} rounded-full transition-all" style="width: ${progressPct}%"></div>
+                                <div class="h-full ${milestones > 0 ? 'bg-amber-400' : 'bg-purple-400'} rounded-full transition-all" style="width: ${progressPct}%"></div>
                             </div>
-                            <span class="text-[10px] font-mono font-bold text-slate-400">${count}/${target}</span>
+                            <span class="text-[10px] font-mono font-bold text-slate-400">${count}/${nextTarget}</span>
                         </div>
+                        <div class="text-[9px] text-slate-400 font-semibold">Next: ${nextTarget} colors for +0.25x more</div>
                     </div>
                 `;
             }).join('');
 
             const setsComp = document.getElementById('codex-sets-completed');
-            if (setsComp) setsComp.innerText = `${completedSetsCount}/${COLOR_FAMILIES.length}`;
+            if (setsComp) setsComp.innerText = completedSetsCount.toLocaleString();
 
             grid.innerHTML = uniqueHexes.map(hex => `
                 <div class="flex flex-col items-center gap-1 group">
@@ -1321,17 +1334,17 @@
             updateEconomyUI();
             playSfx('cash');
 
-            // Calculate card count (Secret Packs yield random 1-5 cards)
+            // Secret Packs yield a random 1-15 cards.
             let actualCardCount = pack.cardsCount;
             if (pack.secret) {
-                actualCardCount = Math.floor(Math.random() * 5) + 1;
+                actualCardCount = Math.floor(Math.random() * 15) + 1;
             } else if (typeof pack.cardsCount !== 'number') {
                 actualCardCount = parseInt(pack.cardsCount) || 3;
             }
 
             pendingPackCards = [];
             for (let i = 0; i < actualCardCount; i++) {
-                pendingPackCards.push(createPaintCard(pack.rarityBoost, pack.shinyBoost));
+                pendingPackCards.push(createPaintCard(pack.rarityBoost, pack.shinyBoost, pack.exclusiveRarity, pack.exclusiveRarityChance));
             }
 
             const container = document.getElementById('revealed-cards-container');
