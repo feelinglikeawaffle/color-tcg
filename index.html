@@ -377,6 +377,7 @@
             <button id="tab-research-btn" onclick="switchTab('research')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-200 hover:bg-white/80">
                 <i class="fa-solid fa-flask mr-1.5"></i> Research Lab
             </button>
+            <button id="tab-automation-btn" onclick="switchTab('automation')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-200 hover:bg-white/80">Automation Factory</button>
         </nav>
     </div>
 
@@ -538,7 +539,16 @@
                 <div id="mastery-contracts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
         </section>
-
+        <section id="tab-automation" class="hidden space-y-4">
+            <div class="glass-panel p-5 rounded-3xl space-y-3">
+                <h2 class="font-black text-slate-800 text-lg">Automation Factory</h2>
+                <p class="text-xs text-slate-500">Automate normal pack buying, opening, sorting, and selling. Secret packs remain manual.</p>
+                <div class="flex flex-wrap gap-2 items-center"><label class="text-xs font-bold">Buyer target</label><select id="automation-pack-select" onchange="setAutomationPack(this.value)" class="bg-white border rounded-xl p-2 text-xs"></select><span id="automation-line-status" class="text-xs font-bold">Offline</span></div>
+                <div class="text-xs font-bold">Queue <span id="automation-queue-count">0 / 0</span> | Cards processed <span id="automation-cards-processed">0</span> | Earnings <span id="automation-sales-total">$0</span></div>
+            </div>
+            <div class="flex justify-between"><h3 class="font-black">Machine Floor</h3><span id="automation-machine-count" class="text-xs font-bold">0 / 12</span></div>
+            <div id="automation-machines-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
+        </section>
     </main>
 
     <!-- SECRET PACK MINI-GAME MODAL -->
@@ -832,6 +842,7 @@
             packsOpened: 0,
             normalPackOpens: 0,
             research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0 },
+            automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0 },
             claimedMasteries: [],
             selectedCardId: null,
             lastTickTimestamp: Date.now()
@@ -898,7 +909,7 @@
                 traits,
                 traitMultiplier,
                 incomePerSec: parseFloat(incomePerSec.toFixed(2)),
-                sellValue: parseFloat((incomePerSec * 40).toFixed(2)),
+                sellValue: parseFloat((incomePerSec * 100).toFixed(2)),
                 acquiredAt: card.acquiredAt || new Date().toLocaleDateString()
             };
         }
@@ -919,6 +930,12 @@
                                 const level = Number(parsed.research[key]);
                                 if (Number.isFinite(level)) gameState.research[key] = Math.max(0, Math.min(10, Math.floor(level)));
                             });
+                        }
+                        if (parsed.automation && typeof parsed.automation === 'object') {
+                            gameState.automation = Object.assign(gameState.automation, parsed.automation);
+                            gameState.automation.queue = Array.isArray(parsed.automation.queue) ? parsed.automation.queue.filter(id => PACKS.some(p => p.id === id && !p.secret)).slice(0, 500) : [];
+                            gameState.automation.machines = parsed.automation.machines || {};
+                            gameState.automation.lastRun = parsed.automation.lastRun || {};
                         }
                         if (Array.isArray(parsed.claimedMasteries)) gameState.claimedMasteries = parsed.claimedMasteries.filter(id => typeof id === 'string');
                         if (typeof parsed.lastTickTimestamp === 'number') gameState.lastTickTimestamp = parsed.lastTickTimestamp;
@@ -1067,7 +1084,7 @@
                 traits: traits,
                 traitMultiplier: traitMult,
                 incomePerSec: parseFloat(incomePerSec.toFixed(2)),
-                sellValue: parseFloat((incomePerSec * 40).toFixed(2)),
+                sellValue: parseFloat((incomePerSec * 100).toFixed(2)),
                 acquiredAt: new Date().toLocaleDateString()
             };
         }
@@ -1163,10 +1180,9 @@
                 updateEconomyUI();
             }
 
+            runAutomation(now);
             const storeTab = document.getElementById('tab-store');
-            if (storeTab && !storeTab.classList.contains('hidden')) {
-                updateStoreButtonStates();
-            }
+            if (storeTab && !storeTab.classList.contains('hidden')) updateStoreButtonStates();
         }
 
         function updateEconomyUI() {
@@ -1606,7 +1622,7 @@
         // NAVIGATION & PACK ACTIONS
         function switchTab(tabId) {
             playSfx('click');
-            ['inventory', 'codex', 'store', 'stats', 'research'].forEach(t => {
+            ['inventory', 'codex', 'store', 'stats', 'research', 'automation'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if (el) el.classList.add('hidden');
                 const btn = document.getElementById(`tab-${t}-btn`);
@@ -1624,6 +1640,7 @@
             if (tabId === 'store') renderStore();
             if (tabId === 'stats') renderStats();
             if (tabId === 'research') renderResearchLab();
+            if (tabId === 'automation') renderAutomation();
         }
 
         let pendingPackCards = [];
