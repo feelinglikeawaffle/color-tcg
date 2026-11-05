@@ -1570,6 +1570,9 @@
                 return;
             }
 
+            // Regular packs open immediately, with their price charged as before.
+            gameState.currency -= pack.price;
+            updateEconomyUI();
             openPackContents(pack);
         }
 
