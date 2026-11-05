@@ -628,17 +628,17 @@
             { id: 'absolute_zero', name: 'Absolute Zero Pigment', description: 'Frozen photon particles emitting maximum yield energy.', price: 50000000000000000000000000, cardsCount: 12, icon: 'fa-snowflake', rarityBoost: 250000000.0, shinyBoost: 120000000.0 },
             { id: 'big_bang_chroma', name: 'Big Bang Chroma', description: 'The genesis of all color in the universe. Infinite power.', price: 1000000000000000000000000000, cardsCount: 12, icon: 'fa-meteor', rarityBoost: 1000000000.0, shinyBoost: 500000000.0 },
 
-            // SECRET MILESTONE PACKS
-            { id: 'secret_first_step', name: 'Secret: Collector Starter', description: 'Unlocked by opening 5 total booster packs.', price: 500, cardsCount: 5, icon: 'fa-key', rarityBoost: 10.0, shinyBoost: 10.0, secret: true, unlockType: 'packs', unlockValue: 5 },
-            { id: 'secret_pack_hoarder', name: 'Secret: Pack Enthusiast', description: 'Unlocked by opening 25 total booster packs.', price: 50000, cardsCount: 6, icon: 'fa-box-open', rarityBoost: 50.0, shinyBoost: 30.0, secret: true, unlockType: 'packs', unlockValue: 25 },
-            { id: 'secret_swatch_master', name: 'Secret: Swatch Hoarder', description: 'Unlocked by collecting at least 50 total swatches.', price: 5000000, cardsCount: 7, icon: 'fa-layer-group', rarityBoost: 200.0, shinyBoost: 100.0, secret: true, unlockType: 'swatches', unlockValue: 50 },
-            { id: 'secret_hue_explorer', name: 'Secret: Hue Pioneer', description: 'Unlocked by discovering 20 unique hex codes in Codex.', price: 500000000, cardsCount: 7, icon: 'fa-compass', rarityBoost: 1000.0, shinyBoost: 500.0, secret: true, unlockType: 'codex', unlockValue: 20 },
-            { id: 'secret_millionaire', name: 'Secret: Color Tycoon', description: 'Unlocked by earning a total of $1,000,000 lifetime revenue.', price: 10000000000, cardsCount: 8, icon: 'fa-sack-dollar', rarityBoost: 5000.0, shinyBoost: 2500.0, secret: true, unlockType: 'revenue', unlockValue: 1000000 },
-            { id: 'secret_set_master', name: 'Secret: Codex Perfectionist', description: 'Unlocked by completing 3 full Codex set bonuses.', price: 500000000000, cardsCount: 8, icon: 'fa-certificate', rarityBoost: 20000.0, shinyBoost: 10000.0, secret: true, unlockType: 'codexSets', unlockValue: 3 },
-            { id: 'secret_split_collector', name: 'Secret: Prism Split Specialist', description: 'Unlocked by owning at least 3 Split Gradient cards.', price: 10000000000000, cardsCount: 9, icon: 'fa-sliders', rarityBoost: 100000.0, shinyBoost: 50000.0, secret: true, unlockType: 'splits', unlockValue: 3 },
-            { id: 'secret_billionaire', name: 'Secret: Chromatic Empire', description: 'Unlocked by reaching $1,000,000,000 lifetime revenue.', price: 1000000000000000, cardsCount: 9, icon: 'fa-vault', rarityBoost: 1000000.0, shinyBoost: 500000.0, secret: true, unlockType: 'revenue', unlockValue: 1000000000 },
-            { id: 'secret_finish_hunter', name: 'Secret: Ultra Foil Virtuoso', description: 'Unlocked by pulling any finish with 1,000x+ multiplier.', price: 5000000000000000000, cardsCount: 10, icon: 'fa-gem', rarityBoost: 10000000.0, shinyBoost: 5000000.0, secret: true, unlockType: 'highFinish', unlockValue: 1000 },
-            { id: 'secret_god_chroma', name: 'Secret: Transcendent God Pack', description: 'Unlocked by opening 100 packs and having high revenue.', price: 10000000000000000000000, cardsCount: 12, icon: 'fa-dharmachakra', rarityBoost: 100000000.0, shinyBoost: 50000000.0, secret: true, unlockType: 'godTier', unlockValue: 100 }
+            // SECRET MILESTONE PACKS (VARIABLE CARDS & HEAVILY BOOSTED SPECIAL FINISH ODDS)
+            { id: 'secret_first_step', name: 'Secret: Collector Starter', description: 'Gamble! Unseals 1-5 cards with massive special finish multipliers.', price: 500, cardsCount: '1-5', icon: 'fa-key', rarityBoost: 30.0, shinyBoost: 100.0, secret: true, unlockType: 'packs', unlockValue: 5 },
+            { id: 'secret_pack_hoarder', name: 'Secret: Pack Enthusiast', description: 'Gamble! Drops 1-5 cards featuring heavily boosted ultra-rarities.', price: 50000, cardsCount: '1-5', icon: 'fa-box-open', rarityBoost: 150.0, shinyBoost: 400.0, secret: true, unlockType: 'packs', unlockValue: 25 },
+            { id: 'secret_swatch_master', name: 'Secret: Swatch Hoarder', description: 'Gamble! Yields 1-5 swatches with hyper finish variant multipliers.', price: 5000000, cardsCount: '1-5', icon: 'fa-layer-group', rarityBoost: 600.0, shinyBoost: 1500.0, secret: true, unlockType: 'swatches', unlockValue: 50 },
+            { id: 'secret_hue_explorer', name: 'Secret: Hue Pioneer', description: 'Gamble! Yields 1-5 cards with celestial & quantum foil odds.', price: 500000000, cardsCount: '1-5', icon: 'fa-compass', rarityBoost: 3000.0, shinyBoost: 8000.0, secret: true, unlockType: 'codex', unlockValue: 20 },
+            { id: 'secret_millionaire', name: 'Secret: Color Tycoon', description: 'Gamble! Yields 1-5 cards infused with extreme income multipliers.', price: 10000000000, cardsCount: '1-5', icon: 'fa-sack-dollar', rarityBoost: 15000.0, shinyBoost: 40000.0, secret: true, unlockType: 'revenue', unlockValue: 1000000 },
+            { id: 'secret_set_master', name: 'Secret: Codex Perfectionist', description: 'Gamble! Yields 1-5 swatches guaranteed to pull special finishes.', price: 500000000000, cardsCount: '1-5', icon: 'fa-certificate', rarityBoost: 60000.0, shinyBoost: 150000.0, secret: true, unlockType: 'codexSets', unlockValue: 3 },
+            { id: 'secret_split_collector', name: 'Secret: Prism Split Specialist', description: 'Gamble! Drops 1-5 multi-split cards with cosmic foil boosts.', price: 10000000000000, cardsCount: '1-5', icon: 'fa-sliders', rarityBoost: 300000.0, shinyBoost: 800000.0, secret: true, unlockType: 'splits', unlockValue: 3 },
+            { id: 'secret_billionaire', name: 'Secret: Chromatic Empire', description: 'Gamble! Drops 1-5 cards with astronomical passive income rates.', price: 1000000000000000, cardsCount: '1-5', icon: 'fa-vault', rarityBoost: 3000000.0, shinyBoost: 8000000.0, secret: true, unlockType: 'revenue', unlockValue: 1000000000 },
+            { id: 'secret_finish_hunter', name: 'Secret: Ultra Foil Virtuoso', description: 'Gamble! Unseals 1-5 cards with high Godray & Temporal Rift odds.', price: 5000000000000000000, cardsCount: '1-5', icon: 'fa-gem', rarityBoost: 30000000.0, shinyBoost: 80000000.0, secret: true, unlockType: 'highFinish', unlockValue: 1000 },
+            { id: 'secret_god_chroma', name: 'Secret: Transcendent God Pack', description: 'Gamble! Drops 1-5 cards with Big Bang Essence finish chances.', price: 10000000000000000000000, cardsCount: '1-5', icon: 'fa-dharmachakra', rarityBoost: 300000000.0, shinyBoost: 800000000.0, secret: true, unlockType: 'godTier', unlockValue: 100 }
         ];
 
         const PREFIXES = ['Pastel', 'Soft', 'Velvet', 'Silk', 'Muted', 'Blush', 'Frosted', 'Satin', 'Lunar', 'Mint', 'Cotton', 'Glacier', 'Rose', 'Cosmic', 'Aura', 'Quantum', 'Hyper', 'Void', 'Astral', 'Nebula', 'Solar', 'Omni', 'Infinite'];
@@ -1321,8 +1321,16 @@
             updateEconomyUI();
             playSfx('cash');
 
+            // Calculate card count (Secret Packs yield random 1-5 cards)
+            let actualCardCount = pack.cardsCount;
+            if (pack.secret) {
+                actualCardCount = Math.floor(Math.random() * 5) + 1;
+            } else if (typeof pack.cardsCount !== 'number') {
+                actualCardCount = parseInt(pack.cardsCount) || 3;
+            }
+
             pendingPackCards = [];
-            for (let i = 0; i < pack.cardsCount; i++) {
+            for (let i = 0; i < actualCardCount; i++) {
                 pendingPackCards.push(createPaintCard(pack.rarityBoost, pack.shinyBoost));
             }
 
@@ -1342,7 +1350,10 @@
             const doneBtn = document.getElementById('pack-modal-done-btn');
             const packModal = document.getElementById('pack-modal');
 
-            if (title) title.innerText = `UNSEALING ${pack.name.toUpperCase()}`;
+            if (title) {
+                const subText = pack.secret ? ` (${actualCardCount} CARDS UNSEALED)` : '';
+                title.innerText = `UNSEALING ${pack.name.toUpperCase()}${subText}`;
+            }
             if (doneBtn) doneBtn.classList.add('hidden');
             if (packModal) packModal.classList.remove('hidden');
         }
