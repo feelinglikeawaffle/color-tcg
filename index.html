@@ -347,6 +347,9 @@
             <button id="tab-stats-btn" onclick="switchTab('stats')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-200 hover:bg-white/80">
                 <i class="fa-solid fa-chart-pie mr-1.5"></i> Statistics
             </button>
+            <button id="tab-research-btn" onclick="switchTab('research')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-200 hover:bg-white/80">
+                <i class="fa-solid fa-flask mr-1.5"></i> Research Lab
+            </button>
         </nav>
     </div>
 
@@ -489,6 +492,26 @@
                     <h2 class="font-black text-slate-800 text-base border-b border-purple-50 pb-2">Rarity Breakdown</h2>
                     <div id="rarity-breakdown-list" class="space-y-2.5"></div>
                 </div>
+            </div>
+        </section>
+
+        <section id="tab-research" class="hidden space-y-4">
+            <div class="glass-panel p-6 rounded-3xl space-y-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white flex items-center justify-center text-lg shadow-lg"><i class="fa-solid fa-flask"></i></div>
+                    <div>
+                        <h2 class="font-black text-slate-800 text-lg">Chromatic Research</h2>
+                        <p class="text-xs text-slate-500">Permanent upgrades for your collection, packs, and passive yield.</p>
+                    </div>
+                </div>
+            </div>
+            <div id="research-upgrades-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+            <div class="glass-panel p-5 rounded-3xl space-y-3">
+                <div>
+                    <h2 class="font-black text-slate-800 text-base">Mastery Contracts</h2>
+                    <p class="text-xs text-slate-500 mt-1">Long-term collection goals with one-time cash rewards. Complete them at your own pace.</p>
+                </div>
+                <div id="mastery-contracts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
         </section>
 
@@ -703,6 +726,23 @@
             { id: 'secret_finish_hunter', name: 'Secret: Ultra Foil Virtuoso', description: 'Gamble! Unseals 1-15 cards with high Godray & Temporal Rift odds.', price: 5000000000000000000, cardsCount: '1-15', icon: 'fa-gem', rarityBoost: 30000000.0, shinyBoost: 80000000.0, secret: true, exclusiveRarity: 'Absolute Spectrum', exclusiveRarityChance: 0.3, unlockType: 'highFinish', unlockValue: 1000 },
             { id: 'secret_god_chroma', name: 'Secret: Transcendent God Pack', description: 'Gamble! Drops 1-15 cards with Big Bang Essence finish chances.', price: 10000000000000000000000, cardsCount: '1-15', icon: 'fa-dharmachakra', rarityBoost: 300000000.0, shinyBoost: 800000000.0, secret: true, exclusiveRarity: 'Genesis Chroma', exclusiveRarityChance: 0.35, unlockType: 'godTier', unlockValue: 100 }
         ];
+        
+        const NORMAL_PACK_RARITY_FLOORS = [
+            'Common', 'Uncommon', 'Rare', 'Rare', 'Epic', 'Epic',
+            'Legendary', 'Legendary', 'Mythic', 'Mythic',
+            'Split Gradient', 'Split Gradient', 'Ultra Mega Split', 'Ultra Mega Split',
+            'Quad-Color Split', 'Quad-Color Split',
+            'Hyper-Spectrum', 'Hyper-Spectrum', 'Hyper-Spectrum', 'Hyper-Spectrum',
+            'Hyper-Spectrum', 'Hyper-Spectrum'
+        ];
+        let normalPackIndex = 0;
+        PACKS.filter(pack => !pack.secret).forEach(pack => {
+            const tier = normalPackIndex++;
+            pack.rarityFloor = NORMAL_PACK_RARITY_FLOORS[tier] || 'Hyper-Spectrum';
+            pack.bonusCards = 2 + Math.floor(tier / 3);
+            pack.incomeMultiplier = 1 + (tier * 0.12);
+        });
+
 
         const PREFIXES = ['Pastel', 'Soft', 'Velvet', 'Silk', 'Muted', 'Blush', 'Frosted', 'Satin', 'Lunar', 'Mint', 'Cotton', 'Glacier', 'Rose', 'Cosmic', 'Aura', 'Quantum', 'Hyper', 'Void', 'Astral', 'Nebula', 'Solar', 'Omni', 'Infinite'];
         const NOUNS = ['Bloom', 'Mist', 'Glow', 'Echo', 'Spark', 'Tide', 'Petal', 'Breeze', 'Haze', 'Sands', 'Cloud', 'Pulse', 'Dusk', 'Dawn', 'Frost', 'Matrix', 'Singularity', 'Flare', 'Veil', 'Core', 'Ray', 'Prism'];
@@ -713,6 +753,9 @@
             lifetimeRevenue: 0.00,
             inventory: [],
             packsOpened: 0,
+            normalPackOpens: 0,
+            research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0 },
+            claimedMasteries: [],
             selectedCardId: null,
             lastTickTimestamp: Date.now()
         };
@@ -781,6 +824,14 @@
                         if (typeof parsed.currency === 'number' && !isNaN(parsed.currency)) gameState.currency = parsed.currency;
                         if (typeof parsed.lifetimeRevenue === 'number' && !isNaN(parsed.lifetimeRevenue)) gameState.lifetimeRevenue = parsed.lifetimeRevenue;
                         if (typeof parsed.packsOpened === 'number' && !isNaN(parsed.packsOpened)) gameState.packsOpened = parsed.packsOpened;
+                        if (typeof parsed.normalPackOpens === 'number' && !isNaN(parsed.normalPackOpens)) gameState.normalPackOpens = parsed.normalPackOpens;
+                        if (parsed.research && typeof parsed.research === 'object') {
+                            ['yieldCore', 'packPress', 'rarityLab', 'foilLab', 'codexLens'].forEach(key => {
+                                const level = Number(parsed.research[key]);
+                                if (Number.isFinite(level)) gameState.research[key] = Math.max(0, Math.min(10, Math.floor(level)));
+                            });
+                        }
+                        if (Array.isArray(parsed.claimedMasteries)) gameState.claimedMasteries = parsed.claimedMasteries.filter(id => typeof id === 'string');
                         if (typeof parsed.lastTickTimestamp === 'number') gameState.lastTickTimestamp = parsed.lastTickTimestamp;
 
                         if (Array.isArray(parsed.inventory)) {
@@ -856,8 +907,10 @@
             return `${prefix} ${noun}`;
         }
 
-        function rollRarity(boost = 1.0) {
-            const keys = Object.keys(RARITIES).filter(k => !RARITIES[k].secretOnly);
+        function rollRarity(boost = 1.0, minimumRarity = 'Common') {
+            const allKeys = Object.keys(RARITIES).filter(k => !RARITIES[k].secretOnly);
+            const floorIndex = Math.max(0, allKeys.indexOf(minimumRarity));
+            const keys = allKeys.slice(floorIndex);
             let totalWeight = 0;
             const weights = keys.map(k => {
                 let weight = RARITIES[k].chance;
@@ -892,9 +945,9 @@
             return 'Standard';
         }
 
-        function createPaintCard(rarityBoost = 1.0, shinyBoost = 1.0, secretRarity = null, secretRarityChance = 0) {
+        function createPaintCard(rarityBoost = 1.0, shinyBoost = 1.0, secretRarity = null, secretRarityChance = 0, minimumRarity = 'Common', incomeMultiplier = 1) {
             const canRollSecretRarity = secretRarity && RARITIES[secretRarity]?.secretOnly && Math.random() < Math.max(0, Math.min(1, secretRarityChance));
-            const rarity = canRollSecretRarity ? secretRarity : rollRarity(rarityBoost);
+            const rarity = canRollSecretRarity ? secretRarity : rollRarity(rarityBoost, minimumRarity);
             const variant = rollVariant(shinyBoost);
             let hex, name;
             let hexesList = [];
@@ -927,7 +980,7 @@
 
             const rMult = RARITIES[rarity] ? RARITIES[rarity].multiplier : 1;
             const vMult = VARIANTS[variant] ? VARIANTS[variant].multiplier : 1;
-            const incomePerSec = 0.05 * rMult * vMult;
+            const incomePerSec = 0.05 * rMult * vMult * Math.max(1, incomeMultiplier);
 
             return {
                 id: 'card_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
@@ -1001,7 +1054,10 @@
         function calculateTotalIncomePerSecond() {
             if (!Array.isArray(gameState.inventory)) return 0;
             const baseIncome = gameState.inventory.reduce((sum, card) => sum + (card.incomePerSec || 0), 0);
-            return baseIncome * calculateCodexMultiplier();
+            const research = gameState.research || {};
+            const yieldBonus = 1 + ((research.yieldCore || 0) * 0.15);
+            const codexBonus = 1 + ((research.codexLens || 0) * 0.10);
+            return baseIncome * calculateCodexMultiplier() * yieldBonus * codexBonus;
         }
 
         function formatCurrency(num) {
@@ -1218,13 +1274,13 @@
                                 </div>
                                 <div class="flex gap-1">
                                     ${pack.secret ? '<span class="font-mono text-[9px] font-black bg-amber-200 text-amber-800 px-2 py-0.5 rounded-lg">SECRET</span>' : ''}
-                                    <span class="font-mono text-xs font-black bg-purple-50 text-purple-600 border border-purple-100 px-3 py-1 rounded-xl">${pack.cardsCount} Swatches</span>
+                                    <span class="font-mono text-xs font-black bg-purple-50 text-purple-600 border border-purple-100 px-3 py-1 rounded-xl">${pack.secret ? pack.cardsCount : (pack.cardsCount + (pack.bonusCards || 0) + (gameState.research?.packPress || 0)) + '+ Swatches'}</span>
                                 </div>
                             </div>
                             <div>
                                 <h3 class="font-black text-slate-800 text-base">${pack.name}</h3>
                                 <p class="text-xs text-slate-500 mt-1 leading-relaxed">${pack.description}</p>
-                                ${pack.secret && pack.exclusiveRarity ? `<p class="text-[10px] font-bold text-amber-700 mt-2">Exclusive: ${pack.exclusiveRarity} · ${Math.round(pack.exclusiveRarityChance * 100)}% chance per card</p><p class="text-[10px] font-bold text-purple-600 mt-1"><i class="fa-solid fa-gamepad mr-1"></i>Win a quick mini-game to unseal</p>` : ''}
+                                ${pack.secret && pack.exclusiveRarity ? `<p class="text-[10px] font-bold text-amber-700 mt-2">Exclusive: ${pack.exclusiveRarity} · ${Math.round(pack.exclusiveRarityChance * 100)}% chance per card</p><p class="text-[10px] font-bold text-purple-600 mt-1"><i class="fa-solid fa-gamepad mr-1"></i>Win a harder mini-game to unseal</p>` : (!pack.secret ? `<p class="text-[10px] font-bold text-emerald-700 mt-2">Guaranteed: ${pack.rarityFloor}+ · +${pack.bonusCards} bonus swatches · ${pack.incomeMultiplier.toFixed(2)}x card yield</p>` : '')}
                             </div>
                         </div>
 
@@ -1344,10 +1400,109 @@
             }
         }
 
+
+        const RESEARCH_UPGRADES = [
+            { id: 'yieldCore', name: 'Yield Core', icon: 'fa-bolt', description: '+15% total passive income per level.', baseCost: 2500 },
+            { id: 'packPress', name: 'Automated Pack Press', icon: 'fa-boxes-stacked', description: '+1 extra card in every normal pack per level.', baseCost: 25000 },
+            { id: 'rarityLab', name: 'Rarity Analyzer', icon: 'fa-microscope', description: '+20% pack rarity odds per level.', baseCost: 150000 },
+            { id: 'foilLab', name: 'Foil Resonator', icon: 'fa-gem', description: '+20% finish odds per level.', baseCost: 1000000 },
+            { id: 'codexLens', name: 'Codex Lens', icon: 'fa-book-open', description: '+10% Codex income bonus per level.', baseCost: 5000000 }
+        ];
+
+        function getResearchCost(upgrade) {
+            const level = gameState.research?.[upgrade.id] || 0;
+            return upgrade.baseCost * Math.pow(5, level);
+        }
+
+        function buyResearchUpgrade(id) {
+            const upgrade = RESEARCH_UPGRADES.find(item => item.id === id);
+            if (!upgrade) return;
+            gameState.research = gameState.research || {};
+            const level = gameState.research[id] || 0;
+            const cost = getResearchCost(upgrade);
+            if (level >= 10 || gameState.currency < cost) return;
+            gameState.currency -= cost;
+            gameState.research[id] = level + 1;
+            playSfx('cash');
+            updateEconomyUI();
+            renderResearchLab();
+            renderStore();
+            saveGameData();
+        }
+
+        function getMasteryContracts() {
+            const uniqueHexes = new Set(gameState.inventory.flatMap(card => card.hexesList || [card.hex])).size;
+            const splitCards = gameState.inventory.filter(card => ['Split Gradient', 'Ultra Mega Split', 'Quad-Color Split', 'Hyper-Spectrum'].includes(card.rarity)).length;
+            const topFinishes = gameState.inventory.filter(card => (VARIANTS[card.variant]?.multiplier || 1) >= 100000).length;
+            return [
+                { id: 'collector_50', name: 'Archive Expansion', description: 'Unseal 50 packs.', progress: gameState.packsOpened, target: 50, reward: 25000 },
+                { id: 'palette_100', name: 'Spectrum Cartographer', description: 'Discover 100 unique colors in your Codex.', progress: uniqueHexes, target: 100, reward: 250000 },
+                { id: 'split_20', name: 'Fracture Engineer', description: 'Collect 20 split-spectrum cards.', progress: splitCards, target: 20, reward: 2500000 },
+                { id: 'finish_5', name: 'Foil Connoisseur', description: 'Collect 5 finishes worth at least 100,000x.', progress: topFinishes, target: 5, reward: 25000000 },
+                { id: 'revenue_1b', name: 'Chromatic Tycoon', description: 'Earn $1 billion in lifetime revenue.', progress: gameState.lifetimeRevenue, target: 1000000000, reward: 100000000 }
+            ];
+        }
+
+        function claimMastery(id) {
+            const contract = getMasteryContracts().find(item => item.id === id);
+            if (!contract || contract.progress < contract.target || gameState.claimedMasteries.includes(id)) return;
+            gameState.claimedMasteries.push(id);
+            gameState.currency += contract.reward;
+            playSfx('cash');
+            updateEconomyUI();
+            renderResearchLab();
+            saveGameData();
+        }
+
+        function renderResearchLab() {
+            const grid = document.getElementById('research-upgrades-grid');
+            const contractsGrid = document.getElementById('mastery-contracts-grid');
+            if (grid) {
+                grid.innerHTML = RESEARCH_UPGRADES.map(upgrade => {
+                    const level = gameState.research?.[upgrade.id] || 0;
+                    const cost = getResearchCost(upgrade);
+                    const maxed = level >= 10;
+                    const canBuy = !maxed && gameState.currency >= cost;
+                    const costLabel = maxed ? 'MAX LEVEL' : '$' + formatCurrency(cost);
+                    const buttonLabel = maxed ? 'Maxed' : 'Research';
+                    return '<div class="glass-panel p-5 rounded-3xl space-y-3">' +
+                        '<div class="flex items-center justify-between gap-2">' +
+                            '<div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fa-solid ' + upgrade.icon + '"></i></div>' +
+                            '<span class="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg">Lv. ' + level + '/10</span>' +
+                        '</div>' +
+                        '<div><h3 class="font-black text-slate-800 text-sm">' + upgrade.name + '</h3>' +
+                            '<p class="text-xs text-slate-500 mt-1">' + upgrade.description + '</p></div>' +
+                        '<div class="flex items-center justify-between gap-2 pt-2 border-t border-purple-50">' +
+                            '<span class="font-mono text-xs font-black text-slate-700">' + costLabel + '</span>' +
+                            '<button onclick="buyResearchUpgrade(\'' + upgrade.id + '\')" ' + (canBuy ? '' : 'disabled') +
+                                ' class="px-4 py-2 rounded-xl text-xs font-bold ' + (canBuy ? 'bg-purple-500 text-white hover:bg-purple-600' : 'bg-slate-200 text-slate-400 cursor-not-allowed') + '">' + buttonLabel + '</button>' +
+                        '</div></div>';
+                }).join('');
+            }
+            if (contractsGrid) {
+                contractsGrid.innerHTML = getMasteryContracts().map(contract => {
+                    const claimed = gameState.claimedMasteries.includes(contract.id);
+                    const complete = contract.progress >= contract.target;
+                    const pct = Math.max(0, Math.min(100, (contract.progress / contract.target) * 100));
+                    const progressLabel = formatCurrency(Math.min(contract.progress, contract.target)) + ' / ' + formatCurrency(contract.target);
+                    const status = claimed ? 'Claimed' : complete ? 'Complete' : 'In Progress';
+                    const claimLabel = claimed ? 'Claimed' : 'Claim';
+                    return '<div class="rounded-2xl border border-purple-100 bg-white/70 p-4 space-y-2">' +
+                        '<div class="flex items-center justify-between gap-2"><h3 class="font-black text-slate-800 text-xs">' + contract.name + '</h3>' +
+                            '<span class="text-[9px] font-black uppercase ' + (claimed ? 'text-emerald-600' : complete ? 'text-amber-600' : 'text-slate-400') + '">' + status + '</span></div>' +
+                        '<p class="text-[10px] text-slate-500">' + contract.description + '</p>' +
+                        '<div class="h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-gradient-to-r from-violet-400 to-fuchsia-400 rounded-full" style="width:' + pct + '%"></div></div>' +
+                        '<div class="flex justify-between items-center gap-2"><span class="text-[9px] font-mono text-slate-500">' + progressLabel + ' · Reward $' + formatCurrency(contract.reward) + '</span>' +
+                            '<button onclick="claimMastery(\'' + contract.id + '\')" ' + (complete && !claimed ? '' : 'disabled') +
+                                ' class="px-3 py-1.5 rounded-lg text-[10px] font-bold ' + (complete && !claimed ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400') + '">' + claimLabel + '</button></div></div>';
+                }).join('');
+            }
+        }
+
         // NAVIGATION & PACK ACTIONS
         function switchTab(tabId) {
             playSfx('click');
-            ['inventory', 'codex', 'store', 'stats'].forEach(t => {
+            ['inventory', 'codex', 'store', 'stats', 'research'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if (el) el.classList.add('hidden');
                 const btn = document.getElementById(`tab-${t}-btn`);
@@ -1364,6 +1519,7 @@
             if (tabId === 'codex') renderCodex();
             if (tabId === 'store') renderStore();
             if (tabId === 'stats') renderStats();
+            if (tabId === 'research') renderResearchLab();
         }
 
         let pendingPackCards = [];
@@ -1401,8 +1557,12 @@
         }
 
         function startSecretMiniGame(pack) {
-            activeSecretMiniGame = { packId: pack.id, correctIndex: -1, choices: [], type: '' };
-            const roll = Math.floor(Math.random() * 3);
+            const secretPacks = PACKS.filter(item => item.secret);
+            const tier = Math.max(0, secretPacks.findIndex(item => item.id === pack.id));
+            const difficulty = Math.min(9, tier + (gameState.packsOpened >= 50 ? 1 : 0));
+            const choiceCount = Math.min(8, 4 + Math.floor(difficulty / 2));
+            activeSecretMiniGame = { packId: pack.id, correctIndex: -1, choices: [], type: '', difficulty: difficulty };
+            const roll = Math.floor(Math.random() * 4);
             const title = document.getElementById('secret-minigame-title');
             const prompt = document.getElementById('secret-minigame-prompt');
             const body = document.getElementById('secret-minigame-body');
@@ -1417,61 +1577,111 @@
             if (roll === 0) {
                 activeSecretMiniGame.type = 'color';
                 const target = generateRandomHex();
-                const choices = shuffleMiniGameChoices([target, generateRandomHex(), generateRandomHex(), generateRandomHex()]);
-                activeSecretMiniGame.choices = choices;
-                activeSecretMiniGame.correctIndex = choices.indexOf(target);
-                title.innerText = 'Color Match';
-                prompt.innerText = 'Find the exact same paint swatch shown below.';
-                body.innerHTML = `
-                    <div class="flex flex-col items-center gap-2">
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Swatch</div>
-                        <div class="w-20 h-20 rounded-2xl border-4 border-white shadow-lg" style="background:${target}"></div>
-                        <span class="font-mono text-xs font-bold text-slate-500">${target}</span>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${choices.map((hex, i) => `
-                        <button class="mini-game-choice p-3" onclick="answerSecretMiniGame(${i})">
-                            <div class="mini-game-swatch" style="background:${hex}"></div><span class="text-[10px] font-mono">${hex}</span>
-                        </button>`).join('')}</div>`;
+                const choices = [target];
+                const variation = 12 + difficulty * 4;
+                while (choices.length < choiceCount) {
+                    const shade = makeNearbyShade(target, variation);
+                    if (!choices.includes(shade)) choices.push(shade);
+                }
+                activeSecretMiniGame.choices = shuffleMiniGameChoices(choices);
+                activeSecretMiniGame.correctIndex = activeSecretMiniGame.choices.indexOf(target);
+                title.innerText = 'Precision Color Match';
+                prompt.innerText = difficulty >= 3 ? 'The swatches are deliberately similar. Find the exact match without a hex readout.' : 'Find the exact paint swatch. The decoys are close in shade.';
+                body.innerHTML = '<div class="flex flex-col items-center gap-2">' +
+                    '<div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Swatch</div>' +
+                    '<div class="w-20 h-20 rounded-2xl border-4 border-white shadow-lg" style="background:' + target + '"></div>' +
+                    (difficulty < 3 ? '<span class="font-mono text-xs font-bold text-slate-500">' + target + '</span>' : '<span class="text-[10px] font-bold text-rose-500">HEX HIDDEN</span>') +
+                    '</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
+                    activeSecretMiniGame.choices.map((hex, i) => '<button class="mini-game-choice p-3" onclick="answerSecretMiniGame(' + i + ')">' +
+                        '<div class="mini-game-swatch" style="background:' + hex + '"></div><span class="text-[10px] font-mono">' +
+                        (difficulty < 2 ? hex : 'SWATCH ' + (i + 1)) + '</span></button>').join('') + '</div>';
             } else if (roll === 1) {
                 activeSecretMiniGame.type = 'math';
-                const a = Math.floor(Math.random() * 16) + 4;
-                const b = Math.floor(Math.random() * 12) + 2;
-                const subtract = Math.random() < 0.35;
-                const answer = subtract ? a + b - Math.min(a, b) : a + b;
-                const actualA = subtract ? Math.max(a, b) : a;
-                const actualB = subtract ? Math.min(a, b) : b;
-                const symbol = subtract ? '−' : '+';
-                const choices = shuffleMiniGameChoices([answer, answer + 2, Math.max(0, answer - 3), answer + 5]);
+                const operations = difficulty < 2 ? ['+', '−'] : difficulty < 5 ? ['+', '−', '×'] : ['+', '−', '×', '÷'];
+                const op = operations[Math.floor(Math.random() * operations.length)];
+                let a, b, answer;
+                if (op === '+') {
+                    a = Math.floor(Math.random() * (18 + difficulty * 5)) + 12;
+                    b = Math.floor(Math.random() * (14 + difficulty * 4)) + 6;
+                    answer = a + b;
+                } else if (op === '−') {
+                    a = Math.floor(Math.random() * (30 + difficulty * 8)) + 20;
+                    b = Math.floor(Math.random() * Math.min(a - 1, 18 + difficulty * 4)) + 1;
+                    answer = a - b;
+                } else if (op === '×') {
+                    a = Math.floor(Math.random() * (6 + difficulty)) + 4;
+                    b = Math.floor(Math.random() * (7 + difficulty)) + 3;
+                    answer = a * b;
+                } else {
+                    b = Math.floor(Math.random() * (7 + Math.floor(difficulty / 2))) + 2;
+                    answer = Math.floor(Math.random() * (8 + difficulty)) + 3;
+                    a = b * answer;
+                }
+                const offsets = shuffleMiniGameChoices([-7, -3, 2, 5, 9, 12, -11, 15]).slice(0, choiceCount - 1);
+                const values = [answer];
+                offsets.forEach(offset => {
+                    let value = Math.max(0, answer + offset);
+                    while (values.includes(value)) value++;
+                    values.push(value);
+                });
+                const choices = shuffleMiniGameChoices(values);
                 activeSecretMiniGame.choices = choices;
                 activeSecretMiniGame.correctIndex = choices.indexOf(answer);
-                title.innerText = 'Quick Calculation';
-                prompt.innerText = 'Solve this one-step equation before the timer runs out.';
-                body.innerHTML = `
-                    <div class="text-4xl font-black text-purple-700 font-mono py-3">${actualA} ${symbol} ${actualB} = ?</div>
-                    <div class="grid grid-cols-2 gap-3">${choices.map((value, i) => `
-                        <button class="mini-game-choice text-xl" onclick="answerSecretMiniGame(${i})">${value}</button>`).join('')}</div>`;
-            } else {
+                title.innerText = 'Rapid Calculation';
+                prompt.innerText = difficulty >= 5 ? 'No easy sums now. Solve the operation before the clock runs out.' : 'Solve the randomized calculation. One wrong answer refunds the pack.';
+                body.innerHTML = '<div class="text-4xl font-black text-purple-700 font-mono py-3">' + a + ' ' + op + ' ' + b + ' = ?</div>' +
+                    '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' + choices.map((value, i) =>
+                        '<button class="mini-game-choice text-xl" onclick="answerSecretMiniGame(' + i + ')">' + value + '</button>').join('') + '</div>';
+            } else if (roll === 2) {
                 activeSecretMiniGame.type = 'odd';
                 const base = generateRandomHex();
-                const odd = rgbToHex({r: 255-hexToRgb(base).r, g: 255-hexToRgb(base).g, b: 255-hexToRgb(base).b});
-                let shades = [base, makeNearbyShade(base, 12), makeNearbyShade(base, 18), odd];
-                while (new Set(shades).size < 4) shades[1] = makeNearbyShade(base, 24);
-                const choices = shuffleMiniGameChoices(shades);
+                const shades = [];
+                const subtleRange = Math.max(4, 14 - difficulty);
+                while (shades.length < choiceCount - 1) {
+                    const shade = makeNearbyShade(base, subtleRange);
+                    if (!shades.includes(shade)) shades.push(shade);
+                }
+                let odd = makeNearbyShade(base, 55 + difficulty * 5);
+                while (shades.includes(odd) || odd === base) odd = makeNearbyShade(base, 70 + difficulty * 4);
+                const choices = shuffleMiniGameChoices(shades.concat([odd]));
                 activeSecretMiniGame.choices = choices;
                 activeSecretMiniGame.correctIndex = choices.indexOf(odd);
-                title.innerText = 'Odd Shade Out';
-                prompt.innerText = 'Three swatches are close in color. Tap the one that does not belong.';
-                body.innerHTML = `
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${choices.map((hex, i) => `
-                        <button class="mini-game-choice p-3" onclick="answerSecretMiniGame(${i})">
-                            <div class="mini-game-swatch" style="background:${hex}"></div><span class="text-[10px] font-mono">${hex}</span>
-                        </button>`).join('')}</div>`;
+                title.innerText = 'Chromatic Intruder';
+                prompt.innerText = 'Most swatches are almost identical. Identify the one color that breaks the palette.';
+                body.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
+                    choices.map((hex, i) => '<button class="mini-game-choice p-3" onclick="answerSecretMiniGame(' + i + ')">' +
+                        '<div class="mini-game-swatch" style="background:' + hex + '"></div><span class="text-[10px] font-mono">' +
+                        (difficulty < 2 ? hex : 'PIGMENT ' + (i + 1)) + '</span></button>').join('') + '</div>';
+            } else {
+                activeSecretMiniGame.type = 'memory';
+                const palette = [];
+                while (palette.length < Math.min(6, 4 + Math.floor(difficulty / 2))) {
+                    const shade = generateRandomHex();
+                    if (!palette.includes(shade)) palette.push(shade);
+                }
+                const sequenceLength = Math.min(7, 3 + Math.floor(difficulty / 2));
+                const sequence = Array.from({ length: sequenceLength }, () => Math.floor(Math.random() * palette.length));
+                const memoryChallenge = activeSecretMiniGame;
+                activeSecretMiniGame.palette = palette;
+                activeSecretMiniGame.sequence = sequence;
+                activeSecretMiniGame.sequenceIndex = 0;
+                title.innerText = 'Pigment Recall';
+                prompt.innerText = 'Memorize the color sequence. Repeat it in the correct order.';
+                body.innerHTML = '<div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Memorize this sequence</div>' +
+                    '<div class="flex flex-wrap justify-center gap-2">' +
+                    sequence.map(index => '<div class="w-10 h-10 rounded-xl border-2 border-white shadow" style="background:' + palette[index] + '"></div>').join('') +
+                    '</div><div class="text-xs font-bold text-purple-600">Sequence length: ' + sequenceLength + '</div>';
+                setTimeout(() => {
+                    if (activeSecretMiniGame !== memoryChallenge) return;
+                    prompt.innerText = 'Repeat the sequence in the same order.';
+                    renderMemoryChoiceButtons();
+                }, Math.max(1200, 2300 - difficulty * 100));
             }
 
-            if (feedback) feedback.innerText = 'One try. Complete the challenge to unlock your pack.';
+            if (feedback) feedback.innerText = 'One mistake ends the challenge. A failed run returns the full pack price.';
             if (cancelBtn) cancelBtn.classList.remove('hidden');
             if (closeBtn) closeBtn.classList.add('hidden');
-            secretMiniGameTimeLeft = 10;
+            secretMiniGameTimeLeft = Math.max(6, 10 - Math.floor(difficulty / 2));
             updateSecretMiniGameTimer();
             document.getElementById('secret-minigame-modal').classList.remove('hidden');
             if (secretMiniGameInterval) clearInterval(secretMiniGameInterval);
@@ -1480,6 +1690,19 @@
                 updateSecretMiniGameTimer();
                 if (secretMiniGameTimeLeft <= 0) failSecretMiniGame('Time ran out. Your full pack price has been returned.');
             }, 1000);
+        }
+
+        function renderMemoryChoiceButtons() {
+            if (!activeSecretMiniGame || activeSecretMiniGame.type !== 'memory') return;
+            const body = document.getElementById('secret-minigame-body');
+            if (!body) return;
+            const palette = activeSecretMiniGame.palette;
+            body.innerHTML = '<div class="text-xs font-black text-purple-700">Step ' +
+                (activeSecretMiniGame.sequenceIndex + 1) + ' of ' + activeSecretMiniGame.sequence.length + '</div>' +
+                '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">' +
+                palette.map((hex, i) => '<button class="mini-game-choice p-3" onclick="answerSecretMiniGame(' + i + ')">' +
+                    '<div class="mini-game-swatch" style="background:' + hex + '"></div>' +
+                    '<span class="text-[10px] font-mono">COLOR ' + (i + 1) + '</span></button>').join('') + '</div>';
         }
 
         function updateSecretMiniGameTimer() {
@@ -1498,11 +1721,21 @@
 
         function answerSecretMiniGame(choiceIndex) {
             if (!activeSecretMiniGame || !pendingSecretPackPurchase) return;
-            if (choiceIndex === activeSecretMiniGame.correctIndex) {
-                completeSecretMiniGame();
-            } else {
-                failSecretMiniGame('Not quite! Your full pack price has been returned.');
+            if (activeSecretMiniGame.type === 'memory') {
+                if (choiceIndex !== activeSecretMiniGame.sequence[activeSecretMiniGame.sequenceIndex]) {
+                    failSecretMiniGame('Sequence broken. Your full pack price has been returned.');
+                    return;
+                }
+                activeSecretMiniGame.sequenceIndex++;
+                if (activeSecretMiniGame.sequenceIndex >= activeSecretMiniGame.sequence.length) {
+                    completeSecretMiniGame();
+                } else {
+                    renderMemoryChoiceButtons();
+                }
+                return;
             }
+            if (choiceIndex === activeSecretMiniGame.correctIndex) completeSecretMiniGame();
+            else failSecretMiniGame('Not quite! Your full pack price has been returned.');
         }
 
         function completeSecretMiniGame() {
@@ -1584,14 +1817,28 @@
             let actualCardCount = pack.cardsCount;
             if (pack.secret) {
                 actualCardCount = Math.floor(Math.random() * 15) + 1;
-            } else if (typeof pack.cardsCount !== 'number') {
-                actualCardCount = parseInt(pack.cardsCount) || 3;
+            } else {
+                if (typeof pack.cardsCount !== 'number') actualCardCount = parseInt(pack.cardsCount) || 3;
+                gameState.normalPackOpens = (gameState.normalPackOpens || 0) + 1;
+                actualCardCount += (pack.bonusCards || 0) + (gameState.research?.packPress || 0);
+                if (gameState.normalPackOpens % 5 === 0) actualCardCount += 3;
             }
 
+            const research = gameState.research || {};
+            const rarityBoost = pack.rarityBoost * (1 + ((research.rarityLab || 0) * 0.20));
+            const shinyBoost = pack.shinyBoost * (1 + ((research.foilLab || 0) * 0.20));
             pendingPackCards = [];
             for (let i = 0; i < actualCardCount; i++) {
-                pendingPackCards.push(createPaintCard(pack.rarityBoost, pack.shinyBoost, pack.exclusiveRarity, pack.exclusiveRarityChance));
+                pendingPackCards.push(createPaintCard(
+                    rarityBoost,
+                    shinyBoost,
+                    pack.exclusiveRarity,
+                    pack.exclusiveRarityChance,
+                    pack.secret ? 'Common' : (pack.rarityFloor || 'Common'),
+                    pack.secret ? 1 : (pack.incomeMultiplier || 1)
+                ));
             }
+            saveGameData();
 
             const container = document.getElementById('revealed-cards-container');
             if (container) {
