@@ -1557,8 +1557,12 @@
         }
 
         function startSecretMiniGame(pack) {
-            activeSecretMiniGame = { packId: pack.id, correctIndex: -1, choices: [], type: '' };
-            const roll = Math.floor(Math.random() * 3);
+            const secretPacks = PACKS.filter(item => item.secret);
+            const tier = Math.max(0, secretPacks.findIndex(item => item.id === pack.id));
+            const difficulty = Math.min(9, tier + (gameState.packsOpened >= 50 ? 1 : 0));
+            const choiceCount = Math.min(8, 4 + Math.floor(difficulty / 2));
+            activeSecretMiniGame = { packId: pack.id, correctIndex: -1, choices: [], type: '', difficulty: difficulty };
+            const roll = Math.floor(Math.random() * 4);
             const title = document.getElementById('secret-minigame-title');
             const prompt = document.getElementById('secret-minigame-prompt');
             const body = document.getElementById('secret-minigame-body');
@@ -1573,61 +1577,111 @@
             if (roll === 0) {
                 activeSecretMiniGame.type = 'color';
                 const target = generateRandomHex();
-                const choices = shuffleMiniGameChoices([target, generateRandomHex(), generateRandomHex(), generateRandomHex()]);
-                activeSecretMiniGame.choices = choices;
-                activeSecretMiniGame.correctIndex = choices.indexOf(target);
-                title.innerText = 'Color Match';
-                prompt.innerText = 'Find the exact same paint swatch shown below.';
-                body.innerHTML = `
-                    <div class="flex flex-col items-center gap-2">
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Swatch</div>
-                        <div class="w-20 h-20 rounded-2xl border-4 border-white shadow-lg" style="background:${target}"></div>
-                        <span class="font-mono text-xs font-bold text-slate-500">${target}</span>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${choices.map((hex, i) => `
-                        <button class="mini-game-choice p-3" onclick="answerSecretMiniGame(${i})">
-                            <div class="mini-game-swatch" style="background:${hex}"></div><span class="text-[10px] font-mono">${hex}</span>
-                        </button>`).join('')}</div>`;
+                const choices = [target];
+                const variation = 12 + difficulty * 4;
+                while (choices.length < choiceCount) {
+                    const shade = makeNearbyShade(target, variation);
+                    if (!choices.includes(shade)) choices.push(shade);
+                }
+                activeSecretMiniGame.choices = shuffleMiniGameChoices(choices);
+                activeSecretMiniGame.correctIndex = activeSecretMiniGame.choices.indexOf(target);
+                title.innerText = 'Precision Color Match';
+                prompt.innerText = difficulty >= 3 ? 'The swatches are deliberately similar. Find the exact match without a hex readout.' : 'Find the exact paint swatch. The decoys are close in shade.';
+                body.innerHTML = '<div class="flex flex-col items-center gap-2">' +
+                    '<div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Swatch</div>' +
+                    '<div class="w-20 h-20 rounded-2xl border-4 border-white shadow-lg" style="background:' + target + '"></div>' +
+                    (difficulty < 3 ? '<span class="font-mono text-xs font-bold text-slate-500">' + target + '</span>' : '<span class="text-[10px] font-bold text-rose-500">HEX HIDDEN</span>') +
+                    '</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
+                    activeSecretMiniGame.choices.map((hex, i) => '<button class="mini-game-choice p-3" onclick="answerSecretMiniGame(' + i + ')">' +
+                        '<div class="mini-game-swatch" style="background:' + hex + '"></div><span class="text-[10px] font-mono">' +
+                        (difficulty < 2 ? hex : 'SWATCH ' + (i + 1)) + '</span></button>').join('') + '</div>';
             } else if (roll === 1) {
                 activeSecretMiniGame.type = 'math';
-                const a = Math.floor(Math.random() * 16) + 4;
-                const b = Math.floor(Math.random() * 12) + 2;
-                const subtract = Math.random() < 0.35;
-                const answer = subtract ? a + b - Math.min(a, b) : a + b;
-                const actualA = subtract ? Math.max(a, b) : a;
-                const actualB = subtract ? Math.min(a, b) : b;
-                const symbol = subtract ? '−' : '+';
-                const choices = shuffleMiniGameChoices([answer, answer + 2, Math.max(0, answer - 3), answer + 5]);
+                const operations = difficulty < 2 ? ['+', '−'] : difficulty < 5 ? ['+', '−', '×'] : ['+', '−', '×', '÷'];
+                const op = operations[Math.floor(Math.random() * operations.length)];
+                let a, b, answer;
+                if (op === '+') {
+                    a = Math.floor(Math.random() * (18 + difficulty * 5)) + 12;
+                    b = Math.floor(Math.random() * (14 + difficulty * 4)) + 6;
+                    answer = a + b;
+                } else if (op === '−') {
+                    a = Math.floor(Math.random() * (30 + difficulty * 8)) + 20;
+                    b = Math.floor(Math.random() * Math.min(a - 1, 18 + difficulty * 4)) + 1;
+                    answer = a - b;
+                } else if (op === '×') {
+                    a = Math.floor(Math.random() * (6 + difficulty)) + 4;
+                    b = Math.floor(Math.random() * (7 + difficulty)) + 3;
+                    answer = a * b;
+                } else {
+                    b = Math.floor(Math.random() * (7 + Math.floor(difficulty / 2))) + 2;
+                    answer = Math.floor(Math.random() * (8 + difficulty)) + 3;
+                    a = b * answer;
+                }
+                const offsets = shuffleMiniGameChoices([-7, -3, 2, 5, 9, 12, -11, 15]).slice(0, choiceCount - 1);
+                const values = [answer];
+                offsets.forEach(offset => {
+                    let value = Math.max(0, answer + offset);
+                    while (values.includes(value)) value++;
+                    values.push(value);
+                });
+                const choices = shuffleMiniGameChoices(values);
                 activeSecretMiniGame.choices = choices;
                 activeSecretMiniGame.correctIndex = choices.indexOf(answer);
-                title.innerText = 'Quick Calculation';
-                prompt.innerText = 'Solve this one-step equation before the timer runs out.';
-                body.innerHTML = `
-                    <div class="text-4xl font-black text-purple-700 font-mono py-3">${actualA} ${symbol} ${actualB} = ?</div>
-                    <div class="grid grid-cols-2 gap-3">${choices.map((value, i) => `
-                        <button class="mini-game-choice text-xl" onclick="answerSecretMiniGame(${i})">${value}</button>`).join('')}</div>`;
-            } else {
+                title.innerText = 'Rapid Calculation';
+                prompt.innerText = difficulty >= 5 ? 'No easy sums now. Solve the operation before the clock runs out.' : 'Solve the randomized calculation. One wrong answer refunds the pack.';
+                body.innerHTML = '<div class="text-4xl font-black text-purple-700 font-mono py-3">' + a + ' ' + op + ' ' + b + ' = ?</div>' +
+                    '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' + choices.map((value, i) =>
+                        '<button class="mini-game-choice text-xl" onclick="answerSecretMiniGame(' + i + ')">' + value + '</button>').join('') + '</div>';
+            } else if (roll === 2) {
                 activeSecretMiniGame.type = 'odd';
                 const base = generateRandomHex();
-                const odd = rgbToHex({r: 255-hexToRgb(base).r, g: 255-hexToRgb(base).g, b: 255-hexToRgb(base).b});
-                let shades = [base, makeNearbyShade(base, 12), makeNearbyShade(base, 18), odd];
-                while (new Set(shades).size < 4) shades[1] = makeNearbyShade(base, 24);
-                const choices = shuffleMiniGameChoices(shades);
+                const shades = [];
+                const subtleRange = Math.max(4, 14 - difficulty);
+                while (shades.length < choiceCount - 1) {
+                    const shade = makeNearbyShade(base, subtleRange);
+                    if (!shades.includes(shade)) shades.push(shade);
+                }
+                let odd = makeNearbyShade(base, 55 + difficulty * 5);
+                while (shades.includes(odd) || odd === base) odd = makeNearbyShade(base, 70 + difficulty * 4);
+                const choices = shuffleMiniGameChoices(shades.concat([odd]));
                 activeSecretMiniGame.choices = choices;
                 activeSecretMiniGame.correctIndex = choices.indexOf(odd);
-                title.innerText = 'Odd Shade Out';
-                prompt.innerText = 'Three swatches are close in color. Tap the one that does not belong.';
-                body.innerHTML = `
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${choices.map((hex, i) => `
-                        <button class="mini-game-choice p-3" onclick="answerSecretMiniGame(${i})">
-                            <div class="mini-game-swatch" style="background:${hex}"></div><span class="text-[10px] font-mono">${hex}</span>
-                        </button>`).join('')}</div>`;
+                title.innerText = 'Chromatic Intruder';
+                prompt.innerText = 'Most swatches are almost identical. Identify the one color that breaks the palette.';
+                body.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
+                    choices.map((hex, i) => '<button class="mini-game-choice p-3" onclick="answerSecretMiniGame(' + i + ')">' +
+                        '<div class="mini-game-swatch" style="background:' + hex + '"></div><span class="text-[10px] font-mono">' +
+                        (difficulty < 2 ? hex : 'PIGMENT ' + (i + 1)) + '</span></button>').join('') + '</div>';
+            } else {
+                activeSecretMiniGame.type = 'memory';
+                const palette = [];
+                while (palette.length < Math.min(6, 4 + Math.floor(difficulty / 2))) {
+                    const shade = generateRandomHex();
+                    if (!palette.includes(shade)) palette.push(shade);
+                }
+                const sequenceLength = Math.min(7, 3 + Math.floor(difficulty / 2));
+                const sequence = Array.from({ length: sequenceLength }, () => Math.floor(Math.random() * palette.length));
+                const memoryChallenge = activeSecretMiniGame;
+                activeSecretMiniGame.palette = palette;
+                activeSecretMiniGame.sequence = sequence;
+                activeSecretMiniGame.sequenceIndex = 0;
+                title.innerText = 'Pigment Recall';
+                prompt.innerText = 'Memorize the color sequence. Repeat it in the correct order.';
+                body.innerHTML = '<div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Memorize this sequence</div>' +
+                    '<div class="flex flex-wrap justify-center gap-2">' +
+                    sequence.map(index => '<div class="w-10 h-10 rounded-xl border-2 border-white shadow" style="background:' + palette[index] + '"></div>').join('') +
+                    '</div><div class="text-xs font-bold text-purple-600">Sequence length: ' + sequenceLength + '</div>';
+                setTimeout(() => {
+                    if (activeSecretMiniGame !== memoryChallenge) return;
+                    prompt.innerText = 'Repeat the sequence in the same order.';
+                    renderMemoryChoiceButtons();
+                }, Math.max(1200, 2300 - difficulty * 100));
             }
 
-            if (feedback) feedback.innerText = 'One try. Complete the challenge to unlock your pack.';
+            if (feedback) feedback.innerText = 'One mistake ends the challenge. A failed run returns the full pack price.';
             if (cancelBtn) cancelBtn.classList.remove('hidden');
             if (closeBtn) closeBtn.classList.add('hidden');
-            secretMiniGameTimeLeft = 10;
+            secretMiniGameTimeLeft = Math.max(6, 10 - Math.floor(difficulty / 2));
             updateSecretMiniGameTimer();
             document.getElementById('secret-minigame-modal').classList.remove('hidden');
             if (secretMiniGameInterval) clearInterval(secretMiniGameInterval);
@@ -1636,6 +1690,19 @@
                 updateSecretMiniGameTimer();
                 if (secretMiniGameTimeLeft <= 0) failSecretMiniGame('Time ran out. Your full pack price has been returned.');
             }, 1000);
+        }
+
+        function renderMemoryChoiceButtons() {
+            if (!activeSecretMiniGame || activeSecretMiniGame.type !== 'memory') return;
+            const body = document.getElementById('secret-minigame-body');
+            if (!body) return;
+            const palette = activeSecretMiniGame.palette;
+            body.innerHTML = '<div class="text-xs font-black text-purple-700">Step ' +
+                (activeSecretMiniGame.sequenceIndex + 1) + ' of ' + activeSecretMiniGame.sequence.length + '</div>' +
+                '<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">' +
+                palette.map((hex, i) => '<button class="mini-game-choice p-3" onclick="answerSecretMiniGame(' + i + ')">' +
+                    '<div class="mini-game-swatch" style="background:' + hex + '"></div>' +
+                    '<span class="text-[10px] font-mono">COLOR ' + (i + 1) + '</span></button>').join('') + '</div>';
         }
 
         function updateSecretMiniGameTimer() {
@@ -1654,11 +1721,21 @@
 
         function answerSecretMiniGame(choiceIndex) {
             if (!activeSecretMiniGame || !pendingSecretPackPurchase) return;
-            if (choiceIndex === activeSecretMiniGame.correctIndex) {
-                completeSecretMiniGame();
-            } else {
-                failSecretMiniGame('Not quite! Your full pack price has been returned.');
+            if (activeSecretMiniGame.type === 'memory') {
+                if (choiceIndex !== activeSecretMiniGame.sequence[activeSecretMiniGame.sequenceIndex]) {
+                    failSecretMiniGame('Sequence broken. Your full pack price has been returned.');
+                    return;
+                }
+                activeSecretMiniGame.sequenceIndex++;
+                if (activeSecretMiniGame.sequenceIndex >= activeSecretMiniGame.sequence.length) {
+                    completeSecretMiniGame();
+                } else {
+                    renderMemoryChoiceButtons();
+                }
+                return;
             }
+            if (choiceIndex === activeSecretMiniGame.correctIndex) completeSecretMiniGame();
+            else failSecretMiniGame('Not quite! Your full pack price has been returned.');
         }
 
         function completeSecretMiniGame() {
