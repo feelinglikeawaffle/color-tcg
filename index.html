@@ -695,19 +695,24 @@
             'First Light': { multiplier: 250000, chance: 0.00008, description: 'An exceptionally rare origin-point glow.' }
         };
 
-        function rollCardTraits() {
+        function rollCardTraits(progressionTier = 0) {
             const traits = [];
+            const tier = Math.max(0, progressionTier);
+            // Starter packs can only roll modest traits. The rarest multipliers unlock as packs advance.
+            const maxTraitMultiplier = tier < 2 ? 1000 : tier < 4 ? 5200 : tier < 6 ? 15000 : tier < 8 ? 42000 : tier < 10 ? 85000 : tier < 12 ? 250000 : 500000;
+            const chanceScale = Math.min(2.4, 0.20 + (tier * 0.22));
+            const eligible = Object.entries(CARD_TRAITS).filter(([, info]) => info.multiplier <= maxTraitMultiplier);
             const roll = Math.random();
             let cumulative = 0;
-            for (const [name, info] of Object.entries(CARD_TRAITS)) {
-                cumulative += info.chance;
+            for (const [name, info] of eligible) {
+                cumulative += info.chance * chanceScale;
                 if (roll < cumulative) {
                     traits.push(name);
-                    // A tiny chance for a second independent trait; both stack multiplicatively.
-                    if (Math.random() < 0.0008) {
-                        const remaining = Object.keys(CARD_TRAITS).filter(key => key !== name);
+                    // A small late-game chance for a second trait; both multipliers stack.
+                    if (Math.random() < Math.min(0.008, 0.0005 + (tier * 0.0005))) {
+                        const remaining = eligible.filter(([key]) => key !== name);
                         const second = remaining[Math.floor(Math.random() * remaining.length)];
-                        if (second) traits.push(second);
+                        if (second) traits.push(second[0]);
                     }
                     break;
                 }
@@ -1012,12 +1017,15 @@
             return keys[0] || 'Common';
         }
 
-        function rollVariant(boost = 1.0) {
-            const keys = Object.keys(VARIANTS);
+        function rollVariant(boost = 1.0, progressionTier = 0) {
+            // High-end finishes unlock gradually: starter packs cannot roll the runaway multipliers.
+            const allKeys = Object.keys(VARIANTS);
+            const availableCount = Math.min(allKeys.length, 5 + (Math.max(0, progressionTier) * 2));
+            const keys = allKeys.slice(0, availableCount);
             let totalWeight = 0;
             const weights = keys.map(k => {
                 let weight = VARIANTS[k].prob;
-                if (k !== 'Standard') weight *= boost;
+                if (k !== 'Standard') weight *= Math.max(1, boost);
                 totalWeight += weight;
                 return weight;
             });
@@ -1030,11 +1038,11 @@
             return 'Standard';
         }
 
-        function createPaintCard(rarityBoost = 1.0, shinyBoost = 1.0, secretRarity = null, secretRarityChance = 0, minimumRarity = 'Common', incomeMultiplier = 1) {
+        function createPaintCard(rarityBoost = 1.0, shinyBoost = 1.0, secretRarity = null, secretRarityChance = 0, minimumRarity = 'Common', incomeMultiplier = 1, progressionTier = 0) {
             const canRollSecretRarity = secretRarity && RARITIES[secretRarity]?.secretOnly && Math.random() < Math.max(0, Math.min(1, secretRarityChance));
             const rarity = canRollSecretRarity ? secretRarity : rollRarity(rarityBoost, minimumRarity);
-            const variant = rollVariant(shinyBoost);
-            const traits = rollCardTraits();
+            const variant = rollVariant(shinyBoost, progressionTier);
+            const traits = rollCardTraits(progressionTier);
             const traitName = traits[0] || '';
             const splitCount = traitName === 'Duo-Split' ? 2 : traitName === 'Tri-Split' ? 3 : traitName === 'Quad-Split' ? 4 : traitName === 'Hyper-Spectrum' ? 5 : 1;
             let hexesList = [];
@@ -1918,8 +1926,13 @@
             const research = gameState.research || {};
             const rarityBoost = pack.rarityBoost * (1 + ((research.rarityLab || 0) * 0.20));
             const shinyBoost = pack.shinyBoost * (1 + ((research.foilLab || 0) * 0.20));
+            const normalPackTier = PACKS.filter(p => !p.secret).findIndex(p => p.id === pack.id);
+            const secretPackTier = PACKS.filter(p => p.secret).findIndex(p => p.id === pack.id);
+            const progressionTier = pack.secret ? Math.max(2, 2 + (Math.max(0, secretPackTier) * 2)) : Math.max(0, normalPackTier);
+            // Secret rarity odds also ramp with progression so the first secret pack is exciting, not game-breaking.
+            const exclusiveChance = pack.secret ? pack.exclusiveRarityChance * Math.min(1, progressionTier / 10) : pack.exclusiveRarityChance;
             pendingPackCards = [];
-            for (let i = 0; i < actualCardCount; i++) pendingPackCards.push(createPaintCard(rarityBoost, shinyBoost, pack.exclusiveRarity, pack.exclusiveRarityChance, pack.secret ? 'Common' : (pack.rarityFloor || 'Common'), pack.secret ? 1 : (pack.incomeMultiplier || 1)));
+            for (let i = 0; i < actualCardCount; i++) pendingPackCards.push(createPaintCard(rarityBoost, shinyBoost, pack.exclusiveRarity, exclusiveChance, pack.secret ? 'Common' : (pack.rarityFloor || 'Common'), pack.secret ? 1 : (pack.incomeMultiplier || 1), progressionTier));
             saveGameData();
             const container = document.getElementById('revealed-cards-container');
             if (container) container.innerHTML = pendingPackCards.map((card, idx) => '<div id="unrevealed-card-' + idx + '" onclick="revealCard(' + idx + ')" class="w-36 h-52 bg-white/10 backdrop-blur-md rounded-2xl border-2 border-purple-300/40 shadow-2xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 group"><div class="w-12 h-12 rounded-2xl bg-purple-400/20 text-purple-200 flex items-center justify-center text-xl group-hover:rotate-12 transition-transform"><i class="fa-solid fa-gift"></i></div><span class="text-[10px] font-bold text-purple-200 mt-3 uppercase tracking-wider">Tap to Reveal</span></div>').join('');
