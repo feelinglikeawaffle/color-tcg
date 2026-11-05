@@ -376,10 +376,6 @@
                         <option value="Epic">Epic</option>
                         <option value="Legendary">Legendary</option>
                         <option value="Mythic">Mythic</option>
-                        <option value="Split Gradient">Split Gradient</option>
-                        <option value="Ultra Mega Split">Ultra Mega Split</option>
-                        <option value="Quad-Color Split">Quad-Color Split</option>
-                        <option value="Hyper-Spectrum">Hyper-Spectrum</option>
                         <option value="Chromatic Relic">Chromatic Relic</option>
                         <option value="Prismatic Ascendant">Prismatic Ascendant</option>
                         <option value="Ethereal Spectrum">Ethereal Spectrum</option>
@@ -630,10 +626,6 @@
             Epic: { name: 'Epic', multiplier: 15.0, chance: 0.07, bg: 'bg-purple-100 text-purple-800' },
             Legendary: { name: 'Legendary', multiplier: 40.0, chance: 0.035, bg: 'bg-amber-100 text-amber-800' },
             Mythic: { name: 'Mythic', multiplier: 120.0, chance: 0.015, bg: 'bg-rose-100 text-rose-800' },
-            'Split Gradient': { name: 'Split Gradient', multiplier: 350.0, chance: 0.006, bg: 'bg-indigo-100 text-indigo-800' },
-            'Ultra Mega Split': { name: 'Ultra Mega Split', multiplier: 1000.0, chance: 0.0025, bg: 'bg-pink-100 text-pink-800' },
-            'Quad-Color Split': { name: 'Quad-Color Split', multiplier: 3000.0, chance: 0.001, bg: 'bg-fuchsia-100 text-fuchsia-800' },
-            'Hyper-Spectrum': { name: 'Hyper-Spectrum', multiplier: 8000.0, chance: 0.0005, bg: 'bg-cyan-100 text-cyan-800' },
             'Chromatic Relic': { name: 'Chromatic Relic', multiplier: 12000.0, chance: 0, bg: 'bg-violet-100 text-violet-900', secretOnly: true },
             'Prismatic Ascendant': { name: 'Prismatic Ascendant', multiplier: 30000.0, chance: 0, bg: 'bg-fuchsia-100 text-fuchsia-900', secretOnly: true },
             'Ethereal Spectrum': { name: 'Ethereal Spectrum', multiplier: 75000.0, chance: 0, bg: 'bg-sky-100 text-sky-900', secretOnly: true },
@@ -645,6 +637,44 @@
             'Absolute Spectrum': { name: 'Absolute Spectrum', multiplier: 100000000.0, chance: 0, bg: 'bg-orange-100 text-orange-900', secretOnly: true },
             'Genesis Chroma': { name: 'Genesis Chroma', multiplier: 1000000000.0, chance: 0, bg: 'bg-yellow-100 text-yellow-900', secretOnly: true }
         };
+
+
+        const CARD_TRAITS = {
+            'Duo-Split': { multiplier: 40, chance: 0.035, description: 'Two-color split pigment.' },
+            'Tri-Split': { multiplier: 250, chance: 0.012, description: 'Three-color split pigment.' },
+            'Quad-Split': { multiplier: 1800, chance: 0.0035, description: 'Four-color split pigment.' },
+            'Hyper-Spectrum': { multiplier: 15000, chance: 0.0008, description: 'Five-color spectrum pigment.' },
+            'Prismatic Core': { multiplier: 120, chance: 0.009, description: 'A rare prismatic core runs through the swatch.' },
+            'Afterimage': { multiplier: 900, chance: 0.0025, description: 'A spectral afterimage trails the pigment.' },
+            'Living Chroma': { multiplier: 7500, chance: 0.0007, description: 'The pigment shifts between chromatic states.' },
+            'Eclipse Mark': { multiplier: 60000, chance: 0.00015, description: 'A near-impossible eclipse imprint.' },
+            'Origin Signature': { multiplier: 500000, chance: 0.000025, description: 'A one-in-a-generation signature pigment.' }
+        };
+
+        function rollCardTraits() {
+            const traits = [];
+            const roll = Math.random();
+            let cumulative = 0;
+            for (const [name, info] of Object.entries(CARD_TRAITS)) {
+                cumulative += info.chance;
+                if (roll < cumulative) {
+                    traits.push(name);
+                    // A tiny chance for a second independent trait; both stack multiplicatively.
+                    if (Math.random() < 0.0008) {
+                        const remaining = Object.keys(CARD_TRAITS).filter(key => key !== name);
+                        const second = remaining[Math.floor(Math.random() * remaining.length)];
+                        if (second) traits.push(second);
+                    }
+                    break;
+                }
+            }
+            return traits;
+        }
+
+        function getCardTraitMultiplier(cardOrTraits) {
+            const traits = Array.isArray(cardOrTraits) ? cardOrTraits : (cardOrTraits?.traits || []);
+            return traits.reduce((mult, name) => mult * (CARD_TRAITS[name]?.multiplier || 1), 1);
+        }
 
         // VARIANTS / FINISHES CONFIG
         const VARIANTS = {
@@ -730,15 +760,14 @@
         const NORMAL_PACK_RARITY_FLOORS = [
             'Common', 'Uncommon', 'Rare', 'Rare', 'Epic', 'Epic',
             'Legendary', 'Legendary', 'Mythic', 'Mythic',
-            'Split Gradient', 'Split Gradient', 'Ultra Mega Split', 'Ultra Mega Split',
-            'Quad-Color Split', 'Quad-Color Split',
-            'Hyper-Spectrum', 'Hyper-Spectrum', 'Hyper-Spectrum', 'Hyper-Spectrum',
-            'Hyper-Spectrum', 'Hyper-Spectrum'
+            'Mythic', 'Mythic', 'Mythic', 'Mythic',
+            'Mythic', 'Mythic', 'Mythic', 'Mythic',
+            'Mythic', 'Mythic', 'Mythic', 'Mythic'
         ];
         let normalPackIndex = 0;
         PACKS.filter(pack => !pack.secret).forEach(pack => {
             const tier = normalPackIndex++;
-            pack.rarityFloor = NORMAL_PACK_RARITY_FLOORS[tier] || 'Hyper-Spectrum';
+            pack.rarityFloor = NORMAL_PACK_RARITY_FLOORS[tier] || 'Mythic';
             pack.bonusCards = 2 + Math.floor(tier / 3);
             pack.incomeMultiplier = 1 + (tier * 0.12);
         });
@@ -793,14 +822,24 @@
         // SAFE CARD SANITIZER
         function sanitizeCard(card) {
             if (!card || typeof card !== 'object') return null;
-            const validRarity = RARITIES[card.rarity] ? card.rarity : 'Common';
+            const legacySplitTraits = {
+                'Split Gradient': { rarity: 'Rare', trait: 'Duo-Split' },
+                'Ultra Mega Split': { rarity: 'Epic', trait: 'Tri-Split' },
+                'Quad-Color Split': { rarity: 'Legendary', trait: 'Quad-Split' },
+                'Hyper-Spectrum': { rarity: 'Mythic', trait: 'Hyper-Spectrum' }
+            };
+            const legacy = legacySplitTraits[card.rarity];
+            const validRarity = legacy ? legacy.rarity : (RARITIES[card.rarity] ? card.rarity : 'Common');
             const validVariant = VARIANTS[card.variant] ? card.variant : 'Standard';
             const id = card.id || ('card_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
             const hex = typeof card.hex === 'string' ? card.hex : '#8b5cf6';
             const hexesList = Array.isArray(card.hexesList) && card.hexesList.length > 0 ? card.hexesList : [hex];
-            const incomePerSec = typeof card.incomePerSec === 'number' && !isNaN(card.incomePerSec) ? card.incomePerSec : 0.05;
-            const sellValue = typeof card.sellValue === 'number' && !isNaN(card.sellValue) ? card.sellValue : (incomePerSec * 40);
-
+            const traits = Array.isArray(card.traits) ? card.traits.filter(name => CARD_TRAITS[name]) : [];
+            if (legacy && !traits.includes(legacy.trait)) traits.push(legacy.trait);
+            const traitMultiplier = getCardTraitMultiplier(traits);
+            const rarityMultiplier = RARITIES[validRarity]?.multiplier || 1;
+            const finishMultiplier = VARIANTS[validVariant]?.multiplier || 1;
+            const incomePerSec = 0.05 * rarityMultiplier * finishMultiplier * traitMultiplier;
             return {
                 id,
                 hex,
@@ -808,8 +847,10 @@
                 name: card.name || 'Sample Swatch',
                 rarity: validRarity,
                 variant: validVariant,
-                incomePerSec,
-                sellValue,
+                traits,
+                traitMultiplier,
+                incomePerSec: parseFloat(incomePerSec.toFixed(2)),
+                sellValue: parseFloat((incomePerSec * 40).toFixed(2)),
                 acquiredAt: card.acquiredAt || new Date().toLocaleDateString()
             };
         }
@@ -924,7 +965,7 @@
                 if (rand < weights[i]) return keys[i];
                 rand -= weights[i];
             }
-            return 'Common';
+            return keys[0] || 'Common';
         }
 
         function rollVariant(boost = 1.0) {
@@ -949,38 +990,21 @@
             const canRollSecretRarity = secretRarity && RARITIES[secretRarity]?.secretOnly && Math.random() < Math.max(0, Math.min(1, secretRarityChance));
             const rarity = canRollSecretRarity ? secretRarity : rollRarity(rarityBoost, minimumRarity);
             const variant = rollVariant(shinyBoost);
-            let hex, name;
+            const traits = rollCardTraits();
+            const traitName = traits[0] || '';
+            const splitCount = traitName === 'Duo-Split' ? 2 : traitName === 'Tri-Split' ? 3 : traitName === 'Quad-Split' ? 4 : traitName === 'Hyper-Spectrum' ? 5 : 1;
             let hexesList = [];
-
-            if (rarity === 'Split Gradient') {
-                const h1 = generateRandomHex(), h2 = generateRandomHex();
-                hexesList = [h1, h2];
-                hex = `linear-gradient(135deg, ${h1}, ${h2})`;
-                name = `Duo-Split ${generateProceduralName(h1)}`;
-            } else if (rarity === 'Ultra Mega Split') {
-                const h1 = generateRandomHex(), h2 = generateRandomHex(), h3 = generateRandomHex();
-                hexesList = [h1, h2, h3];
-                hex = `linear-gradient(135deg, ${h1}, ${h2}, ${h3})`;
-                name = `Tri-Split ${generateProceduralName(h1)}`;
-            } else if (rarity === 'Quad-Color Split') {
-                const h1 = generateRandomHex(), h2 = generateRandomHex(), h3 = generateRandomHex(), h4 = generateRandomHex();
-                hexesList = [h1, h2, h3, h4];
-                hex = `linear-gradient(135deg, ${h1}, ${h2}, ${h3}, ${h4})`;
-                name = `Quad-Split ${generateProceduralName(h1)}`;
-            } else if (rarity === 'Hyper-Spectrum') {
-                const h1 = generateRandomHex(), h2 = generateRandomHex(), h3 = generateRandomHex(), h4 = generateRandomHex(), h5 = generateRandomHex();
-                hexesList = [h1, h2, h3, h4, h5];
-                hex = `linear-gradient(135deg, ${h1}, ${h2}, ${h3}, ${h4}, ${h5})`;
-                name = `Hyper ${generateProceduralName(h1)}`;
-            } else {
-                hex = generateRandomHex();
-                hexesList = [hex];
-                name = generateProceduralName(hex);
-            }
+            for (let i = 0; i < splitCount; i++) hexesList.push(generateRandomHex());
+            const hex = splitCount > 1
+                ? 'linear-gradient(135deg, ' + hexesList.join(', ') + ')'
+                : hexesList[0];
+            const namePrefix = splitCount > 1 ? traitName + ' ' : '';
+            const name = namePrefix + generateProceduralName(hexesList[0]);
 
             const rMult = RARITIES[rarity] ? RARITIES[rarity].multiplier : 1;
             const vMult = VARIANTS[variant] ? VARIANTS[variant].multiplier : 1;
-            const incomePerSec = 0.05 * rMult * vMult * Math.max(1, incomeMultiplier);
+            const traitMult = getCardTraitMultiplier(traits);
+            const incomePerSec = 0.05 * rMult * vMult * traitMult * Math.max(1, incomeMultiplier);
 
             return {
                 id: 'card_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
@@ -989,6 +1013,8 @@
                 name: name,
                 rarity: rarity,
                 variant: variant,
+                traits: traits,
+                traitMultiplier: traitMult,
                 incomePerSec: parseFloat(incomePerSec.toFixed(2)),
                 sellValue: parseFloat((incomePerSec * 40).toFixed(2)),
                 acquiredAt: new Date().toLocaleDateString()
@@ -1148,6 +1174,7 @@
                 variantBadge = `<span class="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-md uppercase tracking-wider">${card.variant} (${mult}x)</span>`;
             }
 
+            const traitBadges = (card.traits || []).map(name => '<span class="bg-amber-100 text-amber-800 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-amber-200">' + name + ' · ' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x</span>').join('');
             const isGradient = card.hex && card.hex.includes('gradient');
             const bgStyle = isGradient ? `background: ${card.hex};` : `background-color: ${card.hex};`;
             const displayHex = isGradient ? card.rarity.toUpperCase() : card.hex;
@@ -1161,6 +1188,7 @@
                         </div>
                         <div class="space-y-1">
                             <div class="text-xs font-bold text-slate-800 truncate" title="${card.name}">${card.name}</div>
+                            ${traitBadges ? '<div class="flex flex-wrap gap-1">' + traitBadges + '</div>' : ''}
                             <div class="flex items-center justify-between text-[10px]">
                                 <span class="px-2 py-0.5 rounded-md font-bold ${rarityInfo.bg}">${card.rarity}</span>
                                 <span class="font-mono text-emerald-600 font-bold">+$${formatCurrency(card.incomePerSec)}/s</span>
@@ -1220,7 +1248,7 @@
             if (!pack.secret) return true;
 
             const uniqueHexes = Array.from(new Set(gameState.inventory.flatMap(c => c.hexesList || [c.hex])));
-            const splitCards = gameState.inventory.filter(c => c.rarity.includes('Split') || c.rarity.includes('Spectrum')).length;
+            const splitCards = gameState.inventory.filter(c => (c.traits || []).some(name => ['Duo-Split', 'Tri-Split', 'Quad-Split', 'Hyper-Spectrum'].includes(name))).length;
             const maxFinishMult = gameState.inventory.reduce((max, c) => Math.max(max, VARIANTS[c.variant]?.multiplier || 1), 1);
 
             let completedSetsCount = 0;
@@ -1432,14 +1460,18 @@
 
         function getMasteryContracts() {
             const uniqueHexes = new Set(gameState.inventory.flatMap(card => card.hexesList || [card.hex])).size;
-            const splitCards = gameState.inventory.filter(card => ['Split Gradient', 'Ultra Mega Split', 'Quad-Color Split', 'Hyper-Spectrum'].includes(card.rarity)).length;
+            const splitCards = gameState.inventory.filter(card => (card.traits || []).some(name => ['Duo-Split', 'Tri-Split', 'Quad-Split', 'Hyper-Spectrum'].includes(name))).length;
             const topFinishes = gameState.inventory.filter(card => (VARIANTS[card.variant]?.multiplier || 1) >= 100000).length;
             return [
                 { id: 'collector_50', name: 'Archive Expansion', description: 'Unseal 50 packs.', progress: gameState.packsOpened, target: 50, reward: 25000 },
                 { id: 'palette_100', name: 'Spectrum Cartographer', description: 'Discover 100 unique colors in your Codex.', progress: uniqueHexes, target: 100, reward: 250000 },
-                { id: 'split_20', name: 'Fracture Engineer', description: 'Collect 20 split-spectrum cards.', progress: splitCards, target: 20, reward: 2500000 },
+                { id: 'split_20', name: 'Fracture Engineer', description: 'Collect 20 split-spectrum traits on cards of any rarity.', progress: splitCards, target: 20, reward: 2500000 },
+                { id: 'trait_5', name: 'Trait Researcher', description: 'Collect 5 different special traits.', progress: new Set(gameState.inventory.flatMap(card => card.traits || [])).size, target: 5, reward: 12500000 },
+                { id: 'trait_stack_3', name: 'Trait Collector', description: 'Own three cards with at least one special trait.', progress: gameState.inventory.filter(card => (card.traits || []).length > 0).length, target: 3, reward: 3500000 },
+                { id: 'stacked_3', name: 'Compound Discovery', description: 'Find a card with two stacked traits.', progress: gameState.inventory.some(card => (card.traits || []).length >= 2) ? 1 : 0, target: 1, reward: 50000000 },
                 { id: 'finish_5', name: 'Foil Connoisseur', description: 'Collect 5 finishes worth at least 100,000x.', progress: topFinishes, target: 5, reward: 25000000 },
-                { id: 'revenue_1b', name: 'Chromatic Tycoon', description: 'Earn $1 billion in lifetime revenue.', progress: gameState.lifetimeRevenue, target: 1000000000, reward: 100000000 }
+                { id: 'revenue_1b', name: 'Chromatic Tycoon', description: 'Earn $1 billion in lifetime revenue.', progress: gameState.lifetimeRevenue, target: 1000000000, reward: 100000000 },
+                { id: 'trait_origin', name: 'Origin Hunter', description: 'Discover an Origin Signature trait.', progress: gameState.inventory.some(card => (card.traits || []).includes('Origin Signature')) ? 1 : 0, target: 1, reward: 1000000000 }
             ];
         }
 
@@ -1909,7 +1941,7 @@
             if (prev) prev.innerHTML = renderCardHTML(card, false);
             if (hexCode) hexCode.innerText = card.hex;
             if (rarity) rarity.innerText = card.rarity;
-            if (variant) variant.innerText = `${card.variant} (${VARIANTS[card.variant]?.multiplier || 1}x)`;
+            if (variant) variant.innerText = `${card.variant} (${VARIANTS[card.variant]?.multiplier || 1}x)` + ((card.traits || []).length ? ' · Traits: ' + card.traits.map(name => name + ' (' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x)').join(', ') : ' · No special traits');
             if (income) income.innerText = `+$${formatCurrency(card.incomePerSec)}/s`;
             if (sellPrice) sellPrice.innerText = `$${formatCurrency(card.sellValue)}`;
 
