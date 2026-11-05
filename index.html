@@ -266,6 +266,33 @@
             margin: 0 auto 7px;
         }
 
+        /* Trait-specific pigment overlays: the base swatch color remains visible beneath each effect. */
+        .trait-color-surface { isolation: isolate; }
+        .trait-color-surface::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0; opacity: .78; mix-blend-mode: screen; }
+        .trait-color-surface > * { position: relative; z-index: 1; }
+        .trait-aurora-veil::after { background: linear-gradient(125deg, transparent 12%, rgba(80,255,190,.65), rgba(160,110,255,.48), transparent 82%); }
+        .trait-static-bloom::after { background: repeating-linear-gradient(115deg, transparent 0 18px, rgba(80,230,255,.65) 19px 21px, transparent 22px 38px); }
+        .trait-glacier-glass::after { background: linear-gradient(135deg, rgba(255,255,255,.72), transparent 35%, rgba(125,220,255,.5)); box-shadow: inset 0 0 18px rgba(255,255,255,.65); }
+        .trait-emberheart::after { background: radial-gradient(circle at 50% 75%, rgba(255,90,20,.8), rgba(255,190,50,.35) 38%, transparent 72%); }
+        .trait-moonlit::after { background: radial-gradient(circle at 75% 15%, rgba(235,245,255,.85), rgba(150,175,255,.3) 35%, transparent 72%); }
+        .trait-solar-flare::after { background: conic-gradient(from 20deg at 50% 50%, transparent, rgba(255,220,60,.65), transparent 24%, rgba(255,120,20,.45), transparent 60%); }
+        .trait-velvet-touch::after { background: linear-gradient(145deg, rgba(45,12,65,.42), rgba(255,210,245,.22), rgba(35,10,50,.5)); mix-blend-mode: soft-light; }
+        .trait-holographic-dust::after { background: radial-gradient(circle at 20% 25%, white 0 1px, transparent 2px), radial-gradient(circle at 68% 35%, rgba(100,255,255,.95) 0 1px, transparent 3px), radial-gradient(circle at 42% 78%, rgba(255,150,240,.9) 0 1px, transparent 3px), linear-gradient(120deg, transparent, rgba(255,255,255,.22), transparent); background-size: 37px 31px, 43px 39px, 29px 41px, auto; }
+        .trait-void-touched::after { background: radial-gradient(circle, transparent 20%, rgba(8,5,24,.78) 100%); mix-blend-mode: multiply; }
+        .trait-stardust-trail::after { background: repeating-linear-gradient(135deg, transparent 0 14px, rgba(255,255,255,.7) 15px 16px, transparent 17px 31px); }
+        .trait-glasswing::after { background: linear-gradient(115deg, rgba(255,255,255,.72), transparent 28%, rgba(110,255,230,.45) 52%, transparent 76%, rgba(255,255,255,.55)); }
+        .trait-gravity-well::after { background: radial-gradient(ellipse at center, transparent 8%, rgba(20,10,55,.2) 38%, rgba(10,5,35,.72) 100%); }
+        .trait-phantom-hue::after { background: linear-gradient(90deg, rgba(255,0,180,.32), transparent 30%, rgba(0,220,255,.38) 70%, transparent); }
+        .trait-time-fracture::after { background: repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,.55) 24px 25px, transparent 26px 48px); clip-path: polygon(0 0, 100% 0, 92% 34%, 100% 58%, 88% 100%, 0 100%, 9% 62%, 0 35%); }
+        .trait-celestial-bloom::after { background: radial-gradient(ellipse at center, rgba(255,255,255,.72), rgba(255,205,100,.35) 25%, rgba(180,120,255,.35) 48%, transparent 76%); }
+        .trait-first-light::after { background: radial-gradient(circle at 50% 50%, white, rgba(255,245,180,.8) 12%, rgba(255,255,255,.18) 42%, transparent 72%); }
+        .trait-duo-split::after, .trait-tri-split::after, .trait-quad-split::after, .trait-hyper-spectrum::after { background: linear-gradient(115deg, rgba(255,255,255,.25), transparent 42%, rgba(255,255,255,.28)); }
+        .trait-prismatic-core::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), rgba(120,245,255,.35), transparent); }
+        .trait-afterimage::after { background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,.45) 45%, rgba(190,140,255,.4) 58%, transparent 80%); }
+        .trait-living-chroma::after { background: linear-gradient(120deg, rgba(255,80,170,.4), rgba(70,255,190,.38), rgba(90,130,255,.42)); animation: holoSweep 4s ease infinite; background-size: 250% 250%; }
+        .trait-eclipse-mark::after { background: radial-gradient(circle at 50% 50%, transparent 0 22%, rgba(15,10,35,.88) 24% 35%, rgba(255,210,90,.6) 37%, transparent 52%); }
+        .trait-origin-signature::after { background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.9), rgba(255,215,120,.55) 18%, transparent 58%); box-shadow: inset 0 0 22px rgba(255,255,255,.8); }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -641,31 +668,31 @@
 
 
         const CARD_TRAITS = {
-            'Duo-Split': { multiplier: 40, chance: 0.035, description: 'Two-color split pigment.' },
-            'Tri-Split': { multiplier: 250, chance: 0.012, description: 'Three-color split pigment.' },
-            'Quad-Split': { multiplier: 1800, chance: 0.0035, description: 'Four-color split pigment.' },
-            'Hyper-Spectrum': { multiplier: 15000, chance: 0.0008, description: 'Five-color spectrum pigment.' },
-            'Prismatic Core': { multiplier: 120, chance: 0.009, description: 'A rare prismatic core runs through the swatch.' },
-            'Afterimage': { multiplier: 900, chance: 0.0025, description: 'A spectral afterimage trails the pigment.' },
-            'Living Chroma': { multiplier: 7500, chance: 0.0007, description: 'The pigment shifts between chromatic states.' },
-            'Eclipse Mark': { multiplier: 60000, chance: 0.00015, description: 'A near-impossible eclipse imprint.' },
-            'Origin Signature': { multiplier: 500000, chance: 0.000025, description: 'A one-in-a-generation signature pigment.' },
-            'Aurora Veil': { multiplier: 65, chance: 0.018, description: 'Soft aurora light shimmers through the pigment.' },
-            'Static Bloom': { multiplier: 180, chance: 0.011, description: 'Electric filaments bloom across the color.' },
-            'Glacier Glass': { multiplier: 320, chance: 0.008, description: 'A crystal-clear frozen sheen.' },
-            'Emberheart': { multiplier: 550, chance: 0.006, description: 'A warm ember glow sits beneath the surface.' },
-            'Moonlit': { multiplier: 850, chance: 0.0045, description: 'A cool lunar highlight follows the swatch.' },
-            'Solar Flare': { multiplier: 1400, chance: 0.0035, description: 'A concentrated burst of solar pigment.' },
-            'Velvet Touch': { multiplier: 2100, chance: 0.0028, description: 'An unusually deep, soft-looking pigment.' },
-            'Holographic Dust': { multiplier: 3400, chance: 0.0022, description: 'Tiny holographic flecks catch the light.' },
-            'Void Touched': { multiplier: 5200, chance: 0.0017, description: 'A dark edge seems to absorb surrounding color.' },
-            'Stardust Trail': { multiplier: 8200, chance: 0.0012, description: 'Fine star-like particles trail through the pigment.' },
-            'Glasswing': { multiplier: 12000, chance: 0.0009, description: 'A translucent iridescent trait.' },
-            'Gravity Well': { multiplier: 19000, chance: 0.00065, description: 'Color appears to bend inward toward a central point.' },
-            'Phantom Hue': { multiplier: 28000, chance: 0.00045, description: 'A hidden secondary hue appears at certain angles.' },
-            'Time Fracture': { multiplier: 42000, chance: 0.0003, description: 'Layered color bands resemble a frozen instant.' },
-            'Celestial Bloom': { multiplier: 85000, chance: 0.00012, description: 'A rare radiant bloom of cosmic pigment.' },
-            'First Light': { multiplier: 250000, chance: 0.00004, description: 'An exceptionally rare origin-point glow.' }
+            'Duo-Split': { multiplier: 40, chance: 0.07, description: 'Two-color split pigment.' },
+            'Tri-Split': { multiplier: 250, chance: 0.024, description: 'Three-color split pigment.' },
+            'Quad-Split': { multiplier: 1800, chance: 0.007, description: 'Four-color split pigment.' },
+            'Hyper-Spectrum': { multiplier: 15000, chance: 0.0016, description: 'Five-color spectrum pigment.' },
+            'Prismatic Core': { multiplier: 120, chance: 0.018, description: 'A rare prismatic core runs through the swatch.' },
+            'Afterimage': { multiplier: 900, chance: 0.005, description: 'A spectral afterimage trails the pigment.' },
+            'Living Chroma': { multiplier: 7500, chance: 0.0014, description: 'The pigment shifts between chromatic states.' },
+            'Eclipse Mark': { multiplier: 60000, chance: 0.0003, description: 'A near-impossible eclipse imprint.' },
+            'Origin Signature': { multiplier: 500000, chance: 0.00005, description: 'A one-in-a-generation signature pigment.' },
+            'Aurora Veil': { multiplier: 65, chance: 0.036, description: 'Soft aurora light shimmers through the pigment.' },
+            'Static Bloom': { multiplier: 180, chance: 0.022, description: 'Electric filaments bloom across the color.' },
+            'Glacier Glass': { multiplier: 320, chance: 0.016, description: 'A crystal-clear frozen sheen.' },
+            'Emberheart': { multiplier: 550, chance: 0.012, description: 'A warm ember glow sits beneath the surface.' },
+            'Moonlit': { multiplier: 850, chance: 0.009, description: 'A cool lunar highlight follows the swatch.' },
+            'Solar Flare': { multiplier: 1400, chance: 0.007, description: 'A concentrated burst of solar pigment.' },
+            'Velvet Touch': { multiplier: 2100, chance: 0.0056, description: 'An unusually deep, soft-looking pigment.' },
+            'Holographic Dust': { multiplier: 3400, chance: 0.0044, description: 'Tiny holographic flecks catch the light.' },
+            'Void Touched': { multiplier: 5200, chance: 0.0034, description: 'A dark edge seems to absorb surrounding color.' },
+            'Stardust Trail': { multiplier: 8200, chance: 0.0024, description: 'Fine star-like particles trail through the pigment.' },
+            'Glasswing': { multiplier: 12000, chance: 0.0018, description: 'A translucent iridescent trait.' },
+            'Gravity Well': { multiplier: 19000, chance: 0.0013, description: 'Color appears to bend inward toward a central point.' },
+            'Phantom Hue': { multiplier: 28000, chance: 0.0009, description: 'A hidden secondary hue appears at certain angles.' },
+            'Time Fracture': { multiplier: 42000, chance: 0.0006, description: 'Layered color bands resemble a frozen instant.' },
+            'Celestial Bloom': { multiplier: 85000, chance: 0.00024, description: 'A rare radiant bloom of cosmic pigment.' },
+            'First Light': { multiplier: 250000, chance: 0.00008, description: 'An exceptionally rare origin-point glow.' }
         };
 
         function rollCardTraits() {
@@ -1192,6 +1219,7 @@
             }
 
             const traitBadges = (card.traits || []).map(name => '<span class="bg-amber-100 text-amber-800 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-amber-200">' + name + ' · ' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x</span>').join('');
+            const traitVisualClasses = (card.traits || []).map(name => 'trait-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-')).join(' ');
             const isGradient = card.hex && card.hex.includes('gradient');
             const bgStyle = isGradient ? `background: ${card.hex};` : `background-color: ${card.hex};`;
             const displayHex = isGradient ? card.rarity.toUpperCase() : card.hex;
@@ -1199,7 +1227,7 @@
             return `
                 <div onmousemove="handle3DTilt(event, this)" onmouseleave="reset3DTilt(this)" onclick="${isClickable ? `openCardModal('${card.id}')` : ''}" class="card-3d-wrapper cursor-pointer group">
                     <div class="card-3d-inner bg-white/80 rounded-2xl p-3 border border-purple-100 shadow-sm hover:shadow-xl relative overflow-hidden ${effectClass}">
-                        <div class="w-full h-32 rounded-xl mb-2.5 shadow-inner relative flex items-end p-2 transition-transform duration-300 group-hover:scale-[1.02]" style="${bgStyle}">
+                        <div class="w-full h-32 rounded-xl mb-2.5 shadow-inner relative flex items-end p-2 transition-transform duration-300 group-hover:scale-[1.02] trait-color-surface ${traitVisualClasses}" style="${bgStyle}">
                             <div class="absolute top-2 right-2">${variantBadge}</div>
                             <span class="bg-slate-900/60 backdrop-blur-md px-2 py-0.5 rounded-lg text-[9px] font-mono text-white font-bold tracking-wider truncate max-w-[110px]">${displayHex}</span>
                         </div>
@@ -1334,7 +1362,7 @@
                                 <div class="text-[10px] text-slate-400 font-bold uppercase">Pack Price</div>
                                 <div class="font-mono text-sm font-black text-slate-800">$${formatCurrency(pack.price)}</div>
                             </div>
-                            ${!pack.secret ? '<div class="flex flex-wrap gap-1.5 mt-2">' + [5,10,25].map(n => '<button id="pack-bulk-btn-${pack.id}-' + n + '" onclick="buyPack(\'${pack.id}\',' + n + ')" ' + (gameState.currency >= pack.price * n ? '' : 'disabled') + ' class="px-2 py-1 rounded-lg text-[9px] font-black ' + (gameState.currency >= pack.price * n ? 'bg-slate-100 text-purple-700 hover:bg-purple-100' : 'bg-slate-100 text-slate-300') + '">Buy x' + n + '</button>').join('') + '</div>' : ''}
+                            ${!pack.secret ? '<div class="flex flex-wrap gap-1.5 mt-2">' + [5,10,25].map(n => '<button id="pack-bulk-btn-' + pack.id + '-' + n + '" onclick="buyPack(' + "'" + pack.id + "'" + ',' + n + ')" ' + (gameState.currency >= pack.price * n && !pendingSecretPackPurchase ? '' : 'disabled') + ' class="px-2 py-1 rounded-lg text-[9px] font-black bg-slate-100 text-purple-700 hover:bg-purple-100 disabled:text-slate-300 disabled:cursor-not-allowed">Buy x' + n + '</button>').join('') + '</div>' : ''}
                             <button id="pack-buy-btn-${pack.id}" onclick="buyPack('${pack.id}', 1)" ${canAfford ? '' : 'disabled'} class="px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${canAfford ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}">
                                 Unseal Pack
                             </button>
@@ -1349,7 +1377,11 @@
                 const btn = document.getElementById(`pack-buy-btn-${pack.id}`);
                 [5, 10, 25].forEach(quantity => {
                     const bulkBtn = document.getElementById(`pack-bulk-btn-${pack.id}-${quantity}`);
-                    if (bulkBtn) bulkBtn.disabled = pack.secret || pendingSecretPackPurchase || gameState.currency < pack.price * quantity;
+                    if (bulkBtn) {
+                        const canBuyBulk = !pack.secret && !pendingSecretPackPurchase && gameState.currency >= pack.price * quantity;
+                        bulkBtn.disabled = !canBuyBulk;
+                        bulkBtn.className = 'px-2 py-1 rounded-lg text-[9px] font-black ' + (canBuyBulk ? 'bg-slate-100 text-purple-700 hover:bg-purple-100' : 'bg-slate-100 text-slate-300 cursor-not-allowed');
+                    }
                 });
                 if (btn) {
                     const canAfford = gameState.currency >= pack.price && !pendingSecretPackPurchase;
