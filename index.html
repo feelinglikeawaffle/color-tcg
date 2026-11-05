@@ -243,6 +243,29 @@
             border-color: #ff0055 !important;
         }
 
+        /* Secret-pack mini-game */
+        .mini-game-choice {
+            min-height: 76px;
+            border: 2px solid rgba(196, 181, 253, 0.75);
+            border-radius: 16px;
+            background: rgba(255,255,255,0.88);
+            color: #334155;
+            font-weight: 800;
+            transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+        }
+        .mini-game-choice:hover {
+            transform: translateY(-2px);
+            border-color: #a78bfa;
+            box-shadow: 0 8px 18px rgba(139,92,246,.15);
+        }
+        .mini-game-choice:active { transform: scale(.98); }
+        .mini-game-swatch {
+            width: 54px; height: 54px; border-radius: 14px;
+            border: 2px solid rgba(15,23,42,.12);
+            box-shadow: inset 0 1px 4px rgba(255,255,255,.45), 0 3px 8px rgba(15,23,42,.10);
+            margin: 0 auto 7px;
+        }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -471,6 +494,26 @@
 
     </main>
 
+    <!-- SECRET PACK MINI-GAME MODAL -->
+    <div id="secret-minigame-modal" class="hidden fixed inset-0 z-[60] bg-slate-900/75 backdrop-blur-lg flex items-center justify-center p-4">
+        <div class="glass-panel bg-white/95 p-6 sm:p-8 rounded-3xl max-w-lg w-full text-center space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between gap-3">
+                <span class="text-[10px] font-black tracking-widest text-amber-700 bg-amber-100 px-3 py-1.5 rounded-full">SECRET PACK ACCESS</span>
+                <span id="secret-minigame-timer" class="font-mono font-black text-sm text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl">10s</span>
+            </div>
+            <div>
+                <h2 id="secret-minigame-title" class="text-2xl font-black text-slate-800">Quick Challenge</h2>
+                <p id="secret-minigame-prompt" class="text-sm text-slate-500 mt-2">Complete this quick challenge to unseal your pack.</p>
+            </div>
+            <div id="secret-minigame-body" class="min-h-[150px] flex flex-col justify-center gap-4"></div>
+            <p id="secret-minigame-feedback" class="text-xs font-bold text-slate-500 min-h-5" aria-live="polite"></p>
+            <div class="flex gap-2">
+                <button id="secret-minigame-cancel" onclick="cancelSecretMiniGame()" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs">Cancel & Refund</button>
+                <button id="secret-minigame-close" onclick="closeSecretMiniGame()" class="hidden flex-1 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-bold text-xs">Return to Store</button>
+            </div>
+        </div>
+    </div>
+
     <!-- PACK OPENING MODAL -->
     <div id="pack-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-4">
         <div class="max-w-4xl w-full text-center space-y-6">
@@ -625,28 +668,28 @@
         ];
 
         const PACKS = [
-            { id: 'starter', name: 'Pastel Starter', description: 'Soft subtle hues and foundation palette samples.', price: 10, cardsCount: 3, icon: 'fa-paint-roller', rarityBoost: 1.0, shinyBoost: 1.0 },
-            { id: 'vibrant', name: 'Chroma Palette', description: 'Saturated secondary colors with elevated rare chances.', price: 80, cardsCount: 4, icon: 'fa-fill-drip', rarityBoost: 1.6, shinyBoost: 1.4 },
-            { id: 'neon', name: 'Neon Fluorescent', description: 'High-energy shades with guaranteed shiny variants.', price: 400, cardsCount: 4, icon: 'fa-wand-magic-sparkles', rarityBoost: 2.8, shinyBoost: 2.2 },
-            { id: 'spectrum', name: 'Spectrum Elite', description: 'Curated premium pigments with superior income yield.', price: 2200, cardsCount: 5, icon: 'fa-eye-dropper', rarityBoost: 5.5, shinyBoost: 4.0 },
-            { id: 'cosmic', name: 'Cosmic Hex Pack', description: 'Deep cosmic tone swatches with boosted Mythic rates.', price: 12000, cardsCount: 5, icon: 'fa-cubes', rarityBoost: 12.0, shinyBoost: 8.0 },
-            { id: 'divine', name: 'Divine Chromatic', description: 'Ultra-exclusive sample pack containing celestial hues.', price: 85000, cardsCount: 6, icon: 'fa-crown', rarityBoost: 30.0, shinyBoost: 18.0 },
-            { id: 'spectral', name: 'Spectral Palette', description: 'Prismatic pigments infused with extra-dimensional sheen.', price: 500000, cardsCount: 6, icon: 'fa-rainbow', rarityBoost: 75.0, shinyBoost: 40.0 },
-            { id: 'hyperneon', name: 'Hyperdrive Neon', description: 'Electrified photon hues that multiply passive income.', price: 3000000, cardsCount: 6, icon: 'fa-bolt-lightning', rarityBoost: 180.0, shinyBoost: 100.0 },
-            { id: 'zenith', name: 'Zenith Chroma', description: 'Pure zenith pigments yielding incredible split-color odds.', price: 20000000, cardsCount: 7, icon: 'fa-star-of-david', rarityBoost: 450.0, shinyBoost: 250.0 },
-            { id: 'void', name: 'Void Spectrum', description: 'Abyssal dark shades mixed with radiant quantum foils.', price: 150000000, cardsCount: 7, icon: 'fa-circle-radiation', rarityBoost: 1200.0, shinyBoost: 600.0 },
-            { id: 'infinity', name: 'Infinity Prism', description: 'Infinite range of split gradients and high-multiplier swatches.', price: 1000000000, cardsCount: 8, icon: 'fa-infinity', rarityBoost: 3000.0, shinyBoost: 1500.0 },
-            { id: 'celestial', name: 'Celestial Gradient', description: 'Starlight hues woven into multi-tone gradient samples.', price: 8000000000, cardsCount: 8, icon: 'fa-sun', rarityBoost: 8000.0, shinyBoost: 4000.0 },
-            { id: 'supernova_core', name: 'Supernova Core', description: 'Infused with stellar energy. High multi-split chance.', price: 100000000000000, cardsCount: 8, icon: 'fa-burst', rarityBoost: 25000.0, shinyBoost: 12000.0 },
-            { id: 'nebula_swirl', name: 'Nebula Swirl', description: 'Deep space gas clouds forming shimmering diamond tones.', price: 2500000000000000, cardsCount: 8, icon: 'fa-compass-drafting', rarityBoost: 80000.0, shinyBoost: 40000.0 },
-            { id: 'galactic_cat', name: 'Galactic Catalyst', description: 'Triggers atomic pigment splits with huge multipliers.', price: 75000000000000000, cardsCount: 9, icon: 'fa-circle-nodes', rarityBoost: 250000.0, shinyBoost: 120000.0 },
-            { id: 'hypernova_burst', name: 'Hypernova Burst', description: 'Blinding cosmic radiation unlocks Chrono Distortion.', price: 2000000000000000000, cardsCount: 9, icon: 'fa-volcano', rarityBoost: 800000.0, shinyBoost: 400000.0 },
-            { id: 'pulsar_beam', name: 'Pulsar Beam', description: 'Rhythmic photon pulses generating hyper-spectrum shades.', price: 50000000000000000000, cardsCount: 9, icon: 'fa-satellite-dish', rarityBoost: 2500000.0, shinyBoost: 1200000.0 },
-            { id: 'dyson_sphere', name: 'Dyson Sphere Chroma', description: 'Harnesses stellar energy to create Obsidian Gloss.', price: 1000000000000000000000, cardsCount: 10, icon: 'fa-globe', rarityBoost: 8000000.0, shinyBoost: 4000000.0 },
-            { id: 'omniverse_spec', name: 'Omniverse Spectrum', description: 'Multiverse pigment formulas yielding godlike revenue.', price: 35000000000000000000000, cardsCount: 10, icon: 'fa-atom', rarityBoost: 25000000.0, shinyBoost: 12000000.0 },
-            { id: 'eternity_hue', name: 'Eternity Hue', description: 'Timeless chromatic swatches with Godray Aurora odds.', price: 1000000000000000000000000, cardsCount: 10, icon: 'fa-hourglass-start', rarityBoost: 80000000.0, shinyBoost: 40000000.0 },
-            { id: 'absolute_zero', name: 'Absolute Zero Pigment', description: 'Frozen photon particles emitting maximum yield energy.', price: 50000000000000000000000000, cardsCount: 12, icon: 'fa-snowflake', rarityBoost: 250000000.0, shinyBoost: 120000000.0 },
-            { id: 'big_bang_chroma', name: 'Big Bang Chroma', description: 'The genesis of all color in the universe. Infinite power.', price: 1000000000000000000000000000, cardsCount: 12, icon: 'fa-meteor', rarityBoost: 1000000000.0, shinyBoost: 500000000.0 },
+            { id: 'starter', name: 'Pastel Starter', description: 'Soft subtle hues and foundation palette samples.', price: 10, cardsCount: 3, icon: 'fa-paint-roller', rarityBoost: 1, shinyBoost: 1 },
+            { id: 'vibrant', name: 'Chroma Palette', description: 'Saturated secondary colors with elevated rare chances.', price: 80, cardsCount: 5, icon: 'fa-fill-drip', rarityBoost: 1.8, shinyBoost: 1.7 },
+            { id: 'neon', name: 'Neon Fluorescent', description: 'High-energy shades with guaranteed shiny variants.', price: 400, cardsCount: 6, icon: 'fa-wand-magic-sparkles', rarityBoost: 3.2, shinyBoost: 3 },
+            { id: 'spectrum', name: 'Spectrum Elite', description: 'Curated premium pigments with superior income yield.', price: 2200, cardsCount: 7, icon: 'fa-eye-dropper', rarityBoost: 6.5, shinyBoost: 6 },
+            { id: 'cosmic', name: 'Cosmic Hex Pack', description: 'Deep cosmic tone swatches with boosted Mythic rates.', price: 12000, cardsCount: 8, icon: 'fa-cubes', rarityBoost: 14, shinyBoost: 12 },
+            { id: 'divine', name: 'Divine Chromatic', description: 'Ultra-exclusive sample pack containing celestial hues.', price: 85000, cardsCount: 9, icon: 'fa-crown', rarityBoost: 34, shinyBoost: 28 },
+            { id: 'spectral', name: 'Spectral Palette', description: 'Prismatic pigments infused with extra-dimensional sheen.', price: 500000, cardsCount: 10, icon: 'fa-rainbow', rarityBoost: 85, shinyBoost: 65 },
+            { id: 'hyperneon', name: 'Hyperdrive Neon', description: 'Electrified photon hues that multiply passive income.', price: 3000000, cardsCount: 11, icon: 'fa-bolt-lightning', rarityBoost: 210, shinyBoost: 150 },
+            { id: 'zenith', name: 'Zenith Chroma', description: 'Pure zenith pigments yielding incredible split-color odds.', price: 20000000, cardsCount: 12, icon: 'fa-star-of-david', rarityBoost: 550, shinyBoost: 380 },
+            { id: 'void', name: 'Void Spectrum', description: 'Abyssal dark shades mixed with radiant quantum foils.', price: 150000000, cardsCount: 13, icon: 'fa-circle-radiation', rarityBoost: 1450, shinyBoost: 950 },
+            { id: 'infinity', name: 'Infinity Prism', description: 'Infinite range of split gradients and high-multiplier swatches.', price: 1000000000, cardsCount: 14, icon: 'fa-infinity', rarityBoost: 3800, shinyBoost: 2400 },
+            { id: 'celestial', name: 'Celestial Gradient', description: 'Starlight hues woven into multi-tone gradient samples.', price: 8000000000, cardsCount: 15, icon: 'fa-sun', rarityBoost: 10000, shinyBoost: 6000 },
+            { id: 'supernova_core', name: 'Supernova Core', description: 'Infused with stellar energy. High multi-split chance.', price: 100000000000000, cardsCount: 16, icon: 'fa-burst', rarityBoost: 30000, shinyBoost: 18000 },
+            { id: 'nebula_swirl', name: 'Nebula Swirl', description: 'Deep space gas clouds forming shimmering diamond tones.', price: 2500000000000000, cardsCount: 17, icon: 'fa-compass-drafting', rarityBoost: 95000, shinyBoost: 55000 },
+            { id: 'galactic_cat', name: 'Galactic Catalyst', description: 'Triggers atomic pigment splits with huge multipliers.', price: 75000000000000000, cardsCount: 18, icon: 'fa-circle-nodes', rarityBoost: 300000, shinyBoost: 170000 },
+            { id: 'hypernova_burst', name: 'Hypernova Burst', description: 'Blinding cosmic radiation unlocks Chrono Distortion.', price: 2000000000000000000, cardsCount: 19, icon: 'fa-volcano', rarityBoost: 950000, shinyBoost: 550000 },
+            { id: 'pulsar_beam', name: 'Pulsar Beam', description: 'Rhythmic photon pulses generating hyper-spectrum shades.', price: 50000000000000000000, cardsCount: 20, icon: 'fa-satellite-dish', rarityBoost: 3000000, shinyBoost: 2000000 },
+            { id: 'dyson_sphere', name: 'Dyson Sphere Chroma', description: 'Harnesses stellar energy to create Obsidian Gloss.', price: 1000000000000000000000, cardsCount: 21, icon: 'fa-globe', rarityBoost: 10000000, shinyBoost: 7500000 },
+            { id: 'omniverse_spec', name: 'Omniverse Spectrum', description: 'Multiverse pigment formulas yielding godlike revenue.', price: 35000000000000000000000, cardsCount: 22, icon: 'fa-atom', rarityBoost: 40000000, shinyBoost: 30000000 },
+            { id: 'eternity_hue', name: 'Eternity Hue', description: 'Timeless chromatic swatches with Godray Aurora odds.', price: 1000000000000000000000000, cardsCount: 23, icon: 'fa-hourglass-start', rarityBoost: 160000000, shinyBoost: 120000000 },
+            { id: 'absolute_zero', name: 'Absolute Zero Pigment', description: 'Frozen photon particles emitting maximum yield energy.', price: 50000000000000000000000000, cardsCount: 24, icon: 'fa-snowflake', rarityBoost: 650000000, shinyBoost: 480000000 },
+            { id: 'big_bang_chroma', name: 'Big Bang Chroma', description: 'The genesis of all color in the universe. Infinite power.', price: 1000000000000000000000000000, cardsCount: 25, icon: 'fa-meteor', rarityBoost: 2600000000, shinyBoost: 1900000000 },
 
             // SECRET MILESTONE PACKS (VARIABLE CARDS & HEAVILY BOOSTED SPECIAL FINISH ODDS)
             { id: 'secret_first_step', name: 'Secret: Collector Starter', description: 'Gamble! Unseals 1-15 cards with massive special finish multipliers.', price: 500, cardsCount: '1-15', icon: 'fa-key', rarityBoost: 30.0, shinyBoost: 100.0, secret: true, exclusiveRarity: 'Chromatic Relic', exclusiveRarityChance: 0.1, unlockType: 'packs', unlockValue: 5 },
@@ -1165,7 +1208,7 @@
                     `;
                 }
 
-                const canAfford = gameState.currency >= pack.price;
+                const canAfford = gameState.currency >= pack.price && !pendingSecretPackPurchase;
                 return `
                     <div class="glass-panel p-5 rounded-3xl space-y-4 flex flex-col justify-between hover:border-purple-300 transition-all shadow-sm hover:shadow-md ${pack.secret ? 'bg-gradient-to-br from-amber-50/50 to-purple-50/50 border-amber-200' : ''}">
                         <div class="space-y-3">
@@ -1181,7 +1224,7 @@
                             <div>
                                 <h3 class="font-black text-slate-800 text-base">${pack.name}</h3>
                                 <p class="text-xs text-slate-500 mt-1 leading-relaxed">${pack.description}</p>
-                                ${pack.secret && pack.exclusiveRarity ? `<p class="text-[10px] font-bold text-amber-700 mt-2">Exclusive: ${pack.exclusiveRarity} · ${Math.round(pack.exclusiveRarityChance * 100)}% chance per card</p>` : ''}
+                                ${pack.secret && pack.exclusiveRarity ? `<p class="text-[10px] font-bold text-amber-700 mt-2">Exclusive: ${pack.exclusiveRarity} · ${Math.round(pack.exclusiveRarityChance * 100)}% chance per card</p><p class="text-[10px] font-bold text-purple-600 mt-1"><i class="fa-solid fa-gamepad mr-1"></i>Win a quick mini-game to unseal</p>` : ''}
                             </div>
                         </div>
 
@@ -1203,7 +1246,7 @@
             PACKS.forEach(pack => {
                 const btn = document.getElementById(`pack-buy-btn-${pack.id}`);
                 if (btn) {
-                    const canAfford = gameState.currency >= pack.price;
+                    const canAfford = gameState.currency >= pack.price && !pendingSecretPackPurchase;
                     if (canAfford) {
                         btn.removeAttribute('disabled');
                         btn.className = 'px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200';
@@ -1324,17 +1367,220 @@
         }
 
         let pendingPackCards = [];
+        let pendingSecretPackPurchase = null;
+        let secretMiniGameInterval = null;
+        let secretMiniGameTimeLeft = 10;
+        let activeSecretMiniGame = null;
+
+        function shuffleMiniGameChoices(items) {
+            const shuffled = items.slice();
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function hexToRgb(hex) {
+            const value = hex.replace('#', '');
+            return {
+                r: parseInt(value.slice(0, 2), 16),
+                g: parseInt(value.slice(2, 4), 16),
+                b: parseInt(value.slice(4, 6), 16)
+            };
+        }
+
+        function rgbToHex({r, g, b}) {
+            return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('').toUpperCase();
+        }
+
+        function makeNearbyShade(hex, amount) {
+            const rgb = hexToRgb(hex);
+            const delta = () => Math.floor(Math.random() * (amount * 2 + 1)) - amount;
+            return rgbToHex({r: rgb.r + delta(), g: rgb.g + delta(), b: rgb.b + delta()});
+        }
+
+        function startSecretMiniGame(pack) {
+            activeSecretMiniGame = { packId: pack.id, correctIndex: -1, choices: [], type: '' };
+            const roll = Math.floor(Math.random() * 3);
+            const title = document.getElementById('secret-minigame-title');
+            const prompt = document.getElementById('secret-minigame-prompt');
+            const body = document.getElementById('secret-minigame-body');
+            const feedback = document.getElementById('secret-minigame-feedback');
+            const cancelBtn = document.getElementById('secret-minigame-cancel');
+            const closeBtn = document.getElementById('secret-minigame-close');
+            if (!body || !title || !prompt) {
+                failSecretMiniGame('The challenge could not load. Your money has been returned.');
+                return;
+            }
+
+            if (roll === 0) {
+                activeSecretMiniGame.type = 'color';
+                const target = generateRandomHex();
+                const choices = shuffleMiniGameChoices([target, generateRandomHex(), generateRandomHex(), generateRandomHex()]);
+                activeSecretMiniGame.choices = choices;
+                activeSecretMiniGame.correctIndex = choices.indexOf(target);
+                title.innerText = 'Color Match';
+                prompt.innerText = 'Find the exact same paint swatch shown below.';
+                body.innerHTML = `
+                    <div class="flex flex-col items-center gap-2">
+                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Swatch</div>
+                        <div class="w-20 h-20 rounded-2xl border-4 border-white shadow-lg" style="background:${target}"></div>
+                        <span class="font-mono text-xs font-bold text-slate-500">${target}</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${choices.map((hex, i) => `
+                        <button class="mini-game-choice p-3" onclick="answerSecretMiniGame(${i})">
+                            <div class="mini-game-swatch" style="background:${hex}"></div><span class="text-[10px] font-mono">${hex}</span>
+                        </button>`).join('')}</div>`;
+            } else if (roll === 1) {
+                activeSecretMiniGame.type = 'math';
+                const a = Math.floor(Math.random() * 16) + 4;
+                const b = Math.floor(Math.random() * 12) + 2;
+                const subtract = Math.random() < 0.35;
+                const answer = subtract ? a + b - Math.min(a, b) : a + b;
+                const actualA = subtract ? Math.max(a, b) : a;
+                const actualB = subtract ? Math.min(a, b) : b;
+                const symbol = subtract ? '−' : '+';
+                const choices = shuffleMiniGameChoices([answer, answer + 2, Math.max(0, answer - 3), answer + 5]);
+                activeSecretMiniGame.choices = choices;
+                activeSecretMiniGame.correctIndex = choices.indexOf(answer);
+                title.innerText = 'Quick Calculation';
+                prompt.innerText = 'Solve this one-step equation before the timer runs out.';
+                body.innerHTML = `
+                    <div class="text-4xl font-black text-purple-700 font-mono py-3">${actualA} ${symbol} ${actualB} = ?</div>
+                    <div class="grid grid-cols-2 gap-3">${choices.map((value, i) => `
+                        <button class="mini-game-choice text-xl" onclick="answerSecretMiniGame(${i})">${value}</button>`).join('')}</div>`;
+            } else {
+                activeSecretMiniGame.type = 'odd';
+                const base = generateRandomHex();
+                const odd = rgbToHex({r: 255-hexToRgb(base).r, g: 255-hexToRgb(base).g, b: 255-hexToRgb(base).b});
+                let shades = [base, makeNearbyShade(base, 12), makeNearbyShade(base, 18), odd];
+                while (new Set(shades).size < 4) shades[1] = makeNearbyShade(base, 24);
+                const choices = shuffleMiniGameChoices(shades);
+                activeSecretMiniGame.choices = choices;
+                activeSecretMiniGame.correctIndex = choices.indexOf(odd);
+                title.innerText = 'Odd Shade Out';
+                prompt.innerText = 'Three swatches are close in color. Tap the one that does not belong.';
+                body.innerHTML = `
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${choices.map((hex, i) => `
+                        <button class="mini-game-choice p-3" onclick="answerSecretMiniGame(${i})">
+                            <div class="mini-game-swatch" style="background:${hex}"></div><span class="text-[10px] font-mono">${hex}</span>
+                        </button>`).join('')}</div>`;
+            }
+
+            if (feedback) feedback.innerText = 'One try. Complete the challenge to unlock your pack.';
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
+            if (closeBtn) closeBtn.classList.add('hidden');
+            secretMiniGameTimeLeft = 10;
+            updateSecretMiniGameTimer();
+            document.getElementById('secret-minigame-modal').classList.remove('hidden');
+            if (secretMiniGameInterval) clearInterval(secretMiniGameInterval);
+            secretMiniGameInterval = setInterval(() => {
+                secretMiniGameTimeLeft--;
+                updateSecretMiniGameTimer();
+                if (secretMiniGameTimeLeft <= 0) failSecretMiniGame('Time ran out. Your full pack price has been returned.');
+            }, 1000);
+        }
+
+        function updateSecretMiniGameTimer() {
+            const timer = document.getElementById('secret-minigame-timer');
+            if (timer) {
+                timer.innerText = secretMiniGameTimeLeft + 's';
+                timer.className = 'font-mono font-black text-sm px-3 py-1.5 rounded-xl ' +
+                    (secretMiniGameTimeLeft <= 3 ? 'text-rose-700 bg-rose-50' : 'text-purple-700 bg-purple-50');
+            }
+        }
+
+        function clearSecretMiniGameTimer() {
+            if (secretMiniGameInterval) clearInterval(secretMiniGameInterval);
+            secretMiniGameInterval = null;
+        }
+
+        function answerSecretMiniGame(choiceIndex) {
+            if (!activeSecretMiniGame || !pendingSecretPackPurchase) return;
+            if (choiceIndex === activeSecretMiniGame.correctIndex) {
+                completeSecretMiniGame();
+            } else {
+                failSecretMiniGame('Not quite! Your full pack price has been returned.');
+            }
+        }
+
+        function completeSecretMiniGame() {
+            if (!pendingSecretPackPurchase) return;
+            clearSecretMiniGameTimer();
+            const purchase = pendingSecretPackPurchase;
+            const pack = PACKS.find(p => p.id === purchase.packId);
+            pendingSecretPackPurchase = null;
+            activeSecretMiniGame = null;
+            const modal = document.getElementById('secret-minigame-modal');
+            if (modal) modal.classList.add('hidden');
+            if (pack) openPackContents(pack);
+            updateStoreButtonStates();
+        }
+
+        function failSecretMiniGame(message) {
+            if (!pendingSecretPackPurchase) return;
+            clearSecretMiniGameTimer();
+            gameState.currency += pendingSecretPackPurchase.price;
+            pendingSecretPackPurchase = null;
+            activeSecretMiniGame = null;
+            updateEconomyUI();
+            updateStoreButtonStates();
+            saveGameData();
+            const body = document.getElementById('secret-minigame-body');
+            const feedback = document.getElementById('secret-minigame-feedback');
+            const cancelBtn = document.getElementById('secret-minigame-cancel');
+            const closeBtn = document.getElementById('secret-minigame-close');
+            if (body) body.innerHTML = '<div class="text-5xl text-rose-500"><i class="fa-solid fa-rotate-left"></i></div><div class="font-black text-slate-700">Pack not opened</div>';
+            if (feedback) feedback.innerText = message;
+            if (cancelBtn) cancelBtn.classList.add('hidden');
+            if (closeBtn) closeBtn.classList.remove('hidden');
+            const timer = document.getElementById('secret-minigame-timer');
+            if (timer) timer.innerText = 'REFUNDED';
+        }
+
+        function cancelSecretMiniGame() {
+            if (!pendingSecretPackPurchase) return;
+            failSecretMiniGame('Challenge cancelled. Your full pack price has been returned.');
+        }
+
+        function closeSecretMiniGame() {
+            const modal = document.getElementById('secret-minigame-modal');
+            if (modal) modal.classList.add('hidden');
+            const cancelBtn = document.getElementById('secret-minigame-cancel');
+            const closeBtn = document.getElementById('secret-minigame-close');
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
+            if (closeBtn) closeBtn.classList.add('hidden');
+            renderStore();
+        }
 
         function buyPack(packId) {
+            if (pendingSecretPackPurchase) return;
             const pack = PACKS.find(p => p.id === packId);
             if (!pack || gameState.currency < pack.price) return;
 
+            if (pack.secret) {
+                // Hold the price during the challenge; only count/open the pack after a win.
+                gameState.currency -= pack.price;
+                pendingSecretPackPurchase = { packId: pack.id, price: pack.price };
+                updateEconomyUI();
+                playSfx('cash');
+                startSecretMiniGame(pack);
+                updateStoreButtonStates();
+                return;
+            }
+
+            // Regular packs open immediately, with their price charged as before.
             gameState.currency -= pack.price;
+            updateEconomyUI();
+            openPackContents(pack);
+        }
+
+        function openPackContents(pack) {
             gameState.packsOpened++;
             updateEconomyUI();
             playSfx('cash');
 
-            // Secret Packs yield a random 1-15 cards.
             let actualCardCount = pack.cardsCount;
             if (pack.secret) {
                 actualCardCount = Math.floor(Math.random() * 15) + 1;
@@ -1362,13 +1608,13 @@
             const title = document.getElementById('pack-modal-title');
             const doneBtn = document.getElementById('pack-modal-done-btn');
             const packModal = document.getElementById('pack-modal');
-
             if (title) {
                 const subText = pack.secret ? ` (${actualCardCount} CARDS UNSEALED)` : '';
                 title.innerText = `UNSEALING ${pack.name.toUpperCase()}${subText}`;
             }
             if (doneBtn) doneBtn.classList.add('hidden');
             if (packModal) packModal.classList.remove('hidden');
+            updateStoreButtonStates();
         }
 
         function revealCard(idx) {
