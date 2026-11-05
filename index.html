@@ -488,6 +488,7 @@
                     <h2 class="font-black text-slate-800 text-base border-b border-purple-50 pb-2">Rarity Breakdown</h2>
                     <div id="rarity-breakdown-list" class="space-y-2.5"></div>
                 </div>
+                <div class="glass-panel p-6 rounded-3xl space-y-4 md:col-span-2"><div class="flex items-center justify-between gap-3 border-b border-purple-50 pb-2"><h2 class="font-black text-slate-800 text-base">Trait Collection</h2><span id="stat-traits-discovered" class="text-[10px] font-black text-amber-700 bg-amber-100 px-2.5 py-1 rounded-lg">0 / 25 discovered</span></div><p class="text-xs text-slate-500">Traits are independent of rarity and finishes. Multiple traits can stack on one card.</p><div id="trait-breakdown-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div></div>
             </div>
         </section>
 
@@ -648,7 +649,23 @@
             'Afterimage': { multiplier: 900, chance: 0.0025, description: 'A spectral afterimage trails the pigment.' },
             'Living Chroma': { multiplier: 7500, chance: 0.0007, description: 'The pigment shifts between chromatic states.' },
             'Eclipse Mark': { multiplier: 60000, chance: 0.00015, description: 'A near-impossible eclipse imprint.' },
-            'Origin Signature': { multiplier: 500000, chance: 0.000025, description: 'A one-in-a-generation signature pigment.' }
+            'Origin Signature': { multiplier: 500000, chance: 0.000025, description: 'A one-in-a-generation signature pigment.' },
+            'Aurora Veil': { multiplier: 65, chance: 0.018, description: 'Soft aurora light shimmers through the pigment.' },
+            'Static Bloom': { multiplier: 180, chance: 0.011, description: 'Electric filaments bloom across the color.' },
+            'Glacier Glass': { multiplier: 320, chance: 0.008, description: 'A crystal-clear frozen sheen.' },
+            'Emberheart': { multiplier: 550, chance: 0.006, description: 'A warm ember glow sits beneath the surface.' },
+            'Moonlit': { multiplier: 850, chance: 0.0045, description: 'A cool lunar highlight follows the swatch.' },
+            'Solar Flare': { multiplier: 1400, chance: 0.0035, description: 'A concentrated burst of solar pigment.' },
+            'Velvet Touch': { multiplier: 2100, chance: 0.0028, description: 'An unusually deep, soft-looking pigment.' },
+            'Holographic Dust': { multiplier: 3400, chance: 0.0022, description: 'Tiny holographic flecks catch the light.' },
+            'Void Touched': { multiplier: 5200, chance: 0.0017, description: 'A dark edge seems to absorb surrounding color.' },
+            'Stardust Trail': { multiplier: 8200, chance: 0.0012, description: 'Fine star-like particles trail through the pigment.' },
+            'Glasswing': { multiplier: 12000, chance: 0.0009, description: 'A translucent iridescent trait.' },
+            'Gravity Well': { multiplier: 19000, chance: 0.00065, description: 'Color appears to bend inward toward a central point.' },
+            'Phantom Hue': { multiplier: 28000, chance: 0.00045, description: 'A hidden secondary hue appears at certain angles.' },
+            'Time Fracture': { multiplier: 42000, chance: 0.0003, description: 'Layered color bands resemble a frozen instant.' },
+            'Celestial Bloom': { multiplier: 85000, chance: 0.00012, description: 'A rare radiant bloom of cosmic pigment.' },
+            'First Light': { multiplier: 250000, chance: 0.00004, description: 'An exceptionally rare origin-point glow.' }
         };
 
         function rollCardTraits() {
@@ -1317,7 +1334,8 @@
                                 <div class="text-[10px] text-slate-400 font-bold uppercase">Pack Price</div>
                                 <div class="font-mono text-sm font-black text-slate-800">$${formatCurrency(pack.price)}</div>
                             </div>
-                            <button id="pack-buy-btn-${pack.id}" onclick="buyPack('${pack.id}')" ${canAfford ? '' : 'disabled'} class="px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${canAfford ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}">
+                            ${!pack.secret ? '<div class="flex flex-wrap gap-1.5 mt-2">' + [5,10,25].map(n => '<button id="pack-bulk-btn-${pack.id}-' + n + '" onclick="buyPack(\'${pack.id}\',' + n + ')" ' + (gameState.currency >= pack.price * n ? '' : 'disabled') + ' class="px-2 py-1 rounded-lg text-[9px] font-black ' + (gameState.currency >= pack.price * n ? 'bg-slate-100 text-purple-700 hover:bg-purple-100' : 'bg-slate-100 text-slate-300') + '">Buy x' + n + '</button>').join('') + '</div>' : ''}
+                            <button id="pack-buy-btn-${pack.id}" onclick="buyPack('${pack.id}', 1)" ${canAfford ? '' : 'disabled'} class="px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${canAfford ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}">
                                 Unseal Pack
                             </button>
                         </div>
@@ -1329,6 +1347,10 @@
         function updateStoreButtonStates() {
             PACKS.forEach(pack => {
                 const btn = document.getElementById(`pack-buy-btn-${pack.id}`);
+                [5, 10, 25].forEach(quantity => {
+                    const bulkBtn = document.getElementById(`pack-bulk-btn-${pack.id}-${quantity}`);
+                    if (bulkBtn) bulkBtn.disabled = pack.secret || pendingSecretPackPurchase || gameState.currency < pack.price * quantity;
+                });
                 if (btn) {
                     const canAfford = gameState.currency >= pack.price && !pendingSecretPackPurchase;
                     if (canAfford) {
@@ -1426,6 +1448,17 @@
                     `;
                 }).join('');
             }
+            const traitCounts = {};
+            Object.keys(CARD_TRAITS).forEach(name => traitCounts[name] = 0);
+            gameState.inventory.forEach(card => (card.traits || []).forEach(name => { if (Object.prototype.hasOwnProperty.call(traitCounts, name)) traitCounts[name]++; }));
+            const discoveredTraits = Object.values(traitCounts).filter(count => count > 0).length;
+            const discoveredEl = document.getElementById('stat-traits-discovered');
+            if (discoveredEl) discoveredEl.innerText = discoveredTraits + ' / ' + Object.keys(CARD_TRAITS).length + ' discovered';
+            const traitList = document.getElementById('trait-breakdown-list');
+            if (traitList) traitList.innerHTML = Object.entries(CARD_TRAITS).map(([name, info]) => {
+                const count = traitCounts[name] || 0;
+                return '<div class="rounded-xl border ' + (count ? 'border-amber-200 bg-amber-50/50' : 'border-slate-100 bg-slate-50/70') + ' p-3 space-y-1.5"><div class="flex items-center justify-between gap-2"><span class="text-xs font-black">' + name + '</span><span class="text-[10px] font-mono text-slate-500">' + count + ' owned</span></div><p class="text-[10px] text-slate-500">' + info.description + '</p><div class="flex justify-between text-[9px] font-bold text-slate-400"><span>' + formatCurrency(info.multiplier) + 'x multiplier</span><span>' + (info.chance * 100).toFixed(3) + '% base roll</span></div></div>';
+            }).join('');
         }
 
 
@@ -1819,78 +1852,49 @@
             renderStore();
         }
 
-        function buyPack(packId) {
+        function buyPack(packId, requestedQuantity = 1) {
             if (pendingSecretPackPurchase) return;
             const pack = PACKS.find(p => p.id === packId);
-            if (!pack || gameState.currency < pack.price) return;
-
+            if (!pack) return;
+            const quantity = pack.secret ? 1 : Math.max(1, Math.min(25, parseInt(requestedQuantity, 10) || 1));
+            const totalCost = pack.price * quantity;
+            if (gameState.currency < totalCost) return;
             if (pack.secret) {
-                // Hold the price during the challenge; only count/open the pack after a win.
                 gameState.currency -= pack.price;
                 pendingSecretPackPurchase = { packId: pack.id, price: pack.price };
-                updateEconomyUI();
-                playSfx('cash');
-                startSecretMiniGame(pack);
-                updateStoreButtonStates();
-                return;
+                updateEconomyUI(); playSfx('cash'); startSecretMiniGame(pack); updateStoreButtonStates(); return;
             }
-
-            // Regular packs open immediately, with their price charged as before.
-            gameState.currency -= pack.price;
+            gameState.currency -= totalCost;
             updateEconomyUI();
-            openPackContents(pack);
+            openPackContents(pack, quantity);
         }
 
-        function openPackContents(pack) {
-            gameState.packsOpened++;
-            updateEconomyUI();
-            playSfx('cash');
-
-            let actualCardCount = pack.cardsCount;
-            if (pack.secret) {
-                actualCardCount = Math.floor(Math.random() * 15) + 1;
-            } else {
-                if (typeof pack.cardsCount !== 'number') actualCardCount = parseInt(pack.cardsCount) || 3;
-                gameState.normalPackOpens = (gameState.normalPackOpens || 0) + 1;
-                actualCardCount += (pack.bonusCards || 0) + (gameState.research?.packPress || 0);
-                if (gameState.normalPackOpens % 5 === 0) actualCardCount += 3;
+        function openPackContents(pack, quantity = 1) {
+            quantity = pack.secret ? 1 : Math.max(1, Math.min(25, parseInt(quantity, 10) || 1));
+            let actualCardCount = 0;
+            const baseCardCount = typeof pack.cardsCount === 'number' ? pack.cardsCount : (parseInt(pack.cardsCount) || 3);
+            for (let packIndex = 0; packIndex < quantity; packIndex++) {
+                gameState.packsOpened++;
+                if (pack.secret) actualCardCount += Math.floor(Math.random() * 15) + 1;
+                else {
+                    gameState.normalPackOpens = (gameState.normalPackOpens || 0) + 1;
+                    actualCardCount += baseCardCount + (pack.bonusCards || 0) + (gameState.research?.packPress || 0);
+                    if (gameState.normalPackOpens % 5 === 0) actualCardCount += 3;
+                }
             }
-
+            updateEconomyUI(); playSfx('cash');
             const research = gameState.research || {};
             const rarityBoost = pack.rarityBoost * (1 + ((research.rarityLab || 0) * 0.20));
             const shinyBoost = pack.shinyBoost * (1 + ((research.foilLab || 0) * 0.20));
             pendingPackCards = [];
-            for (let i = 0; i < actualCardCount; i++) {
-                pendingPackCards.push(createPaintCard(
-                    rarityBoost,
-                    shinyBoost,
-                    pack.exclusiveRarity,
-                    pack.exclusiveRarityChance,
-                    pack.secret ? 'Common' : (pack.rarityFloor || 'Common'),
-                    pack.secret ? 1 : (pack.incomeMultiplier || 1)
-                ));
-            }
+            for (let i = 0; i < actualCardCount; i++) pendingPackCards.push(createPaintCard(rarityBoost, shinyBoost, pack.exclusiveRarity, pack.exclusiveRarityChance, pack.secret ? 'Common' : (pack.rarityFloor || 'Common'), pack.secret ? 1 : (pack.incomeMultiplier || 1)));
             saveGameData();
-
             const container = document.getElementById('revealed-cards-container');
-            if (container) {
-                container.innerHTML = pendingPackCards.map((card, idx) => `
-                    <div id="unrevealed-card-${idx}" onclick="revealCard(${idx})" class="w-36 h-52 bg-white/10 backdrop-blur-md rounded-2xl border-2 border-purple-300/40 shadow-2xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 group">
-                        <div class="w-12 h-12 rounded-2xl bg-purple-400/20 text-purple-200 flex items-center justify-center text-xl group-hover:rotate-12 transition-transform">
-                            <i class="fa-solid fa-gift"></i>
-                        </div>
-                        <span class="text-[10px] font-bold text-purple-200 mt-3 uppercase tracking-wider">Tap to Reveal</span>
-                    </div>
-                `).join('');
-            }
-
+            if (container) container.innerHTML = pendingPackCards.map((card, idx) => '<div id="unrevealed-card-' + idx + '" onclick="revealCard(' + idx + ')" class="w-36 h-52 bg-white/10 backdrop-blur-md rounded-2xl border-2 border-purple-300/40 shadow-2xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 group"><div class="w-12 h-12 rounded-2xl bg-purple-400/20 text-purple-200 flex items-center justify-center text-xl group-hover:rotate-12 transition-transform"><i class="fa-solid fa-gift"></i></div><span class="text-[10px] font-bold text-purple-200 mt-3 uppercase tracking-wider">Tap to Reveal</span></div>').join('');
             const title = document.getElementById('pack-modal-title');
             const doneBtn = document.getElementById('pack-modal-done-btn');
             const packModal = document.getElementById('pack-modal');
-            if (title) {
-                const subText = pack.secret ? ` (${actualCardCount} CARDS UNSEALED)` : '';
-                title.innerText = `UNSEALING ${pack.name.toUpperCase()}${subText}`;
-            }
+            if (title) title.innerText = quantity > 1 ? 'BULK UNSEAL · ' + quantity + ' ' + pack.name.toUpperCase() + ' PACKS · ' + actualCardCount + ' CARDS' : 'UNSEALING ' + pack.name.toUpperCase() + (pack.secret ? ' (' + actualCardCount + ' CARDS UNSEALED)' : '');
             if (doneBtn) doneBtn.classList.add('hidden');
             if (packModal) packModal.classList.remove('hidden');
             updateStoreButtonStates();
