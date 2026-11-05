@@ -1362,7 +1362,7 @@
                                 <div class="text-[10px] text-slate-400 font-bold uppercase">Pack Price</div>
                                 <div class="font-mono text-sm font-black text-slate-800">$${formatCurrency(pack.price)}</div>
                             </div>
-                            ${!pack.secret ? '<div class="flex flex-wrap gap-1.5 mt-2">' + [5,10,25].map(n => '<button id="pack-bulk-btn-' + pack.id + '-' + n + '" onclick="buyPack(\\'' + pack.id + '\\',' + n + ')" ' + (gameState.currency >= pack.price * n && !pendingSecretPackPurchase ? '' : 'disabled') + ' class="px-2 py-1 rounded-lg text-[9px] font-black bg-slate-100 text-purple-700 hover:bg-purple-100 disabled:text-slate-300 disabled:cursor-not-allowed">Buy x' + n + '</button>').join('') + '</div>' : ''}
+                            ${!pack.secret ? '<div class="flex flex-wrap gap-1.5 mt-2">' + [5,10,25].map(n => '<button id="pack-bulk-btn-' + pack.id + '-' + n + '" onclick="buyPack(' + "'" + pack.id + "'" + ',' + n + ')" ' + (gameState.currency >= pack.price * n && !pendingSecretPackPurchase ? '' : 'disabled') + ' class="px-2 py-1 rounded-lg text-[9px] font-black bg-slate-100 text-purple-700 hover:bg-purple-100 disabled:text-slate-300 disabled:cursor-not-allowed">Buy x' + n + '</button>').join('') + '</div>' : ''}
                             <button id="pack-buy-btn-${pack.id}" onclick="buyPack('${pack.id}', 1)" ${canAfford ? '' : 'disabled'} class="px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${canAfford ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}">
                                 Unseal Pack
                             </button>
