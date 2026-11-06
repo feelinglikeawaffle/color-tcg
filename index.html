@@ -59,7 +59,13 @@
         /* Card 3D Tilt & Smooth Transition Styles */
         .card-3d-wrapper {
             perspective: 1000px;
+            content-visibility: auto;
+            contain-intrinsic-size: 280px 360px;
         }
+        @media (prefers-reduced-motion: reduce) {
+            .card-3d-inner, .effect-shiny, .effect-golden, .effect-holographic, .effect-mercury, .effect-cyberpunk, .effect-supernova, .effect-chrono, .effect-prism, .effect-godray, .effect-quantum-glitch, .effect-hyper-plasma, .effect-supernova-core, .effect-temporal-rift, .effect-astral-nebula, .effect-dimensional-glitch, .effect-celestial-aether, .effect-omnipotent-aura, .effect-big-bang-essence, .trait-living-chroma::after { animation: none !important; transition: none !important; }
+        }
+        @media (max-width: 640px) { .card-3d-wrapper { contain-intrinsic-size: 230px 330px; } }
 
         .card-3d-inner {
             transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.25s ease;
@@ -586,7 +592,7 @@
                 <div class="flex flex-wrap gap-2 items-center"><label class="text-xs font-bold">Buyer target</label><select id="automation-pack-select" onchange="setAutomationPack(this.value)" class="bg-white border rounded-xl p-2 text-xs"></select><span id="automation-line-status" class="text-xs font-bold">Offline</span></div>
                 <div class="text-xs font-bold">Queue <span id="automation-queue-count">0 / 0</span> | Cards processed <span id="automation-cards-processed">0</span> | Earnings <span id="automation-sales-total">$0</span></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-3 border-t border-purple-100"><label class="text-xs font-bold">Preset<select id="auto-preset" onchange="setAutomationPreset(this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"><option value="conservative">Conservative</option><option value="balanced">Balanced</option><option value="aggressive">Aggressive</option><option value="custom">Custom</option></select></label><label class="text-xs font-bold">Cash reserve ($)<input id="auto-reserve" type="number" min="0" onchange="updateAutomationConfig('reserve',this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"></label><label class="text-xs font-bold">Budget / cycle ($)<input id="auto-budget" type="number" min="0" onchange="updateAutomationConfig('budget',this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"></label><label class="text-xs font-bold">Queue limit<select id="auto-queue-limit" onchange="updateAutomationConfig('queueLimit',this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"><option>5</option><option>10</option><option>20</option><option>40</option><option>75</option><option>150</option><option>300</option><option>500</option></select></label></div>
-                <div class="flex flex-wrap gap-3 text-xs font-semibold"><label><input id="auto-buy-enabled" type="checkbox" onchange="updateAutomationConfig('autoBuy',this.checked)"> Auto-buy</label><label><input id="auto-open-enabled" type="checkbox" onchange="updateAutomationConfig('autoOpen',this.checked)"> Auto-open</label><label><input id="auto-sell-enabled" type="checkbox" onchange="updateAutomationConfig('autoSell',this.checked)"> Auto-sell</label><label><input id="auto-protect-traits" type="checkbox" onchange="updateAutomationConfig('protectTraits',this.checked)"> Protect traits</label><label><input id="auto-protect-finishes" type="checkbox" onchange="updateAutomationConfig('protectFinishes',this.checked)"> Protect special finishes</label><label><input id="auto-auto-reveal" type="checkbox" onchange="updateAutomationConfig('autoReveal',this.checked)"> Auto-reveal + summary</label><label>Max sale value ($)<input id="auto-max-sale" type="number" min="0" onchange="updateAutomationConfig('maxSaleValue',this.value)" class="w-24 bg-white border rounded-lg p-1"></label><button id="auto-pause-btn" onclick="toggleAutomationPause()" class="px-3 py-1 rounded-lg bg-amber-100 text-amber-800 font-black">Pause line</button></div><p class="text-[10px] text-slate-500">Buyer buys packs into the queue. Unsealer opens queued packs. Sorters sell only cards that pass your safety rules. Reserve protects cash. To start: install both Pack Purchasing Drone and Chromatic Unsealer, choose a buyer target, and keep Auto-buy / Auto-open enabled. The line then runs automatically.</p><div id="automation-telemetry" class="text-[10px] font-mono text-slate-500 bg-white/60 rounded-xl p-3"></div>
+                <div class="flex flex-wrap gap-3 text-xs font-semibold"><label><input id="auto-buy-enabled" type="checkbox" onchange="updateAutomationConfig('autoBuy',this.checked)"> Auto-buy</label><label><input id="auto-open-enabled" type="checkbox" onchange="updateAutomationConfig('autoOpen',this.checked)"> Auto-open</label><label><input id="auto-sell-enabled" type="checkbox" onchange="updateAutomationConfig('autoSell',this.checked)"> Auto-sell</label><label><input id="auto-protect-traits" type="checkbox" onchange="updateAutomationConfig('protectTraits',this.checked)"> Protect traits</label><label><input id="auto-protect-finishes" type="checkbox" onchange="updateAutomationConfig('protectFinishes',this.checked)"> Protect special finishes</label><label><input id="auto-auto-reveal" type="checkbox" onchange="updateAutomationConfig('autoReveal',this.checked)"> Auto-reveal + summary</label><label>Max sale value ($)<input id="auto-max-sale" type="number" min="0" onchange="updateAutomationConfig('maxSaleValue',this.value)" class="w-24 bg-white border rounded-lg p-1"></label><button id="auto-pause-btn" onclick="toggleAutomationPause()" class="px-3 py-1 rounded-lg bg-amber-100 text-amber-800 font-black">Pause line</button></div><p class="text-[10px] text-slate-500">Buyer buys packs into the queue. Unsealer opens queued packs. Sorters sell only cards that pass your safety rules. Reserve protects cash. To start: install both Pack Purchasing Drone and Chromatic Unsealer, choose a buyer target, and keep Auto-buy / Auto-open enabled. The line then runs automatically.</p><div class="rounded-2xl border border-purple-200 bg-white/75 p-3 space-y-3"><div><b class="text-sm">Inventory Liquidator · custom sale rules</b><p class="text-[10px] text-slate-500">Configure the machine before installing it. Display-case cards are always protected.</p></div><div class="flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold"><label><input id="custom-sell-enabled" type="checkbox" checked onchange="updateAutomationConfig('customSellEnabled',this.checked)"> Run liquidator</label><label><input id="custom-sell-common" type="checkbox" onchange="updateCustomSellRarity('Common',this.checked)"> Common</label><label><input id="custom-sell-uncommon" type="checkbox" onchange="updateCustomSellRarity('Uncommon',this.checked)"> Uncommon</label><label><input id="custom-sell-rare" type="checkbox" onchange="updateCustomSellRarity('Rare',this.checked)"> Rare</label><label><input id="custom-sell-epic" type="checkbox" onchange="updateCustomSellRarity('Epic',this.checked)"> Epic</label><label><input id="custom-sell-legendary" type="checkbox" onchange="updateCustomSellRarity('Legendary',this.checked)"> Legendary</label><label><input id="custom-sell-mythic" type="checkbox" onchange="updateCustomSellRarity('Mythic',this.checked)"> Mythic</label></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2"><label class="text-[10px] font-bold">Minimum sale value ($)<input id="custom-sell-min" type="number" min="0" onchange="updateAutomationConfig('customSellMinValue',this.value)" class="block w-full mt-1 bg-white border rounded-lg p-2"></label><label class="text-[10px] font-bold">Maximum sale value ($)<input id="custom-sell-max" type="number" min="0" onchange="updateAutomationConfig('customSellMaxValue',this.value)" class="block w-full mt-1 bg-white border rounded-lg p-2"></label><label class="text-[10px] font-bold">Keep highest-value cards per rarity<input id="custom-sell-keep" type="number" min="0" max="100" onchange="updateAutomationConfig('customSellKeepPerRarity',this.value)" class="block w-full mt-1 bg-white border rounded-lg p-2"></label><div class="flex flex-col justify-center gap-2 text-[10px] font-semibold"><label><input id="custom-sell-traits" type="checkbox" onchange="updateAutomationConfig('customSellTraits',this.checked)"> Include trait cards</label><label><input id="custom-sell-finishes" type="checkbox" onchange="updateAutomationConfig('customSellFinishes',this.checked)"> Include special finishes</label></div></div><p class="text-[10px] text-slate-500">The machine keeps the highest-value cards in each selected rarity first, then sells lower-value extras up to its cycle limit. Set maximum to 0 for no upper limit; set copies to 0 to allow every matching copy to sell.</p></div><div id="automation-telemetry" class="text-[10px] font-mono text-slate-500 bg-white/60 rounded-xl p-3"></div>
             </div>
             <div class="flex justify-between"><h3 class="font-black">Machine Floor</h3><span id="automation-machine-count" class="text-xs font-bold">0 / 12</span></div>
             <div id="automation-machines-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
@@ -900,7 +906,7 @@
             normalPackOpens: 0,
             research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0, automationTheory: 0, marketAnalysis: 0, pigmentArchive: 0 },
             progression: { ascensions: 0, shards: 0, upgrades: { yield: 0, factory: 0, market: 0 } },
-            automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, autoReveal: true, maxSaleValue: 250 } },
+            automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, autoReveal: true, maxSaleValue: 250, customSellEnabled: true, customSellRarities: ['Common','Uncommon'], customSellMinValue: 0, customSellMaxValue: 250, customSellKeepPerRarity: 1, customSellTraits: false, customSellFinishes: false } },
             claimedMasteries: [],
             dailyCommissions: null,
             selectedCardId: null,
@@ -1262,21 +1268,38 @@
             const breakdown = calculateIncomeBreakdown();
             return cardCollectorValue(card) * caseRate * breakdown.globalMultiplier * breakdown.cardMultiplier;
         }
-        function getDisplayCasePreview(card) {
-            if (isCardDisplayed(card.id)) {
-                const box = (gameState.displayCases || []).find(item => (item.cardIds || []).includes(card.id));
-                return { rate: effectiveCardIncome(card), box, canPlace: false };
+        function buildInventoryRenderContext() {
+            const breakdown = calculateIncomeBreakdown(), inventoryById = new Map(gameState.inventory.map(card => [card.id, card]));
+            const displayedByCard = new Map();
+            (gameState.displayCases || []).forEach(box => (box.cardIds || []).forEach(id => displayedByCard.set(id, box)));
+            const choices = (gameState.displayCases || []).filter(box => Number(box.level) > 0).sort((a,b) => (Number(b.baseRate)||0)*(Number(b.level)||1) - (Number(a.baseRate)||0)*(Number(a.level)||1));
+            return { breakdown, inventoryById, displayedByCard, bestCase: choices[0] || null };
+        }
+        function getDisplayCasePreview(card, context = null) {
+            if (!context) {
+                if (isCardDisplayed(card.id)) { const box = (gameState.displayCases || []).find(item => (item.cardIds || []).includes(card.id)); return { rate: effectiveCardIncome(card), box, canPlace: false }; }
+                const choices = (gameState.displayCases || []).filter(box => Number(box.level) > 0).sort((a,b) => (Number(b.baseRate)||0)*(Number(b.level)||1) - (Number(a.baseRate)||0)*(Number(a.level)||1));
+                if (!choices.length) return { rate: 0, box: null, canPlace: false };
+                const box=choices[0], simulated=(gameState.displayCases||[]).map(item=>({...item,cardIds:(item.cardIds||[]).slice()})), target=simulated.find(item=>item.id===box.id), before=calculateIncomeBreakdown().totalIncome;
+                target.cardIds.push(card.id); return {rate:Math.max(0,calculateIncomeBreakdownFor(simulated).totalIncome-before),box,canPlace:(box.cardIds||[]).length<Number(box.slots||0)};
             }
-            const choices = (gameState.displayCases || []).filter(box => Number(box.level) > 0);
-            if (!choices.length) return { rate: 0, box: null, canPlace: false };
-            choices.sort((a,b) => (Number(b.baseRate)||0)*(Number(b.level)||1) - (Number(a.baseRate)||0)*(Number(a.level)||1));
-            const box = choices[0], canPlace = (box.cardIds || []).length < Number(box.slots || 0);
-            const simulated = (gameState.displayCases || []).map(item => ({ ...item, cardIds: (item.cardIds || []).slice() }));
-            const target = simulated.find(item => item.id === box.id);
-            const before = calculateIncomeBreakdown().totalIncome;
-            target.cardIds.push(card.id);
-            const after = calculateIncomeBreakdownFor(simulated).totalIncome;
-            return { rate: Math.max(0, after-before), box, canPlace };
+            const {breakdown,inventoryById,displayedByCard,bestCase}=context;
+            const totalAtBase = raw => raw <= 250 ? raw : Math.min(250000,250+Math.pow(raw-250,0.68));
+            const displayedBox=displayedByCard.get(card.id);
+            if(displayedBox){
+                const cards=(displayedBox.cardIds||[]).map(id=>inventoryById.get(id)).filter(Boolean);
+                const rate=Math.max(0,Number(displayedBox.baseRate)||0)*Math.max(1,Number(displayedBox.level)||1)*(1+Math.max(0,cards.length-1)*.12);
+                return {rate:cardCollectorValue(card)*rate*breakdown.globalMultiplier*breakdown.cardMultiplier,box:displayedBox,canPlace:false};
+            }
+            if(!bestCase)return {rate:0,box:null,canPlace:false};
+            const existing=(bestCase.cardIds||[]).map(id=>inventoryById.get(id)).filter(Boolean);
+            const baseRate=Math.max(0,Number(bestCase.baseRate)||0)*Math.max(1,Number(bestCase.level)||1);
+            const beforeRate=baseRate*(1+Math.max(0,existing.length-1)*.12),afterRate=baseRate*(1+Math.max(0,existing.length)*.12);
+            const existingValue=existing.reduce((sum,item)=>sum+cardCollectorValue(item),0);
+            const deltaBase=existingValue*(afterRate-beforeRate)+cardCollectorValue(card)*afterRate;
+            const before=totalAtBase(breakdown.baseIncome*breakdown.globalMultiplier);
+            const after=totalAtBase((breakdown.baseIncome+deltaBase)*breakdown.globalMultiplier);
+            return {rate:Math.max(0,after-before),box:bestCase,canPlace:existing.length<Number(bestCase.slots||0)};
         }
         function formatIncomeRate(value) { const n = Math.max(0, Number(value) || 0); const digits = n === 0 ? 0 : n < 0.01 ? 6 : n < 1 ? 4 : 2; return '$' + n.toFixed(digits).replace(/\.?0+$/, ''); }
 
@@ -1297,31 +1320,26 @@
 
         function gameTick() {
             const now = Date.now();
-            const deltaSec = (now - (gameState.lastTickTimestamp || now)) / 1000;
+            const deltaSec = Math.max(0, (now - (gameState.lastTickTimestamp || now)) / 1000);
             gameState.lastTickTimestamp = now;
-
             const income = calculateTotalIncomePerSecond();
-            if (income > 0) {
-                const earned = income * deltaSec;
-                gameState.currency += earned;
-                gameState.lifetimeRevenue += earned;
-                updateEconomyUI();
-            }
-
+            if (income > 0) { const earned = income * deltaSec; gameState.currency += earned; gameState.lifetimeRevenue += earned; }
+            updateEconomyUI(income);
             runAutomation(now);
             const storeTab = document.getElementById('tab-store');
             if (storeTab && !storeTab.classList.contains('hidden')) updateStoreButtonStates();
         }
 
-        function updateEconomyUI() {
+        function updateEconomyUI(incomeOverride) {
             const curr = document.getElementById('currency-display');
             const inc = document.getElementById('income-display');
             const codex = document.getElementById('codex-bonus-display');
             const invCount = document.getElementById('inventory-count');
 
             if (curr) curr.innerText = `$${formatCurrency(gameState.currency)}`;
-            if (inc) { const rate = calculateTotalIncomePerSecond(); inc.innerHTML = `+${formatIncomeRate(rate)}<span class="text-xs font-sans text-slate-400 font-normal">/s display cases</span>`; inc.title = 'Displayed cards with Codex, research, and progression multipliers.'; }
-            const caseIncome = document.getElementById('case-income'); if (caseIncome) caseIncome.textContent = formatIncomeRate(calculateTotalIncomePerSecond()) + '/s';
+            const rate = Number.isFinite(incomeOverride) ? incomeOverride : calculateTotalIncomePerSecond();
+            if (inc) { inc.innerHTML = `+${formatIncomeRate(rate)}<span class="text-xs font-sans text-slate-400 font-normal">/s display cases</span>`; inc.title = 'Displayed cards with Codex, research, and progression multipliers.'; }
+            const caseIncome = document.getElementById('case-income'); if (caseIncome) caseIncome.textContent = formatIncomeRate(rate) + '/s';
             if (codex) codex.innerText = `${calculateCodexMultiplier().toFixed(2)}x`;
             if (invCount) invCount.innerText = gameState.inventory.length;
         }
@@ -1409,7 +1427,7 @@
             }
         }
 
-        function renderCardHTML(card, isClickable = true) {
+        function renderCardHTML(card, isClickable = true, renderContext = null) {
             const rarityInfo = RARITIES[card.rarity] || RARITIES['Common'];
             const effectClass = getEffectClass(card.variant);
             let variantBadge = '';
@@ -1428,8 +1446,8 @@
             }
 
             const traitBadges = (card.traits || []).map(name => '<span class="bg-amber-100 text-amber-800 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-amber-200">' + name + ' · ' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x</span>').join('');
-            const displayed = isCardDisplayed(card.id);
-            const preview = getDisplayCasePreview(card);
+            const displayed = renderContext ? renderContext.displayedByCard.has(card.id) : isCardDisplayed(card.id);
+            const preview = getDisplayCasePreview(card, renderContext);
             const incomeLabel = displayed ? '+' + formatIncomeRate(preview.rate) + '/s in case' : (preview.rate > 0 ? 'Potential +' + formatIncomeRate(preview.rate) + '/s' + (preview.canPlace ? '' : ' · case full') : 'Unlock a display case');
             const caseAction = displayed
                 ? '<button onclick="event.stopPropagation();removeFromDisplayCase(\'' + preview.box.id + '\',\'' + card.id + '\')" class="mt-2 w-full rounded-lg bg-rose-50 text-rose-600 text-[9px] font-black py-1.5">Remove from case</button>'
@@ -1478,6 +1496,7 @@
                 return matchesSearch && matchesRarity && matchesVariant;
             });
 
+            const renderContext = buildInventoryRenderContext();
             const rarityOrder = Object.keys(RARITIES);
             filtered.sort((a, b) => {
                 if (sortBy === 'rarity-desc') {
@@ -1503,7 +1522,7 @@
                 if (emptyState) emptyState.classList.remove('hidden');
             } else {
                 if (emptyState) emptyState.classList.add('hidden');
-                grid.innerHTML = filtered.map(card => renderCardHTML(card)).join('');
+                grid.innerHTML = filtered.map(card => renderCardHTML(card, true, renderContext)).join('');
             }
         }
 
@@ -1833,7 +1852,8 @@ const AUTOMATION_MACHINES = [
 {id:"finishBroker",name:"Finish Broker",role:"finish",baseCost:600000,unlock:32,cycle:8},
 {id:"traitRecycler",name:"Traitless Recycler",role:"traitless",baseCost:1500000,unlock:40,cycle:6},
 {id:"duplicateBroker",name:"Duplicate Broker",role:"duplicates",baseCost:5000000,unlock:55,cycle:12},
-{id:"marketExchange",name:"Grand Market Exchange",role:"market",baseCost:18000000,unlock:75,cycle:1}
+{id:"marketExchange",name:"Grand Market Exchange",role:"market",baseCost:18000000,unlock:75,cycle:1},
+{id:"inventoryLiquidator",name:"Inventory Liquidator",role:"customSell",baseCost:8500000,unlock:60,cycle:9}
 ];
 const AUTOMATION_UPGRADES = [
 {id:"speed",name:"Speed",desc:"Shorter cycle time."},
@@ -1852,30 +1872,59 @@ function buyAutomationMachine(id){const m=AUTOMATION_MACHINES.find(x=>x.id===id)
 function buyAutomationUpgrade(id,key){const m=AUTOMATION_MACHINES.find(x=>x.id===id),u=AUTOMATION_UPGRADES.find(x=>x.id===key);if(!m||!u)return;const s=autoState(id),cost=autoUpgradeCost(m,u),lv=s.upgrades[key]||0;if(!s.level||lv>=25||gameState.currency<cost)return;gameState.currency-=cost;s.upgrades[key]=lv+1;updateEconomyUI();saveGameData();renderAutomation();}
 function autoSaleMultiplier(m){const u=autoState(m.id).upgrades,market=autoState("marketExchange"),bonus=market.level?0.05+(market.upgrades.value||0)*.08+(market.upgrades.efficiency||0)*.025+(market.upgrades.speed||0)*.01+(market.upgrades.throughput||0)*.02+(market.upgrades.safety||0)*.01:0;return(1+(u.efficiency||0)*.04+(u.value||0)*.12)*(1+bonus)*(1+(gameState.progression?.upgrades?.market||0)*.05)*(1+(gameState.research?.marketAnalysis||0)*.04);}
 function runAutomation(now){
-const a=gameState.automation,q=a.queue,cfg=a.config||(a.config={});if(cfg.paused)return;let changed=false;const buyer=AUTOMATION_MACHINES[0],opener=AUTOMATION_MACHINES[1],bs=autoState(buyer.id),os=autoState(opener.id);
+const a=gameState.automation,q=a.queue,cfg=a.config||(a.config={});if(cfg.paused)return;let changed=false,inventoryChanged=false;
+const buyer=AUTOMATION_MACHINES[0],opener=AUTOMATION_MACHINES[1],bs=autoState(buyer.id),os=autoState(opener.id);
 const due=m=>!a.lastRun[m.id]||now-a.lastRun[m.id]>=autoCycle(m)*1000,mark=m=>{a.lastRun[m.id]=now;};
 if(cfg.autoBuy!==false&&bs.level&&os.level&&due(buyer)){mark(buyer);const pack=PACKS.find(p=>p.id===a.selectedPackId&&!p.secret&&gameState.packsOpened>=(p.unlockPacks||0))||PACKS[0],disc=Math.min(.55,(bs.upgrades.efficiency||0)*.025+(bs.upgrades.value||0)*.01),free=Math.max(0,Math.min(autoCapacity(),Number(cfg.queueLimit)||20)-q.length),available=Math.max(0,gameState.currency-Math.max(0,Number(cfg.reserve)||0)),budget=Number(cfg.budget)>0?Math.min(available,Number(cfg.budget)):available,n=Math.min(1+(bs.upgrades.throughput||0),free,Math.floor(budget/(pack.price*(1-disc))));if(n){for(let i=0;i<n;i++)q.push(pack.id);gameState.currency-=pack.price*(1-disc)*n;changed=true;}}
-if(cfg.autoOpen!==false&&os.level&&q.length&&due(opener)){mark(opener);const n=Math.min(1+(os.upgrades.throughput||0),q.length),autoOpened=[];for(let p=0;p<n;p++){const pack=PACKS.find(x=>x.id===q.shift()&&!x.secret);if(!pack)continue;gameState.packsOpened++;gameState.normalPackOpens=(gameState.normalPackOpens||0)+1;let count=(Number(pack.cardsCount)||3)+(pack.bonusCards||0)+(gameState.research.packPress||0);if(gameState.normalPackOpens%5===0)count++;count+=Math.floor((os.upgrades.efficiency||0)/5);const rb=Math.min(4.5,1+Math.log2(Math.max(1,pack.rarityBoost*(1+(gameState.research.rarityLab||0)*.2)))*.55),sb=Math.min(3,1+Math.log2(Math.max(1,pack.shinyBoost*(1+(gameState.research.foilLab||0)*.2)))*.35),tier=Math.max(0,PACKS.filter(x=>!x.secret).findIndex(x=>x.id===pack.id)),packCards=[];for(let i=0;i<count;i++){const card=createPaintCard(rb,sb,null,0,pack.rarityFloor||"Common",pack.incomeMultiplier||1,tier,.18);card.sellValue*=1+(os.upgrades.value||0)*.025;gameState.inventory.push(card);packCards.push(card);}a.cardsProcessed+=count;autoOpened.push({name:pack.name,cards:packCards});changed=true;}if(autoOpened.length&&cfg.autoReveal!==false)showAutomationPackSummary(autoOpened);}
+if(cfg.autoOpen!==false&&os.level&&q.length&&due(opener)){mark(opener);const n=Math.min(1+(os.upgrades.throughput||0),q.length),autoOpened=[];for(let p=0;p<n;p++){const pack=PACKS.find(x=>x.id===q.shift()&&!x.secret);if(!pack)continue;gameState.packsOpened++;gameState.normalPackOpens=(gameState.normalPackOpens||0)+1;let count=(Number(pack.cardsCount)||3)+(pack.bonusCards||0)+(gameState.research.packPress||0);if(gameState.normalPackOpens%5===0)count++;count+=Math.floor((os.upgrades.efficiency||0)/5);const rb=Math.min(4.5,1+Math.log2(Math.max(1,pack.rarityBoost*(1+(gameState.research.rarityLab||0)*.2)))*.55),sb=Math.min(3,1+Math.log2(Math.max(1,pack.shinyBoost*(1+(gameState.research.foilLab||0)*.2)))*.35),tier=Math.max(0,PACKS.filter(x=>!x.secret).findIndex(x=>x.id===pack.id)),packCards=[];for(let i=0;i<count;i++){const card=createPaintCard(rb,sb,null,0,pack.rarityFloor||"Common",pack.incomeMultiplier||1,tier,.18);card.sellValue*=1+(os.upgrades.value||0)*.025;gameState.inventory.push(card);packCards.push(card);}a.cardsProcessed+=count;autoOpened.push({name:pack.name,cards:packCards});changed=true;inventoryChanged=true;}if(autoOpened.length&&cfg.autoReveal!==false)showAutomationPackSummary(autoOpened);}
+let displayedIds=null,saleMultiplier=null;const isDisplayed=id=>{if(!displayedIds)displayedIds=new Set((gameState.displayCases||[]).flatMap(box=>box.cardIds||[]));return displayedIds.has(id);};const saleValue=card=>{if(saleMultiplier===null)saleMultiplier=calculateIncomeBreakdown().globalMultiplier;return Math.max(0,Number(card.sellValue)||(Number(card.incomePerSec)||0)*100)*50*saleMultiplier;};
 const sellers=AUTOMATION_MACHINES.filter(m=>["sorter","finish","traitless","duplicates"].includes(m.role));
-for(const m of sellers){const s=autoState(m.id);if(cfg.autoSell===false||!s.level||!due(m))continue;mark(m);const limit=5+(s.upgrades.throughput||0)*5,cap=100000/(1+(s.upgrades.safety||0)*.35),ids=[],seen=new Set();for(let i=0;i<gameState.inventory.length&&ids.length<limit;i++){const card=gameState.inventory[i];if(isCardDisplayed(card.id)||(cfg.protectTraits!==false&&(card.traits||[]).length)||(cfg.protectFinishes!==false&&card.variant!=="Standard")||effectiveSaleValue(card)>Math.min(cap,Number(cfg.maxSaleValue)||250))continue;let ok=false;if(m.role==="sorter")ok=card.rarity===m.rarity;if(m.role==="finish")ok=card.rarity==="Common";if(m.role==="traitless")ok=["Common","Uncommon"].includes(card.rarity);if(m.role==="duplicates"){const key=(card.hexesList||[card.hex]).join("|");ok=seen.has(key);if(!ok)seen.add(key);}if(ok)ids.push(i);}if(ids.length){let cash=0;ids.forEach(i=>cash+=effectiveSaleValue(gameState.inventory[i])*autoSaleMultiplier(m));const removed=new Set(ids);gameState.inventory=gameState.inventory.filter((card,i)=>!removed.has(i));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;}}
-if(changed){updateEconomyUI();if(!document.getElementById("tab-inventory").classList.contains("hidden"))renderInventory();if(!document.getElementById("tab-codex").classList.contains("hidden"))renderCodex();if(!document.getElementById("tab-stats").classList.contains("hidden"))renderStats();if(!document.getElementById("tab-store").classList.contains("hidden"))renderStore();if(!document.getElementById("tab-progression").classList.contains("hidden"))renderProgression();saveGameData();if(!document.getElementById("tab-automation").classList.contains("hidden"))renderAutomation();}
+for(const m of sellers){const s=autoState(m.id);if(cfg.autoSell===false||!s.level||!due(m))continue;mark(m);const limit=5+(s.upgrades.throughput||0)*5,cap=100000/(1+(s.upgrades.safety||0)*.35),ids=[],seen=new Set();for(let i=0;i<gameState.inventory.length&&ids.length<limit;i++){const card=gameState.inventory[i],value=saleValue(card);if(isDisplayed(card.id)||(cfg.protectTraits!==false&&(card.traits||[]).length)||(cfg.protectFinishes!==false&&card.variant!=="Standard")||value>Math.min(cap,Number(cfg.maxSaleValue)||250))continue;let ok=false;if(m.role==="sorter")ok=card.rarity===m.rarity;if(m.role==="finish")ok=card.rarity==="Common";if(m.role==="traitless")ok=["Common","Uncommon"].includes(card.rarity);if(m.role==="duplicates"){const key=(card.hexesList||[card.hex]).join("|");ok=seen.has(key);if(!ok)seen.add(key);}if(ok)ids.push(i);}if(ids.length){const cash=ids.reduce((sum,i)=>sum+saleValue(gameState.inventory[i])*autoSaleMultiplier(m),0),removed=new Set(ids);gameState.inventory=gameState.inventory.filter((card,i)=>!removed.has(i));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;inventoryChanged=true;}}
+const liquidator=AUTOMATION_MACHINES.find(m=>m.role==="customSell"),ls=autoState(liquidator.id);
+if(cfg.autoSell!==false&&cfg.customSellEnabled!==false&&ls.level&&due(liquidator)){
+ mark(liquidator);const rarities=new Set(Array.isArray(cfg.customSellRarities)?cfg.customSellRarities:["Common","Uncommon"]);
+ const minValue=Math.max(0,Number(cfg.customSellMinValue)||0),rawMax=Number(cfg.customSellMaxValue),maxValue=Number.isFinite(rawMax)?Math.max(0,rawMax):250,keep=Math.max(0,Math.min(100,Math.floor(Number(cfg.customSellKeepPerRarity??1)||0)));
+ const eligible=gameState.inventory.filter(card=>!isDisplayed(card.id)&&rarities.has(card.rarity)&&(cfg.customSellTraits===true||(card.traits||[]).length===0)&&(cfg.customSellFinishes===true||card.variant==="Standard")).map(card=>({card,value:saleValue(card),key:card.rarity})).filter(x=>x.value>=minValue&&(maxValue===0||x.value<=maxValue));
+ const groups=new Map();eligible.forEach(item=>{if(!groups.has(item.key))groups.set(item.key,[]);groups.get(item.key).push(item);});
+ const candidates=[];groups.forEach(items=>{items.sort((a,b)=>b.value-a.value);candidates.push(...items.slice(keep));});
+ const limit=5+(ls.upgrades.throughput||0)*5,selected=candidates.sort((a,b)=>a.value-b.value).slice(0,limit),removeIds=new Set(selected.map(x=>x.card.id));
+ if(removeIds.size){const cash=selected.reduce((sum,x)=>sum+x.value*autoSaleMultiplier(liquidator),0);gameState.inventory=gameState.inventory.filter(card=>!removeIds.has(card.id));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;inventoryChanged=true;}
+}
+if(changed){updateEconomyUI();if(inventoryChanged){if(!document.getElementById("tab-inventory").classList.contains("hidden"))renderInventory();if(!document.getElementById("tab-codex").classList.contains("hidden"))renderCodex();if(!document.getElementById("tab-stats").classList.contains("hidden"))renderStats();if(!document.getElementById("tab-progression").classList.contains("hidden"))renderProgression();}if(!document.getElementById("tab-store").classList.contains("hidden"))renderStore();saveGameData();if(!document.getElementById("tab-automation").classList.contains("hidden"))renderAutomation();}
 }
 function setAutomationPreset(name){const cfg=gameState.automation.config;const presets={conservative:{reserve:10000,budget:2500,queueLimit:5,maxSaleValue:50,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true},balanced:{reserve:0,budget:0,queueLimit:20,maxSaleValue:250,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true},aggressive:{reserve:0,budget:0,queueLimit:150,maxSaleValue:25000,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:false}};cfg.preset=presets[name]?name:"custom";if(presets[name])Object.assign(cfg,presets[name]);saveGameData();renderAutomation();}
-function updateAutomationConfig(key,value){const cfg=gameState.automation.config;cfg[key]=["reserve","budget","queueLimit","maxSaleValue"].includes(key)?Math.max(0,Number(value)||0):value;cfg.preset="custom";saveGameData();renderAutomation();}
+function updateAutomationConfig(key,value){const cfg=gameState.automation.config;cfg[key]=["reserve","budget","queueLimit","maxSaleValue","customSellMinValue","customSellMaxValue","customSellKeepPerRarity"].includes(key)?Math.max(0,Number(value)||0):value;cfg.preset="custom";saveGameData();renderAutomation();}
+function updateCustomSellRarity(rarity,enabled){const cfg=gameState.automation.config;const selected=new Set(Array.isArray(cfg.customSellRarities)?cfg.customSellRarities:["Common","Uncommon"]);if(enabled)selected.add(rarity);else selected.delete(rarity);cfg.customSellRarities=Array.from(selected);cfg.preset="custom";saveGameData();renderAutomation();}
 function toggleAutomationPause(){gameState.automation.config.paused=!gameState.automation.config.paused;saveGameData();renderAutomation();}
 function renderAutomation(){
  const cfg=gameState.automation.config||(gameState.automation.config={});
-const grid=document.getElementById("automation-machines-grid"),a=gameState.automation,select=document.getElementById("automation-pack-select");if(!grid)return;
-select.innerHTML=PACKS.filter(p=>!p.secret&&gameState.packsOpened>=(p.unlockPacks||0)).map(p=>'<option value="'+p.id+'">'+p.name+' - $'+formatCurrency(p.price)+'</option>').join("");select.value=a.selectedPackId||"starter";
- const fields={preset:"preset",reserve:"reserve",budget:"budget",queueLimit:"queue-limit",autoBuy:"buy-enabled",autoOpen:"open-enabled",autoSell:"sell-enabled",protectTraits:"protect-traits",protectFinishes:"protect-finishes",autoReveal:"auto-auto-reveal",maxSaleValue:"max-sale"};Object.entries(fields).forEach(([k,id])=>{const el=document.getElementById("auto-"+id);if(el){if(el.type==="checkbox")el.checked=cfg[k]!==false;else el.value=cfg[k]??(k==="queueLimit"?20:k==="maxSaleValue"?250:k==="preset"?"balanced":0);}});const pause=document.getElementById("auto-pause-btn");if(pause)pause.innerText=cfg.paused?"Resume line":"Pause line";const tele=document.getElementById("automation-telemetry");if(tele)tele.innerText="BUYER "+(autoState("packBuyer").level?"ONLINE":"OFFLINE")+" · OPENER "+(autoState("autoOpener").level?"ONLINE":"OFFLINE")+" · "+(cfg.paused?"PAUSED":"RUNNING")+" · RESERVE $"+formatCurrency(Number(cfg.reserve)||0)+" · QUEUE "+a.queue.length+"/"+Math.min(autoCapacity(),Number(cfg.queueLimit)||20);
-const installed=AUTOMATION_MACHINES.filter(m=>autoState(m.id).level>0).length;
-document.getElementById("automation-machine-count").innerText=installed+" / 12 installed";document.getElementById("automation-queue-count").innerText=a.queue.length+" / "+autoCapacity();
-document.getElementById("automation-line-status").innerText=cfg.paused?"Paused":(autoState("packBuyer").level&&autoState("autoOpener").level?(cfg.autoBuy===false?"Opener online · buyer disabled":cfg.autoOpen===false?"Buyer online · opener disabled":"Running automatically"):"Install buyer and opener");
-document.getElementById("automation-cards-processed").innerText=(a.cardsProcessed||0).toLocaleString();document.getElementById("automation-sales-total").innerText="$"+formatCurrency(a.salesTotal||0);
-grid.innerHTML=AUTOMATION_MACHINES.map(m=>{const s=autoState(m.id),lv=s.level||0,unlocked=gameState.packsOpened>=m.unlock,cost=autoMachineCost(m);let h='<article class="glass-panel p-4 rounded-2xl space-y-2"><div class="flex justify-between gap-2"><b class="text-sm">'+m.name+'</b>';h+=lv?'<span>Installed</span>':'<button data-install="'+m.id+'" '+(!unlocked||gameState.currency<cost?'disabled':'')+'>Install $'+formatCurrency(cost)+'</button>';h+='</div><div class="text-[10px]">Unlock: '+m.unlock+' packs | Cycle: '+autoCycle(m).toFixed(1)+'s</div>';if(lv){h+='<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">';AUTOMATION_UPGRADES.forEach(u=>{const ul=s.upgrades[u.id]||0,uc=autoUpgradeCost(m,u);h+='<div class="bg-white/80 rounded-xl p-2"><b class="text-[9px]">'+u.name+' '+ul+'/25</b><p class="text-[9px]">'+u.desc+'</p><button data-machine="'+m.id+'" data-upgrade="'+u.id+'" '+(ul>=25||gameState.currency<uc?'disabled':'')+'>$'+formatCurrency(uc)+'</button></div>';});h+='</div>';}else h+='<p class="text-[10px]">Install to unlock five upgrade tracks, each with 25 levels.</p>';return h+'</article>';}).join("");
-grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.closest("[data-machine]");if(b)buyAutomationMachine(b.dataset.install);if(u)buyAutomationUpgrade(u.dataset.machine,u.dataset.upgrade);};
+ const grid=document.getElementById("automation-machines-grid"),a=gameState.automation,select=document.getElementById("automation-pack-select");if(!grid)return;
+ select.innerHTML=PACKS.filter(p=>!p.secret&&gameState.packsOpened>=(p.unlockPacks||0)).map(p=>"<option value=\""+p.id+"\">"+p.name+" - $"+formatCurrency(p.price)+"</option>").join("");select.value=a.selectedPackId||"starter";
+ const fields={preset:"preset",reserve:"reserve",budget:"budget",queueLimit:"queue-limit",autoBuy:"buy-enabled",autoOpen:"open-enabled",autoSell:"sell-enabled",protectTraits:"protect-traits",protectFinishes:"protect-finishes",autoReveal:"auto-auto-reveal",maxSaleValue:"max-sale"};
+ Object.entries(fields).forEach(([k,id])=>{const el=document.getElementById("auto-"+id);if(el){if(el.type==="checkbox")el.checked=cfg[k]!==false;else el.value=cfg[k]??(k==="queueLimit"?20:k==="maxSaleValue"?250:k==="preset"?"balanced":0);}});
+ const selected=Array.isArray(cfg.customSellRarities)?cfg.customSellRarities:["Common","Uncommon"];
+ ["Common","Uncommon","Rare","Epic","Legendary","Mythic"].forEach(r=>{const el=document.getElementById("custom-sell-"+r.toLowerCase());if(el)el.checked=selected.includes(r);});
+ [["custom-sell-min",cfg.customSellMinValue??0],["custom-sell-max",cfg.customSellMaxValue??250],["custom-sell-keep",cfg.customSellKeepPerRarity??1]].forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.value=value;});
+ const enabled=document.getElementById("custom-sell-enabled"),traits=document.getElementById("custom-sell-traits"),finishes=document.getElementById("custom-sell-finishes");
+ if(enabled)enabled.checked=cfg.customSellEnabled!==false;if(traits)traits.checked=cfg.customSellTraits===true;if(finishes)finishes.checked=cfg.customSellFinishes===true;
+ const pause=document.getElementById("auto-pause-btn");if(pause)pause.innerText=cfg.paused?"Resume line":"Pause line";
+ const tele=document.getElementById("automation-telemetry");if(tele)tele.innerText="BUYER "+(autoState("packBuyer").level?"ONLINE":"OFFLINE")+" · OPENER "+(autoState("autoOpener").level?"ONLINE":"OFFLINE")+" · "+(cfg.paused?"PAUSED":"RUNNING")+" · RESERVE $"+formatCurrency(Number(cfg.reserve)||0)+" · QUEUE "+a.queue.length+"/"+Math.min(autoCapacity(),Number(cfg.queueLimit)||20);
+ const installed=AUTOMATION_MACHINES.filter(m=>autoState(m.id).level>0).length;
+ document.getElementById("automation-machine-count").innerText=installed+" / 13 installed";document.getElementById("automation-queue-count").innerText=a.queue.length+" / "+autoCapacity();
+ document.getElementById("automation-line-status").innerText=cfg.paused?"Paused":(autoState("packBuyer").level&&autoState("autoOpener").level?(cfg.autoBuy===false?"Opener online · buyer disabled":cfg.autoOpen===false?"Buyer online · opener disabled":"Running automatically"):"Install buyer and opener");
+ document.getElementById("automation-cards-processed").innerText=(a.cardsProcessed||0).toLocaleString();document.getElementById("automation-sales-total").innerText="$"+formatCurrency(a.salesTotal||0);
+ grid.innerHTML=AUTOMATION_MACHINES.map(m=>{
+  const s=autoState(m.id),lv=s.level||0,unlocked=gameState.packsOpened>=m.unlock,cost=autoMachineCost(m);
+  let h="<article class=\"glass-panel p-4 rounded-2xl space-y-2\"><div class=\"flex justify-between gap-2\"><b class=\"text-sm\">"+m.name+"</b>";
+  h+=lv?"<span>Installed</span>":"<button data-install=\""+m.id+"\" "+(!unlocked||gameState.currency<cost?"disabled":"")+">Install $"+formatCurrency(cost)+"</button>";
+  h+="</div><div class=\"text-[10px]\">Unlock: "+m.unlock+" packs | Cycle: "+autoCycle(m).toFixed(1)+"s</div>";
+  if(m.role==="customSell")h+="<p class=\"text-[10px] text-slate-500\">Uses your custom rarity and value rules. Display-case cards are always protected.</p>";
+  if(lv){h+="<div class=\"grid grid-cols-2 sm:grid-cols-3 gap-2\">";AUTOMATION_UPGRADES.forEach(u=>{const ul=s.upgrades[u.id]||0,uc=autoUpgradeCost(m,u);h+="<div class=\"bg-white/80 rounded-xl p-2\"><b class=\"text-[9px]\">"+u.name+" "+ul+"/25</b><p class=\"text-[9px]\">"+u.desc+"</p><button data-machine=\""+m.id+"\" data-upgrade=\""+u.id+"\" "+(ul>=25||gameState.currency<uc?"disabled":"")+">$"+formatCurrency(uc)+"</button></div>";});h+="</div>";}
+  else h+="<p class=\"text-[10px]\">Install to unlock five upgrade tracks, each with 25 levels.</p>";
+  return h+"</article>";
+ }).join("");
+ grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.closest("[data-machine]");if(b)buyAutomationMachine(b.dataset.install);if(u)buyAutomationUpgrade(u.dataset.machine,u.dataset.upgrade);};
 }
-
 
 const ASCENSION_UPGRADES=[{id:"yield",name:"Retained Yield Formula",desc:"+8% passive yield per level.",max:25},{id:"factory",name:"Factory Blueprints",desc:"Reduce machine installation costs by 4% per level.",max:10},{id:"market",name:"Market Memory",desc:"+5% automated sale value per level.",max:20}];
 function uniqueColorCount(){return new Set(gameState.inventory.flatMap(c=>c.hexesList||[c.hex])).size;}
@@ -2454,7 +2503,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
                 renderDisplayCases();
 
                 setInterval(saveGameData, 10000);
-                setInterval(gameTick, 100);
+                setInterval(gameTick, 500);
             } catch (e) {
                 console.error("Critical boot error handled:", e);
                 const recModal = document.getElementById('recovery-modal');
