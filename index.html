@@ -1729,6 +1729,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         }
 
         let pendingPackCards = [];
+        let pendingAutomationSummaries = [];
         let pendingSecretPackPurchase = null;
         let secretMiniGameInterval = null;
         let secretMiniGameTimeLeft = 10;
@@ -2083,6 +2084,8 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         }
 
         function showAutomationPackSummary(packResults) {
+            const activeModal = document.getElementById('pack-modal');
+            if (activeModal && !activeModal.classList.contains('hidden')) { if (pendingAutomationSummaries.length) pendingAutomationSummaries[pendingAutomationSummaries.length - 1].push(...packResults); else pendingAutomationSummaries.push(packResults); return; }
             const title = document.getElementById('pack-modal-title'), container = document.getElementById('revealed-cards-container'), summary = document.getElementById('pack-reveal-summary'), done = document.getElementById('pack-modal-done-btn'), revealAll = document.getElementById('reveal-all-btn'), modal = document.getElementById('pack-modal');
             const allCards = packResults.flatMap(result => result.cards);
             const counts = {}; allCards.forEach(card => counts[card.rarity] = (counts[card.rarity] || 0) + 1);
@@ -2101,6 +2104,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             renderInventory();
             renderStore();
             if (!document.getElementById('tab-progression').classList.contains('hidden')) renderProgression();
+            if (pendingAutomationSummaries.length) showAutomationPackSummary(pendingAutomationSummaries.shift());
         }
 
         function openCardModal(cardId) {
