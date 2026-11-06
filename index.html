@@ -325,6 +325,12 @@
                 </div>
             </div>
 
+            <div id="account-panel" class="flex items-center gap-2">
+                <img id="account-avatar" class="hidden w-9 h-9 rounded-full border-2 border-purple-200" alt="Profile picture">
+                <span id="account-name" class="hidden text-xs font-bold text-slate-700 max-w-24 truncate"></span>
+                <button id="google-signin-btn" onclick="window.colorTCGAuth?.signIn()" class="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold"><i class="fa-brands fa-google mr-1"></i> Sign in</button>
+                <button id="google-signout-btn" onclick="window.colorTCGAuth?.signOut()" class="hidden px-3 py-2 rounded-xl bg-white border border-purple-100 text-xs font-bold">Sign out</button>
+            </div>
             <!-- ECONOMY DISPLAY -->
             <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
                 <div class="glass-panel px-4 py-1.5 rounded-2xl flex items-center gap-2.5">
@@ -379,6 +385,8 @@
             </button>
             <button id="tab-automation-btn" onclick="switchTab('automation')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-200 hover:bg-white/80">Automation Factory</button>
             <button id="tab-progression-btn" onclick="switchTab('progression')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:bg-white/80">Progression</button>
+            <button id="tab-cases-btn" onclick="switchTab('cases')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:bg-white/80">Display Cases</button>
+            <button id="tab-market-btn" onclick="switchTab('market')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:bg-white/80">Marketplace</button>
         </nav>
     </div>
 
@@ -459,6 +467,31 @@
         <!-- TAB 2: STORE -->
         <section id="tab-store" class="hidden space-y-4">
             <div id="packs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- DISPLAY CASES -->
+        <section id="tab-cases" class="hidden space-y-4">
+            <div class="glass-panel p-6 rounded-3xl">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <div><h2 class="text-lg font-black text-slate-800">Collector's Gallery</h2><p class="text-xs text-slate-500">Display your best pulls to generate passive gallery revenue. Displayed cards are locked until you remove them.</p></div>
+                    <div class="text-right"><div class="text-[10px] uppercase font-bold text-slate-400">Gallery income</div><div id="case-income" class="font-mono font-black text-emerald-600">$0.00/s</div></div>
+                </div>
+                <div id="display-cases-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-5"></div>
+            </div>
+            <div class="glass-panel p-5 rounded-3xl"><h3 class="font-black text-slate-800">Unplaced collection</h3><p class="text-xs text-slate-500 mb-3">Choose a card to place in an available display slot.</p><div id="case-eligible-cards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"></div></div>
+        </section>
+        <!-- MARKETPLACE -->
+        <section id="tab-market" class="hidden space-y-4">
+            <div class="glass-panel p-6 rounded-3xl">
+                <h2 class="text-lg font-black text-slate-800">Spectrum Exchange</h2>
+                <p class="text-xs text-slate-500 mt-1">Player-to-player trading with in-game currency only. Listings and purchases will go live once the secure Firebase marketplace backend is configured.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
+                    <div class="bg-white/70 border border-purple-100 rounded-2xl p-4"><div class="text-xs font-bold text-slate-400 uppercase">Trading currency</div><div class="font-black text-emerald-600">In-game funds only</div></div>
+                    <div class="bg-white/70 border border-purple-100 rounded-2xl p-4"><div class="text-xs font-bold text-slate-400 uppercase">Listing fee</div><div class="font-black text-slate-700">To be configured</div></div>
+                    <div class="bg-white/70 border border-purple-100 rounded-2xl p-4"><div class="text-xs font-bold text-slate-400 uppercase">Price history</div><div class="font-black text-slate-700">Coming with live market</div></div>
+                </div>
+                <div class="mt-5 rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-900">Marketplace transactions will be processed by trusted server functions, never by trusting browser-side currency or inventory values.</div>
+            </div>
         </section>
 
         <!-- TAB 3: CODEX -->
@@ -850,6 +883,12 @@
             currency: 25.00,
             lifetimeRevenue: 0.00,
             inventory: [],
+            displayCases: [
+                { id: 'starter-case', name: 'Starter Display', level: 1, slots: 2, cardIds: [], baseRate: 0.02, upgradeCost: 250 },
+                { id: 'gallery-case', name: 'Collector Cabinet', level: 0, slots: 0, cardIds: [], baseRate: 0.08, upgradeCost: 2500 },
+                { id: 'vault-case', name: 'Chromatic Vault', level: 0, slots: 0, cardIds: [], baseRate: 0.25, upgradeCost: 25000 }
+            ],
+            account: null,
             packsOpened: 0,
             normalPackOpens: 0,
             research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0, automationTheory: 0, marketAnalysis: 0, pigmentArchive: 0 },
@@ -947,6 +986,7 @@
                         if (Array.isArray(parsed.inventory)) {
                             gameState.inventory = parsed.inventory.map(c => sanitizeCard(c)).filter(c => c !== null);
                         }
+                        if (Array.isArray(parsed.displayCases)) gameState.displayCases = parsed.displayCases.map((box, i) => ({...({id:'case-'+i,name:'Display Case',level:1,slots:2,cardIds:[],baseRate:0.02,upgradeCost:250}),...box,cardIds:Array.isArray(box.cardIds)?box.cardIds:[]}));
                     } else {
                         recoveryTriggered = true;
                     }
@@ -956,6 +996,7 @@
                 recoveryTriggered = true;
             }
 
+            if (!Array.isArray(gameState.displayCases)) gameState.displayCases = [];
             if (!Array.isArray(gameState.inventory) || gameState.inventory.length === 0) {
                 gameState.inventory = [createPaintCard(1.0, 1.0), createPaintCard(1.0, 1.0)];
             }
@@ -971,7 +1012,7 @@
             const now = Date.now();
             const offlineSec = Math.max(0, (now - (gameState.lastTickTimestamp || now)) / 1000);
             if (offlineSec > 10) {
-                const income = calculateTotalIncomePerSecond();
+                const income = calculateGalleryIncome();
                 const offlineEarned = income * offlineSec;
                 if (offlineEarned > 0.05) {
                     gameState.currency += offlineEarned;
@@ -1151,18 +1192,11 @@
             return totalBonus;
         }
 
-        function calculateIncomeBreakdown() {
-            if (!Array.isArray(gameState.inventory)) return { baseIncome: 0, totalIncome: 0, cardMultiplier: 1 };
-            const baseIncome = gameState.inventory.reduce((sum, card) => sum + Math.max(0, Number(card.incomePerSec) || 0), 0);
-            const research = gameState.research || {};
-            const globalMultiplier = calculateCodexMultiplier() * (1 + ((research.yieldCore || 0) * 0.15)) * (1 + ((research.codexLens || 0) * 0.10)) * (1 + ((gameState.progression?.upgrades?.yield || 0) * 0.08));
-            const rawIncome = baseIncome * globalMultiplier;
-            const totalIncome = rawIncome <= 250 ? rawIncome : Math.min(250000, 250 + Math.pow(rawIncome - 250, 0.68));
-            return { baseIncome, totalIncome, globalMultiplier, cardMultiplier: baseIncome > 0 ? totalIncome / baseIncome : 1 };
-        }
-        function calculateTotalIncomePerSecond() { return calculateIncomeBreakdown().totalIncome; }
-        function effectiveCardIncome(card) { return Math.max(0, Number(card?.incomePerSec) || 0) * calculateIncomeBreakdown().cardMultiplier; }
-        function formatIncomeRate(value) { const n = Math.max(0, Number(value) || 0); const digits = n < 0.01 ? 6 : n < 1 ? 4 : 2; return '$' + n.toFixed(digits); }
+        // Legacy card production is retired. Passive earnings now come only from upgraded display cases.
+        function calculateIncomeBreakdown() { return { baseIncome: 0, totalIncome: calculateGalleryIncome(), globalMultiplier: 1, cardMultiplier: 1 }; }
+        function calculateTotalIncomePerSecond() { return calculateGalleryIncome(); }
+        function effectiveCardIncome(card) { return 0; }
+        function formatIncomeRate(value) { return '$' + Math.max(0, Number(value) || 0).toFixed(2); }
 
         function formatCurrency(num) {
             if (typeof num !== 'number' || isNaN(num)) return '0.00';
@@ -1182,7 +1216,7 @@
             const deltaSec = (now - (gameState.lastTickTimestamp || now)) / 1000;
             gameState.lastTickTimestamp = now;
 
-            const income = calculateTotalIncomePerSecond();
+            const income = calculateGalleryIncome();
             if (income > 0) {
                 const earned = income * deltaSec;
                 gameState.currency += earned;
@@ -1202,16 +1236,65 @@
             const invCount = document.getElementById('inventory-count');
 
             if (curr) curr.innerText = `$${formatCurrency(gameState.currency)}`;
-            if (inc) {
-                const breakdown = calculateIncomeBreakdown();
-                inc.innerHTML = `+${formatIncomeRate(breakdown.totalIncome)}<span class="text-xs font-sans text-slate-400 font-normal">/s</span>`;
-                inc.title = 'Sum of card production after global bonuses and diminishing returns. Base card rate: ' + formatIncomeRate(breakdown.baseIncome) + '/s · Global multiplier: ' + breakdown.globalMultiplier.toFixed(2) + 'x';
-            }
+            if (inc) { const rate = calculateGalleryIncome(); inc.innerHTML = `+${formatIncomeRate(rate)}<span class="text-xs font-sans text-slate-400 font-normal">/s gallery</span>`; inc.title = 'Passive income from cards in display cases only.'; }
+            const caseIncome = document.getElementById('case-income'); if (caseIncome) caseIncome.textContent = formatIncomeRate(calculateGalleryIncome()) + '/s';
             if (codex) codex.innerText = `${calculateCodexMultiplier().toFixed(2)}x`;
             if (invCount) invCount.innerText = gameState.inventory.length;
         }
 
         function effectiveSaleValue(card){const raw=Math.max(0,Number(card.sellValue)||0);return raw<=10000?raw:10000+Math.pow(raw-10000,0.55);}
+
+        function isCardDisplayed(cardId) { return (gameState.displayCases || []).some(box => (box.cardIds || []).includes(cardId)); }
+        function cardCollectorValue(card) {
+            const rarityIndex = Object.keys(RARITIES).filter(k => !RARITIES[k].secretOnly).indexOf(card.rarity);
+            const variant = VARIANTS[card.variant]?.multiplier || 1;
+            const traits = Math.max(1, Number(card.traitMultiplier) || 1);
+            return Math.max(1, (1 + Math.max(0, rarityIndex) * 2.4) * Math.pow(variant, 0.38) * Math.pow(traits, 0.16));
+        }
+        function calculateGalleryIncome() {
+            return (gameState.displayCases || []).reduce((sum, box) => {
+                const cards = (box.cardIds || []).map(id => gameState.inventory.find(card => card.id === id)).filter(Boolean);
+                const level = Math.max(1, Number(box.level) || 1);
+                const caseRate = Math.max(0, Number(box.baseRate) || 0) * level * (1 + Math.max(0, cards.length - 1) * 0.12);
+                return sum + cards.reduce((s, card) => s + cardCollectorValue(card) * caseRate, 0);
+            }, 0);
+        }
+        function renderDisplayCases() {
+            const grid = document.getElementById('display-cases-grid'), eligible = document.getElementById('case-eligible-cards');
+            if (!grid || !eligible) return;
+            grid.innerHTML = (gameState.displayCases || []).map(box => {
+                const unlocked = box.level > 0, cards = (box.cardIds || []).map(id => gameState.inventory.find(card => card.id === id)).filter(Boolean);
+                const income = cards.reduce((s, card) => s + cardCollectorValue(card) * box.baseRate * box.level * (1 + Math.max(0,cards.length-1)*0.12),0);
+                return `<article class="rounded-2xl border border-purple-100 bg-white/80 p-4 space-y-3">
+                    <div class="flex justify-between gap-2"><div><h3 class="font-black text-slate-800">${box.name}</h3><p class="text-[10px] text-slate-400">${unlocked?'Level '+box.level:'Locked display case'}</p></div><div class="text-right"><div class="text-xs font-black text-emerald-600">${formatIncomeRate(income)}/s</div><div class="text-[10px] text-slate-400">${cards.length}/${box.slots} slots</div></div></div>
+                    <div class="grid grid-cols-2 gap-2 min-h-20">${Array.from({length:box.slots||1},(_,i)=>{const card=cards[i];return card?`<div class="rounded-xl p-2 text-xs border border-purple-100" style="background:linear-gradient(135deg,${card.hex}22,white)"><div class="w-full h-8 rounded-lg mb-1" style="background:${card.hex}"></div><b class="block truncate">${card.name}</b><button onclick="removeFromDisplayCase('${box.id}','${card.id}')" class="text-[10px] text-rose-600 font-bold">Remove</button></div>`:'<div class="rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-[10px] text-slate-300">Empty slot</div>'}).join('')}</div>
+                    <button onclick="upgradeDisplayCase('${box.id}')" class="w-full rounded-xl py-2 text-xs font-black ${unlocked?'bg-purple-500 text-white':'bg-slate-900 text-white'}">${unlocked?'Upgrade · $'+formatCurrency(Math.floor(box.upgradeCost*Math.pow(1.85,box.level-1))):'Unlock · $'+formatCurrency(box.upgradeCost)}</button>
+                </article>`;
+            }).join('');
+            const placed = new Set((gameState.displayCases||[]).flatMap(box=>box.cardIds||[]));
+            eligible.innerHTML = gameState.inventory.filter(card=>!placed.has(card.id)).slice(0,60).map(card=>`<button onclick="placeInDisplayCasePrompt('${card.id}')" class="text-left rounded-xl border border-purple-100 bg-white p-2 hover:border-purple-400"><div class="h-12 rounded-lg mb-2" style="background:${card.hex}"></div><b class="block text-[10px] truncate">${card.name}</b><span class="text-[10px] text-slate-500">${card.rarity}</span></button>`).join('') || '<p class="text-xs text-slate-400">All cards are displayed, or your collection is empty.</p>';
+            updateEconomyUI();
+        }
+        function upgradeDisplayCase(id) {
+            const box=gameState.displayCases.find(x=>x.id===id); if(!box)return;
+            const cost=box.level?Math.floor(box.upgradeCost*Math.pow(1.85,box.level-1)):box.upgradeCost;
+            if(gameState.currency<cost){alert('Not enough funds.');return;}
+            gameState.currency-=cost;
+            if(!box.level){box.level=1;box.slots=2;}else{box.level++;box.slots=Math.min(12,box.slots+1);box.baseRate*=1.12;}
+            box.upgradeCost=Math.floor(box.upgradeCost*1.85);saveGameData();renderDisplayCases();updateEconomyUI();
+        }
+        function placeInDisplayCasePrompt(cardId) {
+            const boxes=gameState.displayCases.filter(box=>box.level>0&&(box.cardIds||[]).length<box.slots);
+            if(!boxes.length){alert('Unlock or upgrade a display case with an empty slot first.');return;}
+            const choice=boxes.map((b,i)=>(i+1)+'. '+b.name+' ('+b.cardIds.length+'/'+b.slots+')').join('\n');
+            const n=Number(prompt('Choose a display case:\n'+choice));const box=boxes[n-1];if(!box)return;
+            box.cardIds.push(cardId);saveGameData();renderDisplayCases();renderInventory();
+        }
+        function removeFromDisplayCase(boxId,cardId) {
+            const box=gameState.displayCases.find(x=>x.id===boxId);if(!box)return;
+            box.cardIds=box.cardIds.filter(id=>id!==cardId);saveGameData();renderDisplayCases();renderInventory();
+        }
+        function renderMarket() { const el=document.getElementById('tab-market'); if(el) updateEconomyUI(); }
 
         // RENDERERS
         function getEffectClass(variant) {
@@ -1706,7 +1789,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         // NAVIGATION & PACK ACTIONS
         function switchTab(tabId) {
             playSfx('click');
-            ['inventory', 'codex', 'store', 'stats', 'research', 'automation', 'progression'].forEach(t => {
+            ['inventory', 'codex', 'store', 'stats', 'research', 'automation', 'progression', 'cases', 'market'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if (el) el.classList.add('hidden');
                 const btn = document.getElementById(`tab-${t}-btn`);
@@ -1726,6 +1809,8 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (tabId === 'research') renderResearchLab();
             if (tabId === 'automation') renderAutomation();
             if (tabId === 'progression') renderProgression();
+            if (tabId === 'cases') renderDisplayCases();
+            if (tabId === 'market') renderMarket();
         }
 
         let pendingPackCards = [];
@@ -2143,16 +2228,13 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         }
 
         function sellSingleCard(cardId) {
+            if (isCardDisplayed(cardId)) { alert('Remove this card from its display case before selling it.'); return; }
             const index = gameState.inventory.findIndex(c => c.id === cardId);
             if (index !== -1) {
                 const card = gameState.inventory[index];
                 gameState.currency += effectiveSaleValue(card);
                 gameState.inventory.splice(index, 1);
-                playSfx('cash');
-                closeCardModal();
-                saveGameData();
-                renderInventory();
-                updateEconomyUI();
+                playSfx('cash'); closeCardModal(); saveGameData(); renderInventory(); updateEconomyUI();
             }
         }
 
@@ -2229,6 +2311,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
                 loadGameData();
                 updateEconomyUI();
                 renderInventory();
+                renderDisplayCases();
 
                 setInterval(saveGameData, 10000);
                 setInterval(gameTick, 100);
@@ -2239,5 +2322,32 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             }
         };
     </script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyBOB7aVVLMNGnvYdDjrvuqr7eZteDJEFRM",
+  authDomain: "color-tcg.firebaseapp.com",
+  projectId: "color-tcg",
+  storageBucket: "color-tcg.firebasestorage.app",
+  messagingSenderId: "44054581334",
+  appId: "1:44054581334:web:448752a3dbf9b9935babf7",
+  measurementId: "G-3BYWX3X5NE"
+};
+try {
+ const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app), provider=new GoogleAuthProvider();
+ window.colorTCGAuth={
+  db,
+  async signIn(){try{await signInWithPopup(auth,provider);}catch(e){console.error(e);alert('Google sign-in failed: '+e.message);}},
+  async signOut(){try{await signOut(auth);}catch(e){console.error(e);}}
+ };
+ onAuthStateChanged(auth,user=>{
+  const login=document.getElementById('google-signin-btn'),logout=document.getElementById('google-signout-btn'),avatar=document.getElementById('account-avatar'),name=document.getElementById('account-name');
+  if(user){window.colorTCGUser=user;if(login)login.classList.add('hidden');if(logout)logout.classList.remove('hidden');if(avatar){avatar.src=user.photoURL||'';avatar.classList.toggle('hidden',!user.photoURL);}if(name){name.textContent=user.displayName||user.email||'Collector';name.classList.remove('hidden');} }
+  else{window.colorTCGUser=null;if(login)login.classList.remove('hidden');if(logout)logout.classList.add('hidden');if(avatar)avatar.classList.add('hidden');if(name)name.classList.add('hidden');}
+ });
+} catch(e){console.error('Firebase initialization failed',e);const b=document.getElementById('google-signin-btn');if(b){b.disabled=true;b.textContent='Firebase setup needed';}}
+</script>
 </body>
 </html>
