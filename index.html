@@ -898,6 +898,7 @@
             currency: 25.00,
             lifetimeRevenue: 0.00,
             inventory: [],
+            codexColors: [],
             displayCases: [
                 { id: 'starter-case', name: 'Starter Display', level: 1, slots: 2, cardIds: [], baseRate: 0.02, upgradeCost: 250 },
                 { id: 'gallery-case', name: 'Collector Cabinet', level: 0, slots: 0, cardIds: [], baseRate: 0.08, upgradeCost: 2500 },
@@ -1004,6 +1005,7 @@
                         if (Array.isArray(parsed.inventory)) {
                             gameState.inventory = parsed.inventory.map(c => sanitizeCard(c)).filter(c => c !== null);
                         }
+                        if (Array.isArray(parsed.codexColors)) gameState.codexColors = parsed.codexColors;
                         if (Array.isArray(parsed.displayCases)) gameState.displayCases = parsed.displayCases.map((box, i) => ({...({id:'case-'+i,name:'Display Case',level:1,slots:2,cardIds:[],baseRate:0.02,upgradeCost:250}),...box,cardIds:Array.isArray(box.cardIds)?box.cardIds:[]}));
                         if (parsed.market && typeof parsed.market === 'object') gameState.market = Object.assign(gameState.market, parsed.market);
                         gameState.market.listings = Array.isArray(gameState.market.listings) ? gameState.market.listings : [];
@@ -1023,6 +1025,8 @@
                 gameState.inventory = [createPaintCard(1.0, 1.0), createPaintCard(1.0, 1.0)];
             }
             normalizeInventoryHexColors();
+            recordCodexColors(gameState.inventory.flatMap(card => card.hexesList || [card.hex]));
+            saveGameData();
 
             if (recoveryTriggered) {
                 setTimeout(() => {
@@ -1166,6 +1170,7 @@
                 ? 'linear-gradient(135deg, ' + hexesList.join(', ') + ')'
                 : hexesList[0];
             const name = hexesList.join(' / ');
+            recordCodexColors(hexesList);
 
             const rMult = RARITIES[rarity] ? RARITIES[rarity].multiplier : 1;
             const vMult = VARIANTS[variant] ? VARIANTS[variant].multiplier : 1;
@@ -1232,15 +1237,28 @@
         }
 
         let codexMultiplierCache = { key: '', value: 1 };
+        function recordCodexColors(colors) {
+            if (!Array.isArray(gameState.codexColors)) gameState.codexColors = [];
+            const known = new Set(gameState.codexColors.filter(hex => typeof hex === 'string' && /^#[0-9a-f]{6}$/i.test(hex)).map(hex => hex.toUpperCase()));
+            let changed = false;
+            (Array.isArray(colors) ? colors : []).forEach(hex => {
+                if (typeof hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(hex)) return;
+                const normalized = hex.toUpperCase();
+                if (!known.has(normalized)) { known.add(normalized); gameState.codexColors.push(normalized); changed = true; }
+            });
+            if (changed) { codexMultiplierCache.key = ''; saveGameData(); }
+            return gameState.codexColors;
+        }
+        function getDiscoveredCodexColors() {
+            recordCodexColors((gameState.inventory || []).flatMap(card => card.hexesList || [card.hex]));
+            return gameState.codexColors;
+        }
         function calculateCodexMultiplier() {
             let totalBonus = 1.0;
-            if (!Array.isArray(gameState.inventory)) return totalBonus;
-            const inv = gameState.inventory, first = inv[0]?.id || '', last = inv[inv.length - 1]?.id || '';
             const pigment = gameState.research?.pigmentArchive || 0;
-            const cacheKey = inv.length + '|' + first + '|' + last + '|' + pigment;
+            const uniqueHexes = getDiscoveredCodexColors();
+            const cacheKey = uniqueHexes.length + '|' + (uniqueHexes[uniqueHexes.length - 1] || '') + '|' + pigment;
             if (codexMultiplierCache.key === cacheKey) return codexMultiplierCache.value;
-            const uniqueHexes = Array.from(new Set(inv.flatMap(c => c.hexesList || [c.hex])));
-
             COLOR_FAMILIES.forEach(family => {
                 const count = getCodexFamilyColorCount(family, uniqueHexes);
                 totalBonus += getCodexMilestones(count) * 0.25;
@@ -1582,7 +1600,7 @@
         function isSecretPackUnlocked(pack) {
             if (!pack.secret) return true;
 
-            const uniqueHexes = Array.from(new Set(gameState.inventory.flatMap(c => c.hexesList || [c.hex])));
+            const uniqueHexes = getDiscoveredCodexColors();
             const splitCards = gameState.inventory.filter(c => (c.traits || []).some(name => ['Duo-Split', 'Tri-Split', 'Quad-Split', 'Hyper-Spectrum'].includes(name))).length;
             const maxFinishMult = gameState.inventory.reduce((max, c) => Math.max(max, VARIANTS[c.variant]?.multiplier || 1), 1);
 
@@ -2002,7 +2020,7 @@ const ASCENSION_UPGRADES=[
 {id:"fortune",name:"Prismatic Fortune",desc:"+15% rarity-roll boost per level on every pack card.",max:30},
 {id:"singularity",name:"Factory Singularity",desc:"All automation machines cycle 3% faster per level.",max:25}
 ];
-function uniqueColorCount(){return new Set(gameState.inventory.flatMap(c=>c.hexesList||[c.hex])).size;}
+function uniqueColorCount(){return getDiscoveredCodexColors().length;}
 function canPrestige(){return gameState.packsOpened>=500&&gameState.lifetimeRevenue>=100000000&&uniqueColorCount()>=75;}
 function prestigeReward(){return Math.max(10,Math.min(250,10+Math.floor(Math.log10(Math.max(1,gameState.lifetimeRevenue/100000000))*10)));}
 function prestigeCost(up){return 1+(gameState.progression.upgrades[up.id]||0)*2;}
