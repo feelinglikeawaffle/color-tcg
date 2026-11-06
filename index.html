@@ -1522,6 +1522,8 @@
 
             const renderContext = buildInventoryRenderContext();
             const rarityOrder = Object.keys(RARITIES);
+            const sortSaleMultiplier = renderContext.breakdown.globalMultiplier;
+            const saleValueForSort = card => Math.max(0, Number(card.sellValue) || (Number(card.incomePerSec) || 0) * 100) * 50 * sortSaleMultiplier;
             filtered.sort((a, b) => {
                 if (sortBy === 'rarity-desc') {
                     const powerA = (rarityOrder.indexOf(a.rarity) + 1) * (VARIANTS[a.variant]?.multiplier || 1);
@@ -1535,8 +1537,8 @@
                 }
                 if (sortBy === 'income-desc') return b.incomePerSec - a.incomePerSec;
                 if (sortBy === 'income-asc') return a.incomePerSec - b.incomePerSec;
-                if (sortBy === 'sell-desc') return effectiveSaleValue(b) - effectiveSaleValue(a);
-                if (sortBy === 'sell-asc') return effectiveSaleValue(a) - effectiveSaleValue(b);
+                if (sortBy === 'sell-desc') return saleValueForSort(b) - saleValueForSort(a);
+                if (sortBy === 'sell-asc') return saleValueForSort(a) - saleValueForSort(b);
                 if (sortBy === 'multiplier-desc') return (VARIANTS[b.variant]?.multiplier || 1) - (VARIANTS[a.variant]?.multiplier || 1);
                 return 0;
             });
@@ -2046,10 +2048,9 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         }
         function settleMarketAuction(auction,now) {
             const m=getMarketState(),winner=auction.highestBidder;
-            if(winner&&winner.type==='player'){
+            if(winner&&winner.type==='player'&&auction.kind==='npc'){
                 const amount=auction.currentBid;
-                if(auction.kind==='npc'){gameState.inventory.push(auction.card);gameState.currency=Math.max(0,gameState.currency-amount);}
-                else {gameState.currency+=amount;}
+                gameState.inventory.push(auction.card);
                 marketLog('You won '+auction.card.rarity+' at auction for $'+formatCurrency(amount)+'.');
             } else if(winner&&winner.type==='bot'&&auction.kind==='player'){
                 gameState.currency+=auction.currentBid;
@@ -2082,6 +2083,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
                     const a=playerAuctions[Math.floor(Math.random()*playerAuctions.length)],bot=MARKET_BOTS[Math.floor(Math.random()*MARKET_BOTS.length)];
                     const fair=marketCardPrice(a.card),next=Math.max(a.startBid,a.currentBid?Math.ceil(a.currentBid*1.08):a.startBid);
                     if(next<=bot.budget&&next<=fair*(1.2+Math.random()*0.8)){
+                        if(a.highestBidder?.type==='player')gameState.currency+=a.currentBid;
                         a.currentBid=next;a.highestBidder={type:'bot',id:bot.id,name:bot.name};a.bids++;marketLog(bot.name+' bid $'+formatCurrency(next)+' on your '+a.card.rarity+'.');changed=true;
                     }
                 }
@@ -2125,7 +2127,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         }
         function marketBid(id) {
             const m=getMarketState(),a=m.auctions.find(x=>x.id===id&&!x.settled);
-            if(!a||a.endsAt<=Date.now())return;
+            if(!a||a.kind!=='npc'||a.endsAt<=Date.now())return;
             const bid=Math.max(a.startBid,a.currentBid?Math.ceil(a.currentBid*1.1):a.startBid);
             if(gameState.currency<bid){alert('Not enough funds for that bid.');return;}
             if(a.highestBidder?.type==='player')gameState.currency+=a.currentBid;
@@ -2134,7 +2136,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         }
         function marketBuyout(id) {
             const m=getMarketState(),a=m.auctions.find(x=>x.id===id&&!x.settled);
-            if(!a||!a.buyout||gameState.currency<a.buyout){alert('Buyout unavailable or insufficient funds.');return;}
+            if(!a||a.kind!=='npc'||!a.buyout||gameState.currency<a.buyout){alert('Buyout unavailable or insufficient funds.');return;}
             if(a.highestBidder?.type==='player')gameState.currency+=a.currentBid;
             gameState.currency-=a.buyout;
             if(a.kind==='npc')gameState.inventory.push(a.card);else gameState.currency+=a.buyout;
