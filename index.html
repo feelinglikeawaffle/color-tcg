@@ -850,7 +850,7 @@
             inventory: [],
             packsOpened: 0,
             normalPackOpens: 0,
-            research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0 },
+            research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0, automationTheory: 0, marketAnalysis: 0, pigmentArchive: 0 },
             progression: { ascensions: 0, shards: 0, upgrades: { yield: 0, factory: 0, market: 0 } },
             automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, maxSaleValue: 250 } },
             claimedMasteries: [],
@@ -936,9 +936,9 @@
                         if (typeof parsed.packsOpened === 'number' && !isNaN(parsed.packsOpened)) gameState.packsOpened = parsed.packsOpened;
                         if (typeof parsed.normalPackOpens === 'number' && !isNaN(parsed.normalPackOpens)) gameState.normalPackOpens = parsed.normalPackOpens;
                         if (parsed.research && typeof parsed.research === 'object') {
-                            ['yieldCore', 'packPress', 'rarityLab', 'foilLab', 'codexLens'].forEach(key => {
+                            ['yieldCore', 'packPress', 'rarityLab', 'foilLab', 'codexLens', 'automationTheory', 'marketAnalysis', 'pigmentArchive'].forEach(key => {
                                 const level = Number(parsed.research[key]);
-                                if (Number.isFinite(level)) gameState.research[key] = Math.max(0, Math.min(10, Math.floor(level)));
+                                if (Number.isFinite(level)) gameState.research[key] = Math.max(0, Math.min(15, Math.floor(level)));
                             });
                         }
                         if (parsed.progression && typeof parsed.progression === "object") { gameState.progression = Object.assign(gameState.progression, parsed.progression); gameState.progression.upgrades = Object.assign({ yield: 0, factory: 0, market: 0 }, parsed.progression.upgrades || {}); }
@@ -1155,6 +1155,7 @@
                 const count = getCodexFamilyColorCount(family, uniqueHexes);
                 totalBonus += getCodexMilestones(count) * 0.25;
             });
+            totalBonus *= 1 + ((gameState.research?.pigmentArchive || 0) * 0.02);
             return totalBonus;
         }
 
@@ -1540,7 +1541,10 @@
             { id: 'packPress', name: 'Automated Pack Press', icon: 'fa-boxes-stacked', description: '+1 extra card in every normal pack per level.', baseCost: 25000 },
             { id: 'rarityLab', name: 'Rarity Analyzer', icon: 'fa-microscope', description: '+20% pack rarity odds per level.', baseCost: 150000 },
             { id: 'foilLab', name: 'Foil Resonator', icon: 'fa-gem', description: '+20% finish odds per level.', baseCost: 1000000 },
-            { id: 'codexLens', name: 'Codex Lens', icon: 'fa-book-open', description: '+10% Codex income bonus per level.', baseCost: 5000000 }
+            { id: 'codexLens', name: 'Codex Lens', icon: 'fa-book-open', description: '+10% Codex income bonus per level.', baseCost: 5000000 },
+            { id: 'automationTheory', name: 'Automation Theory', icon: 'fa-gears', description: 'Reduce all factory cycle times by 2% per level.', baseCost: 25000000 },
+            { id: 'marketAnalysis', name: 'Market Analysis', icon: 'fa-chart-line', description: '+4% automated sale payouts per level.', baseCost: 125000000 },
+            { id: 'pigmentArchive', name: 'Pigment Archive', icon: 'fa-book-atlas', description: '+2% Codex multiplier per level.', baseCost: 750000000 }
         ];
 
         function getResearchCost(upgrade) {
@@ -1554,7 +1558,7 @@
             gameState.research = gameState.research || {};
             const level = gameState.research[id] || 0;
             const cost = getResearchCost(upgrade);
-            if (level >= 10 || gameState.currency < cost) return;
+            if (level >= 15 || gameState.currency < cost) return;
             gameState.currency -= cost;
             gameState.research[id] = level + 1;
             playSfx('cash');
@@ -1599,14 +1603,14 @@
                 grid.innerHTML = RESEARCH_UPGRADES.map(upgrade => {
                     const level = gameState.research?.[upgrade.id] || 0;
                     const cost = getResearchCost(upgrade);
-                    const maxed = level >= 10;
+                    const maxed = level >= 15;
                     const canBuy = !maxed && gameState.currency >= cost;
                     const costLabel = maxed ? 'MAX LEVEL' : '$' + formatCurrency(cost);
                     const buttonLabel = maxed ? 'Maxed' : 'Research';
                     return '<div class="glass-panel p-5 rounded-3xl space-y-3">' +
                         '<div class="flex items-center justify-between gap-2">' +
                             '<div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fa-solid ' + upgrade.icon + '"></i></div>' +
-                            '<span class="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg">Lv. ' + level + '/10</span>' +
+                            '<span class="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg">Lv. ' + level + '/15</span>' +
                         '</div>' +
                         '<div><h3 class="font-black text-slate-800 text-sm">' + upgrade.name + '</h3>' +
                             '<p class="text-xs text-slate-500 mt-1">' + upgrade.description + '</p></div>' +
@@ -1663,11 +1667,11 @@ function autoState(id){gameState.automation.machines[id]=gameState.automation.ma
 function autoMachineCost(m){return m.baseCost*Math.pow(2.65,autoState(m.id).level)*(1-(gameState.progression?.upgrades?.factory||0)*.04);}
 function autoUpgradeCost(m,u){return m.baseCost*.45*Math.pow(1.82,autoState(m.id).upgrades[u.id]||0);}
 function autoCapacity(){const l=autoState("bulkLoader"),b=autoState("packBuyer"),o=autoState("autoOpener");return 3+l.level*5+(l.upgrades.throughput||0)*3+(l.upgrades.safety||0)*2+(l.upgrades.speed||0)+(l.upgrades.efficiency||0)*2+(l.upgrades.value||0)+(b.upgrades.safety||0)*2+(o.upgrades.safety||0)*2;}
-function autoCycle(m){return Math.max(.65,m.cycle*Math.pow(.88,autoState(m.id).upgrades.speed||0));}
+function autoCycle(m){return Math.max(.65,m.cycle*Math.pow(.88,autoState(m.id).upgrades.speed||0)*Math.pow(.98,gameState.research?.automationTheory||0));}
 function setAutomationPack(id){if(PACKS.some(p=>p.id===id&&!p.secret&&gameState.packsOpened>=(p.unlockPacks||0))){gameState.automation.selectedPackId=id;saveGameData();renderAutomation();}}
 function buyAutomationMachine(id){const m=AUTOMATION_MACHINES.find(x=>x.id===id);if(!m)return;const s=autoState(id),cost=autoMachineCost(m);if(s.level||gameState.packsOpened<m.unlock||gameState.currency<cost)return;gameState.currency-=cost;s.level=1;updateEconomyUI();saveGameData();renderAutomation();}
 function buyAutomationUpgrade(id,key){const m=AUTOMATION_MACHINES.find(x=>x.id===id),u=AUTOMATION_UPGRADES.find(x=>x.id===key);if(!m||!u)return;const s=autoState(id),cost=autoUpgradeCost(m,u),lv=s.upgrades[key]||0;if(!s.level||lv>=25||gameState.currency<cost)return;gameState.currency-=cost;s.upgrades[key]=lv+1;updateEconomyUI();saveGameData();renderAutomation();}
-function autoSaleMultiplier(m){const u=autoState(m.id).upgrades,market=autoState("marketExchange"),bonus=market.level?0.05+(market.upgrades.value||0)*.08+(market.upgrades.efficiency||0)*.025+(market.upgrades.speed||0)*.01+(market.upgrades.throughput||0)*.02+(market.upgrades.safety||0)*.01:0;return(1+(u.efficiency||0)*.04+(u.value||0)*.12)*(1+bonus)*(1+(gameState.progression?.upgrades?.market||0)*.05);}
+function autoSaleMultiplier(m){const u=autoState(m.id).upgrades,market=autoState("marketExchange"),bonus=market.level?0.05+(market.upgrades.value||0)*.08+(market.upgrades.efficiency||0)*.025+(market.upgrades.speed||0)*.01+(market.upgrades.throughput||0)*.02+(market.upgrades.safety||0)*.01:0;return(1+(u.efficiency||0)*.04+(u.value||0)*.12)*(1+bonus)*(1+(gameState.progression?.upgrades?.market||0)*.05)*(1+(gameState.research?.marketAnalysis||0)*.04);}
 function runAutomation(now){
 const a=gameState.automation,q=a.queue,cfg=a.config||(a.config={});if(cfg.paused)return;let changed=false;const buyer=AUTOMATION_MACHINES[0],opener=AUTOMATION_MACHINES[1],bs=autoState(buyer.id),os=autoState(opener.id);
 const due=m=>!a.lastRun[m.id]||now-a.lastRun[m.id]>=autoCycle(m)*1000,mark=m=>{a.lastRun[m.id]=now;};
@@ -1700,7 +1704,7 @@ function canPrestige(){return gameState.packsOpened>=500&&gameState.lifetimeReve
 function prestigeReward(){return Math.max(1,Math.min(50,1+Math.floor(Math.log10(Math.max(1,gameState.lifetimeRevenue/100000000)))));}
 function prestigeCost(up){return 1+(gameState.progression.upgrades[up.id]||0)*2;}
 function buyPrestigeUpgrade(id){const up=ASCENSION_UPGRADES.find(x=>x.id===id);if(!up)return;const lv=gameState.progression.upgrades[id]||0,cost=prestigeCost(up);if(lv>=up.max||gameState.progression.shards<cost)return;gameState.progression.shards-=cost;gameState.progression.upgrades[id]=lv+1;saveGameData();renderProgression();updateEconomyUI();}
-function performPrestige(){if(!canPrestige())return;const reward=prestigeReward();if(!confirm("Refracture for "+reward+" Prism Shards? Cash, collection, pack progress, research and automation reset. Lifetime revenue, ascension upgrades and claimed mastery records remain."))return;gameState.progression.shards+=reward;gameState.progression.ascensions++;gameState.currency=25;gameState.inventory=[createPaintCard(1,1),createPaintCard(1,1)];gameState.packsOpened=0;gameState.normalPackOpens=0;gameState.research={yieldCore:0,packPress:0,rarityLab:0,foilLab:0,codexLens:0};gameState.automation={selectedPackId:"starter",queue:[],machines:{},lastRun:{},cardsProcessed:0,salesTotal:0,config:{preset:"balanced",paused:false,reserve:0,budget:0,queueLimit:20,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true,maxSaleValue:250}};gameState.lastTickTimestamp=Date.now();saveGameData();updateEconomyUI();renderInventory();renderStore();renderProgression();}
+function performPrestige(){if(!canPrestige())return;const reward=prestigeReward();if(!confirm("Refracture for "+reward+" Prism Shards? Cash, collection, pack progress, research and automation reset. Lifetime revenue, ascension upgrades and claimed mastery records remain."))return;gameState.progression.shards+=reward;gameState.progression.ascensions++;gameState.currency=25;gameState.inventory=[createPaintCard(1,1),createPaintCard(1,1)];gameState.packsOpened=0;gameState.normalPackOpens=0;gameState.research={yieldCore:0,packPress:0,rarityLab:0,foilLab:0,codexLens:0,automationTheory:0,marketAnalysis:0,pigmentArchive:0};gameState.automation={selectedPackId:"starter",queue:[],machines:{},lastRun:{},cardsProcessed:0,salesTotal:0,config:{preset:"balanced",paused:false,reserve:0,budget:0,queueLimit:20,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true,maxSaleValue:250}};gameState.lastTickTimestamp=Date.now();saveGameData();updateEconomyUI();renderInventory();renderStore();renderProgression();}
 function renderProgression(){const p=gameState.progression;const put=(id,v)=>{const e=document.getElementById(id);if(e)e.innerText=v;};put("prestige-count",p.ascensions||0);put("prestige-shards",formatCurrency(p.shards||0));put("progression-packs",gameState.packsOpened.toLocaleString());put("progression-colors",uniqueColorCount().toLocaleString());const nums=[0,10,25,50,100,200,400,800,1500,3000],names=["First Pigment","Palette Apprentice","Color Technician","Spectrum Analyst","Factory Supervisor","Chromatic Engineer","Prism Architect","Spectrum Director","Dimensional Curator","Origin Keeper"];const road=document.getElementById("progression-roadmap");if(road)road.innerHTML=nums.map((n,i)=>{const done=gameState.packsOpened>=n;return '<article class="rounded-2xl border '+(done?"border-emerald-200 bg-emerald-50/70":"border-purple-100 bg-white/70")+' p-3"><div class="flex justify-between"><b class="text-xs">'+names[i]+'</b><b class="text-[9px]">'+(done?"UNLOCKED":"LOCKED")+'</b></div><p class="text-[10px] text-slate-500">Open '+n.toLocaleString()+' packs to reach this milestone.</p><div class="h-1.5 bg-slate-100 rounded-full mt-2"><div class="h-full bg-purple-400" style="width:'+Math.min(100,n?gameState.packsOpened/n*100:100)+'%"></div></div></article>';}).join("");put("prestige-requirements","Requirements: 500 packs ("+gameState.packsOpened+"/500), $100M lifetime revenue ($"+formatCurrency(gameState.lifetimeRevenue)+"), 75 unique colors ("+uniqueColorCount()+"/75). Reward: "+prestigeReward()+" Prism Shards.");const btn=document.getElementById("prestige-button");if(btn)btn.disabled=!canPrestige();const grid=document.getElementById("prestige-upgrades");if(grid)grid.innerHTML=ASCENSION_UPGRADES.map(up=>{const lv=p.upgrades[up.id]||0,cost=prestigeCost(up);return '<article class="bg-white/70 border border-amber-100 rounded-2xl p-4 space-y-2"><b class="text-xs">'+up.name+'</b><p class="text-[10px] text-slate-500">'+up.desc+'</p><div class="flex justify-between text-[10px]"><span>Lv '+lv+'/'+up.max+'</span><span>'+cost+' shards</span></div><button onclick="buyPrestigeUpgrade(&quot;'+up.id+'&quot;)" '+(lv>=up.max||p.shards<cost?"disabled":"")+' class="w-full px-3 py-2 rounded-xl text-xs font-black bg-amber-500 text-white disabled:bg-slate-200">'+(lv>=up.max?"MAXED":"Upgrade")+'</button></article>';}).join("");}
 
         // NAVIGATION & PACK ACTIONS
