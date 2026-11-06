@@ -464,6 +464,7 @@
 
             <!-- CARDS GRID -->
             <div id="inventory-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+            <div class="flex justify-center"><button id="inventory-load-more" onclick="loadMoreInventory()" class="hidden px-5 py-3 rounded-xl bg-white border border-purple-200 text-purple-700 text-xs font-black shadow-sm">Load more cards</button></div>
 
             <div id="inventory-empty" class="hidden glass-panel p-12 rounded-3xl text-center space-y-3">
                 <div class="w-16 h-16 rounded-3xl bg-purple-100 text-purple-400 mx-auto flex items-center justify-center text-2xl">
@@ -492,15 +493,13 @@
         </section>
         <!-- MARKETPLACE -->
         <section id="tab-market" class="hidden space-y-4">
-            <div class="glass-panel p-6 rounded-3xl">
-                <h2 class="text-lg font-black text-slate-800">Spectrum Exchange</h2>
-                <p class="text-xs text-slate-500 mt-1">Player-to-player trading with in-game currency only. Listings and purchases will go live once the secure Firebase marketplace backend is configured.</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-5">
-                    <div class="bg-white/70 border border-purple-100 rounded-2xl p-4"><div class="text-xs font-bold text-slate-400 uppercase">Trading currency</div><div class="font-black text-emerald-600">In-game funds only</div></div>
-                    <div class="bg-white/70 border border-purple-100 rounded-2xl p-4"><div class="text-xs font-bold text-slate-400 uppercase">Listing fee</div><div class="font-black text-slate-700">To be configured</div></div>
-                    <div class="bg-white/70 border border-purple-100 rounded-2xl p-4"><div class="text-xs font-bold text-slate-400 uppercase">Price history</div><div class="font-black text-slate-700">Coming with live market</div></div>
-                </div>
-                <div class="mt-5 rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-900">Marketplace transactions will be processed by trusted server functions, never by trusting browser-side currency or inventory values.</div>
+            <div class="glass-panel p-5 rounded-3xl space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-3"><div><h2 class="text-xl font-black text-slate-800">Spectrum Exchange</h2><p class="text-xs text-slate-500">A living NPC market: collectors list rare pulls, bid in auctions, and compete for your cards.</p></div><div class="text-right"><div class="text-[9px] uppercase font-black text-slate-400">Market activity</div><div id="market-status" class="text-xs font-black text-emerald-600">NPC traders online</div></div></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2"><div class="bg-white/80 rounded-xl p-3"><div class="text-[9px] uppercase font-bold text-slate-400">Your funds</div><b id="market-funds" class="text-emerald-600">$0</b></div><div class="bg-white/80 rounded-xl p-3"><div class="text-[9px] uppercase font-bold text-slate-400">Active listings</div><b id="market-listing-count">0</b></div><div class="bg-white/80 rounded-xl p-3"><div class="text-[9px] uppercase font-bold text-slate-400">Auctions</div><b id="market-auction-count">0</b></div><div class="bg-white/80 rounded-xl p-3"><div class="text-[9px] uppercase font-bold text-slate-400">Recent trades</div><b id="market-trade-count">0</b></div></div>
+                <div class="rounded-2xl bg-white/80 border border-purple-100 p-4 space-y-3"><h3 class="font-black text-slate-800 text-sm">List a card</h3><div class="grid grid-cols-1 sm:grid-cols-4 gap-2"><select id="market-card-select" class="min-w-0 rounded-xl border border-purple-100 p-2 text-xs"><option value="">Choose an unprotected card</option></select><select id="market-sale-mode" class="rounded-xl border border-purple-100 p-2 text-xs"><option value="fixed">Instant sale</option><option value="auction">Auction · 2 min</option></select><input id="market-price-input" type="number" min="1" step="1" placeholder="Asking price" class="rounded-xl border border-purple-100 p-2 text-xs"><button onclick="marketCreatePlayerListing()" class="rounded-xl bg-purple-600 text-white text-xs font-black px-3 py-2">List card</button></div><p class="text-[10px] text-slate-500">Cards are held by the market while listed. Vaulted and display-case cards are protected.</p></div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4"><div class="rounded-2xl bg-white/70 border border-purple-100 p-4"><div class="flex justify-between items-center mb-3"><h3 class="font-black text-slate-800">Live listings</h3><span class="text-[9px] text-slate-400">NPC + your cards</span></div><div id="market-listings" class="space-y-2"></div></div><div class="rounded-2xl bg-white/70 border border-purple-100 p-4"><div class="flex justify-between items-center mb-3"><h3 class="font-black text-slate-800">Auction house</h3><span class="text-[9px] text-slate-400">Bids update as bots compete</span></div><div id="market-auctions" class="space-y-2"></div></div></div>
+                <div class="rounded-2xl bg-white/70 border border-purple-100 p-4"><h3 class="font-black text-slate-800 mb-2">Market ticker</h3><div id="market-ticker" class="space-y-1 text-[10px] text-slate-500"></div></div>
+                <p class="text-[10px] text-slate-400">NPC trading is simulated in this browser save. Cross-device player-to-player trading still requires migrating verified player balances and card ownership into the Firebase account system before it can safely go live.</p>
             </div>
         </section>
 
@@ -913,6 +912,7 @@
             claimedMasteries: [],
             dailyCommissions: null,
             selectedCardId: null,
+            market: { listings: [], auctions: [], history: [], lastNpcRefresh: 0, nextNpcAction: 0, bots: [] },
             lastTickTimestamp: Date.now()
         };
 
@@ -1005,6 +1005,10 @@
                             gameState.inventory = parsed.inventory.map(c => sanitizeCard(c)).filter(c => c !== null);
                         }
                         if (Array.isArray(parsed.displayCases)) gameState.displayCases = parsed.displayCases.map((box, i) => ({...({id:'case-'+i,name:'Display Case',level:1,slots:2,cardIds:[],baseRate:0.02,upgradeCost:250}),...box,cardIds:Array.isArray(box.cardIds)?box.cardIds:[]}));
+                        if (parsed.market && typeof parsed.market === 'object') gameState.market = Object.assign(gameState.market, parsed.market);
+                        gameState.market.listings = Array.isArray(gameState.market.listings) ? gameState.market.listings : [];
+                        gameState.market.auctions = Array.isArray(gameState.market.auctions) ? gameState.market.auctions : [];
+                        gameState.market.history = Array.isArray(gameState.market.history) ? gameState.market.history.slice(-100) : [];
                     } else {
                         recoveryTriggered = true;
                     }
@@ -1045,11 +1049,18 @@
             gameState.lastTickTimestamp = now;
         }
 
-        function saveGameData() {
-            try {
-                localStorage.setItem('hex_pastel_tcg_save_v2', JSON.stringify(gameState));
-            } catch(e) {}
+        let saveScheduled = false, saveIdleHandle = null;
+        function performSaveGameData() {
+            saveScheduled = false; saveIdleHandle = null;
+            try { localStorage.setItem('hex_pastel_tcg_save_v2', JSON.stringify(gameState)); } catch(e) { console.warn('Save deferred or storage full:', e); }
         }
+        function saveGameData() {
+            if (saveScheduled) return;
+            saveScheduled = true;
+            if (typeof window.requestIdleCallback === 'function') saveIdleHandle = window.requestIdleCallback(performSaveGameData, { timeout: 2500 });
+            else saveIdleHandle = window.setTimeout(performSaveGameData, 250);
+        }
+        window.addEventListener('pagehide', () => { if (saveScheduled) performSaveGameData(); });
 
         function confirmResetGame() {
             if (confirm("Are you sure you want to reset all game data? This cannot be undone.")) {
@@ -1215,17 +1226,22 @@
             return count;
         }
 
+        let codexMultiplierCache = { key: '', value: 1 };
         function calculateCodexMultiplier() {
             let totalBonus = 1.0;
             if (!Array.isArray(gameState.inventory)) return totalBonus;
-
-            const uniqueHexes = Array.from(new Set(gameState.inventory.flatMap(c => c.hexesList || [c.hex])));
+            const inv = gameState.inventory, first = inv[0]?.id || '', last = inv[inv.length - 1]?.id || '';
+            const pigment = gameState.research?.pigmentArchive || 0;
+            const cacheKey = inv.length + '|' + first + '|' + last + '|' + pigment;
+            if (codexMultiplierCache.key === cacheKey) return codexMultiplierCache.value;
+            const uniqueHexes = Array.from(new Set(inv.flatMap(c => c.hexesList || [c.hex])));
 
             COLOR_FAMILIES.forEach(family => {
                 const count = getCodexFamilyColorCount(family, uniqueHexes);
                 totalBonus += getCodexMilestones(count) * 0.25;
             });
-            totalBonus *= 1 + ((gameState.research?.pigmentArchive || 0) * 0.02);
+            totalBonus *= 1 + (pigment * 0.02);
+            codexMultiplierCache = { key: cacheKey, value: totalBonus };
             return totalBonus;
         }
 
@@ -1233,10 +1249,10 @@
         function calculateIncomeBreakdown() { return calculateIncomeBreakdownFor(gameState.displayCases || []); }
         function calculateIncomeBreakdownFor(displayCases, extraCards = []) {
             let baseIncome = 0;
-            const incomeCards = (gameState.inventory || []).concat(extraCards || []);
+            const incomeCards = new Map((gameState.inventory || []).concat(extraCards || []).map(card => [card.id, card]));
             (displayCases || []).forEach(box => {
                 if (!(Number(box.level) > 0)) return;
-                const cards = (box.cardIds || []).map(id => incomeCards.find(card => card.id === id)).filter(Boolean);
+                const cards = (box.cardIds || []).map(id => incomeCards.get(id)).filter(Boolean);
                 const caseRate = Math.max(0, Number(box.baseRate) || 0) * Math.max(1, Number(box.level) || 1) * (1 + Math.max(0, cards.length - 1) * 0.12);
                 cards.forEach(card => baseIncome += cardCollectorValue(card) * caseRate);
             });
@@ -1329,6 +1345,7 @@
             if (income > 0) { const earned = income * deltaSec; gameState.currency += earned; gameState.lifetimeRevenue += earned; }
             updateEconomyUI(income);
             runAutomation(now);
+            if (runNpcMarket(now)) { if (!document.getElementById('tab-market')?.classList.contains('hidden')) renderMarket(); saveGameData(); }
             const storeTab = document.getElementById('tab-store');
             if (storeTab && !storeTab.classList.contains('hidden')) updateStoreButtonStates();
         }
@@ -1505,6 +1522,8 @@
 
             const renderContext = buildInventoryRenderContext();
             const rarityOrder = Object.keys(RARITIES);
+            const sortSaleMultiplier = renderContext.breakdown.globalMultiplier;
+            const saleValueForSort = card => Math.max(0, Number(card.sellValue) || (Number(card.incomePerSec) || 0) * 100) * 50 * sortSaleMultiplier;
             filtered.sort((a, b) => {
                 if (sortBy === 'rarity-desc') {
                     const powerA = (rarityOrder.indexOf(a.rarity) + 1) * (VARIANTS[a.variant]?.multiplier || 1);
@@ -1518,8 +1537,8 @@
                 }
                 if (sortBy === 'income-desc') return b.incomePerSec - a.incomePerSec;
                 if (sortBy === 'income-asc') return a.incomePerSec - b.incomePerSec;
-                if (sortBy === 'sell-desc') return effectiveSaleValue(b) - effectiveSaleValue(a);
-                if (sortBy === 'sell-asc') return effectiveSaleValue(a) - effectiveSaleValue(b);
+                if (sortBy === 'sell-desc') return saleValueForSort(b) - saleValueForSort(a);
+                if (sortBy === 'sell-asc') return saleValueForSort(a) - saleValueForSort(b);
                 if (sortBy === 'multiplier-desc') return (VARIANTS[b.variant]?.multiplier || 1) - (VARIANTS[a.variant]?.multiplier || 1);
                 return 0;
             });
@@ -1527,11 +1546,16 @@
             if (filtered.length === 0) {
                 grid.innerHTML = '';
                 if (emptyState) emptyState.classList.remove('hidden');
+                const more = document.getElementById('inventory-load-more'); if (more) more.classList.add('hidden');
             } else {
                 if (emptyState) emptyState.classList.add('hidden');
-                grid.innerHTML = filtered.map(card => renderCardHTML(card, true, renderContext)).join('');
+                const limit = Math.max(120, window.inventoryRenderLimit || 120);
+                grid.innerHTML = filtered.slice(0, limit).map(card => renderCardHTML(card, true, renderContext)).join('');
+                const more = document.getElementById('inventory-load-more');
+                if (more) { more.classList.toggle('hidden', filtered.length <= limit); more.textContent = 'Load 120 more · ' + (filtered.length - limit).toLocaleString() + ' remaining'; }
             }
         }
+        function loadMoreInventory() { window.inventoryRenderLimit = (window.inventoryRenderLimit || 120) + 120; renderInventory(); }
 
         function isSecretPackUnlocked(pack) {
             if (!pack.secret) return true;
@@ -1977,6 +2001,158 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (!task || task.progress < task.target || d.claimed.includes(taskId)) return;
             d.claimed.push(taskId); gameState.currency += task.reward;
             playSfx('cash'); saveGameData(); updateEconomyUI(); renderDailyCommissions();
+        }
+
+
+        // NPC market simulation. Player cards are escrowed in the local save while listed.
+        const MARKET_BOTS = [
+            {id:'bot_iris',name:'Iris Vale',style:'patient collector',budget:180000},
+            {id:'bot_cobalt',name:'CobaltJack',style:'finish hunter',budget:260000},
+            {id:'bot_mira',name:'Mira Spectrum',style:'rare-card flipper',budget:520000},
+            {id:'bot_prism',name:'PrismDealer',style:'auction specialist',budget:900000},
+            {id:'bot_nova',name:'NovaChromatic',style:'mythic collector',budget:2400000}
+        ];
+        function getMarketState() {
+            if (!gameState.market || typeof gameState.market !== 'object') gameState.market = {listings:[],auctions:[],history:[],lastNpcRefresh:0,nextNpcAction:0,bots:[]};
+            const m=gameState.market;
+            if(!Array.isArray(m.listings))m.listings=[];if(!Array.isArray(m.auctions))m.auctions=[];if(!Array.isArray(m.history))m.history=[];
+            return m;
+        }
+        function marketCardPrice(card) {
+            const rarityFactor = RARITIES[card.rarity]?.multiplier || 1;
+            const finishFactor = VARIANTS[card.variant]?.multiplier || 1;
+            const traitFactor = Math.max(1,Number(card.traitMultiplier)||1);
+            return Math.max(100,Math.round(900*rarityFactor*Math.pow(finishFactor,0.55)*Math.pow(traitFactor,0.3)));
+        }
+        function makeNpcCard(rarity) {
+            const card=createPaintCard(2.5,1.8,null,0,'Rare',1,2,0.35);
+            card.rarity=rarity;
+            card.incomePerSec=0.05*(RARITIES[rarity]?.multiplier||1)*(VARIANTS[card.variant]?.multiplier||1)*Math.max(1,Number(card.traitMultiplier)||1);
+            card.sellValue=card.incomePerSec*100;
+            return card;
+        }
+        function marketLog(message) {
+            const m=getMarketState();m.history.unshift({message,at:Date.now()});m.history=m.history.slice(0,40);
+        }
+        function seedNpcMarket(now) {
+            const m=getMarketState(), rarities=['Rare','Rare','Epic','Epic','Legendary','Mythic'];
+            for(let i=0;i<10;i++){
+                const bot=MARKET_BOTS[i%MARKET_BOTS.length],card=makeNpcCard(rarities[i%rarities.length]),price=Math.round(marketCardPrice(card)*(0.9+Math.random()*0.55));
+                m.listings.push({id:'npc_'+now+'_'+i,kind:'npc',seller:bot.name,botId:bot.id,card,price,createdAt:now});
+            }
+            for(let i=0;i<3;i++){
+                const bot=MARKET_BOTS[(i+2)%MARKET_BOTS.length],card=makeNpcCard(['Epic','Legendary','Mythic'][i]);
+                m.auctions.push({id:'npc_auction_'+now+'_'+i,kind:'npc',seller:bot.name,botId:bot.id,card,startBid:Math.max(100,Math.round(marketCardPrice(card)*0.55)),currentBid:0,highestBidder:null,bids:0,endsAt:now+120000+Math.floor(Math.random()*60000),buyout:Math.round(marketCardPrice(card)*1.8)});
+            }
+            m.lastNpcRefresh=now;marketLog('The trading floor opened with fresh rare-card lots.');
+        }
+        function settleMarketAuction(auction,now) {
+            const m=getMarketState(),winner=auction.highestBidder;
+            if(winner&&winner.type==='player'&&auction.kind==='npc'){
+                const amount=auction.currentBid;
+                gameState.inventory.push(auction.card);
+                marketLog('You won '+auction.card.rarity+' at auction for $'+formatCurrency(amount)+'.');
+            } else if(winner&&winner.type==='bot'&&auction.kind==='player'){
+                gameState.currency+=auction.currentBid;
+                marketLog(winner.name+' won your '+auction.card.rarity+' for $'+formatCurrency(auction.currentBid)+'.');
+            } else if(auction.kind==='player'){
+                gameState.inventory.push(auction.card);marketLog('Your auction expired without a sale; the card was returned.');
+            }
+            auction.settled=true;auction.settledAt=now;
+        }
+        function runNpcMarket(now) {
+            const m=getMarketState();let changed=false;
+            if(!m.lastNpcRefresh){seedNpcMarket(now);changed=true;}
+            if(now-m.lastNpcRefresh>90000&&m.listings.filter(x=>x.kind==='npc').length<8){seedNpcMarket(now);changed=true;}
+            m.auctions.forEach(a=>{if(!a.settled&&a.endsAt<=now){settleMarketAuction(a,now);changed=true;}});
+            m.auctions=m.auctions.filter(a=>!a.settled||now-a.settledAt<30000);
+            if(!m.nextNpcAction||now>=m.nextNpcAction){
+                m.nextNpcAction=now+6500+Math.floor(Math.random()*8500);
+                const active=m.listings.filter(x=>x.kind==='player');
+                if(active.length){
+                    const listing=active[Math.floor(Math.random()*active.length)],fair=marketCardPrice(listing.card),buyer=MARKET_BOTS[Math.floor(Math.random()*MARKET_BOTS.length)];
+                    const offer=Math.round(fair*(0.82+Math.random()*0.55));
+                    if(listing.price<=buyer.budget&&listing.price<=offer){
+                        gameState.currency+=listing.price;gameState.lifetimeRevenue+=listing.price;
+                        m.listings=m.listings.filter(x=>x.id!==listing.id);
+                        marketLog(buyer.name+' bought your '+listing.card.rarity+' card for $'+formatCurrency(listing.price)+'.');changed=true;
+                    }
+                }
+                const playerAuctions=m.auctions.filter(a=>a.kind==='player'&&!a.settled&&a.endsAt>now);
+                if(playerAuctions.length&&Math.random()<0.72){
+                    const a=playerAuctions[Math.floor(Math.random()*playerAuctions.length)],bot=MARKET_BOTS[Math.floor(Math.random()*MARKET_BOTS.length)];
+                    const fair=marketCardPrice(a.card),next=Math.max(a.startBid,a.currentBid?Math.ceil(a.currentBid*1.08):a.startBid);
+                    if(next<=bot.budget&&next<=fair*(1.2+Math.random()*0.8)){
+                        if(a.highestBidder?.type==='player')gameState.currency+=a.currentBid;
+                        a.currentBid=next;a.highestBidder={type:'bot',id:bot.id,name:bot.name};a.bids++;marketLog(bot.name+' bid $'+formatCurrency(next)+' on your '+a.card.rarity+'.');changed=true;
+                    }
+                }
+                const npcAuctions=m.auctions.filter(a=>a.kind==='npc'&&!a.settled&&a.endsAt>now);
+                if(npcAuctions.length&&Math.random()<0.35){
+                    const a=npcAuctions[Math.floor(Math.random()*npcAuctions.length)],next=Math.max(a.startBid,a.currentBid?Math.ceil(a.currentBid*1.09):a.startBid);
+                    if(gameState.currency>next*1.5){a.currentBid=next;a.highestBidder={type:'bot',id:'rival_'+Math.floor(Math.random()*4),name:MARKET_BOTS[Math.floor(Math.random()*MARKET_BOTS.length)].name};a.bids++;changed=true;}
+                }
+            }
+            return changed;
+        }
+        function marketCreatePlayerListing() {
+            const select=document.getElementById('market-card-select'),priceInput=document.getElementById('market-price-input'),mode=document.getElementById('market-sale-mode');
+            const card=gameState.inventory.find(x=>x.id===select?.value);
+            if(!card||card.locked||isCardDisplayed(card.id)){alert('Choose an unprotected card that is not in a display case.');return;}
+            const price=Math.floor(Number(priceInput?.value));
+            if(!Number.isSafeInteger(price)||price<1){alert('Enter a whole-number asking price.');return;}
+            gameState.inventory=gameState.inventory.filter(x=>x.id!==card.id);
+            const m=getMarketState(),id='player_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+            if(mode?.value==='auction'){
+                m.auctions.push({id,kind:'player',seller:'You',card,startBid:price,currentBid:0,highestBidder:null,bids:0,endsAt:Date.now()+120000,buyout:Math.round(price*2.5)});
+                marketLog('You listed '+card.rarity+' in the auction house.');
+            }else{
+                m.listings.push({id,kind:'player',seller:'You',card,price,createdAt:Date.now()});
+                marketLog('You listed '+card.rarity+' for $'+formatCurrency(price)+'.');
+            }
+            saveGameData();renderMarket();renderInventory();updateEconomyUI();
+        }
+        function marketBuyListing(id) {
+            const m=getMarketState(),listing=m.listings.find(x=>x.id===id);
+            if(!listing||listing.kind!=='npc')return;
+            if(gameState.currency<listing.price){alert('Not enough funds for this card.');return;}
+            gameState.currency-=listing.price;gameState.inventory.push(listing.card);
+            m.listings=m.listings.filter(x=>x.id!==id);marketLog('You bought '+listing.card.rarity+' from '+listing.seller+' for $'+formatCurrency(listing.price)+'.');
+            saveGameData();renderMarket();renderInventory();updateEconomyUI();
+        }
+        function marketCancelListing(id) {
+            const m=getMarketState(),index=m.listings.findIndex(x=>x.id===id&&x.kind==='player');
+            if(index<0)return;gameState.inventory.push(m.listings[index].card);m.listings.splice(index,1);marketLog('You cancelled a listing and reclaimed your card.');
+            saveGameData();renderMarket();renderInventory();
+        }
+        function marketBid(id) {
+            const m=getMarketState(),a=m.auctions.find(x=>x.id===id&&!x.settled);
+            if(!a||a.kind!=='npc'||a.endsAt<=Date.now())return;
+            const bid=Math.max(a.startBid,a.currentBid?Math.ceil(a.currentBid*1.1):a.startBid);
+            if(gameState.currency<bid){alert('Not enough funds for that bid.');return;}
+            if(a.highestBidder?.type==='player')gameState.currency+=a.currentBid;
+            gameState.currency-=bid;a.currentBid=bid;a.highestBidder={type:'player',id:'you',name:'You'};a.bids++;
+            marketLog('You bid $'+formatCurrency(bid)+' on '+a.card.rarity+'.');saveGameData();renderMarket();updateEconomyUI();
+        }
+        function marketBuyout(id) {
+            const m=getMarketState(),a=m.auctions.find(x=>x.id===id&&!x.settled);
+            if(!a||a.kind!=='npc'||!a.buyout||gameState.currency<a.buyout){alert('Buyout unavailable or insufficient funds.');return;}
+            if(a.highestBidder?.type==='player')gameState.currency+=a.currentBid;
+            gameState.currency-=a.buyout;
+            if(a.kind==='npc')gameState.inventory.push(a.card);else gameState.currency+=a.buyout;
+            a.settled=true;a.settledAt=Date.now();marketLog('You used the buyout for $'+formatCurrency(a.buyout)+'.');
+            saveGameData();renderMarket();renderInventory();updateEconomyUI();
+        }
+        function renderMarket() {
+            const m=getMarketState(),list=document.getElementById('market-listings'),auctions=document.getElementById('market-auctions');
+            if(!list||!auctions)return;
+            const put=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+            put('market-funds','$'+formatCurrency(gameState.currency));put('market-listing-count',m.listings.length);put('market-auction-count',m.auctions.filter(a=>!a.settled).length);put('market-trade-count',m.history.length);
+            const select=document.getElementById('market-card-select'),selected=select?.value;
+            if(select){select.innerHTML='<option value="">Choose an unprotected card</option>'+gameState.inventory.filter(c=>!c.locked&&!isCardDisplayed(c.id)).slice(0,500).map(c=>'<option value="'+c.id+'">'+c.rarity+' · '+c.variant+' · '+c.name+'</option>').join('');if(selected&&gameState.inventory.some(c=>c.id===selected))select.value=selected;}
+            list.innerHTML=m.listings.length?m.listings.slice().sort((a,b)=>a.price-b.price).map(x=>'<article class="flex items-center gap-3 rounded-xl border border-purple-100 bg-white p-3"><div class="w-10 h-10 rounded-lg shrink-0 border" style="background:'+x.card.hex+'"></div><div class="min-w-0 flex-1"><b class="block text-xs">'+x.card.rarity+' '+x.card.variant+'</b><span class="block text-[9px] text-slate-500 truncate">'+x.card.name+' · '+x.seller+'</span></div><b class="text-xs text-emerald-700">$'+formatCurrency(x.price)+'</b>'+(x.kind==='npc'?'<button onclick="marketBuyListing(\''+x.id+'\')" class="rounded-lg bg-purple-600 px-2 py-1.5 text-[9px] font-black text-white">Buy</button>':'<button onclick="marketCancelListing(\''+x.id+'\')" class="rounded-lg bg-slate-100 px-2 py-1.5 text-[9px] font-black">Cancel</button>')+'</article>').join(''):'<p class="text-xs text-slate-400">No active listings. New collectors arrive throughout the day.</p>';
+            auctions.innerHTML=m.auctions.filter(a=>!a.settled).length?m.auctions.filter(a=>!a.settled).map(a=>'<article class="rounded-xl border border-amber-100 bg-white p-3 space-y-2"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg border" style="background:'+a.card.hex+'"></div><div class="min-w-0 flex-1"><b class="block text-xs">'+a.card.rarity+' · '+a.card.variant+'</b><span class="text-[9px] text-slate-500">'+a.seller+' · '+a.bids+' bids</span></div><b class="text-xs text-amber-700">$'+formatCurrency(a.currentBid||a.startBid)+'</b></div><div class="flex justify-between items-center gap-2"><span class="text-[9px] text-slate-400">'+Math.max(0,Math.ceil((a.endsAt-Date.now())/1000))+'s left · leader '+(a.highestBidder?.name||'No bids')+'</span><div class="flex gap-1"><button onclick="marketBid(\''+a.id+'\')" class="rounded-lg bg-amber-500 text-white px-2 py-1.5 text-[9px] font-black">Bid</button><button onclick="marketBuyout(\''+a.id+'\')" class="rounded-lg bg-slate-900 text-white px-2 py-1.5 text-[9px] font-black">Buyout $'+formatCurrency(a.buyout)+'</button></div></div></article>').join(''):'<p class="text-xs text-slate-400">The auction house is waiting for its next rare drop.</p>';
+            const ticker=document.getElementById('market-ticker');if(ticker)ticker.innerHTML=m.history.slice(0,8).map(x=>'<div>• '+x.message+'</div>').join('')||'<div>No trades yet.</div>';
         }
 
         // NAVIGATION & PACK ACTIONS
