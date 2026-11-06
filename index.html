@@ -547,7 +547,7 @@
                 <div class="flex flex-wrap gap-2 items-center"><label class="text-xs font-bold">Buyer target</label><select id="automation-pack-select" onchange="setAutomationPack(this.value)" class="bg-white border rounded-xl p-2 text-xs"></select><span id="automation-line-status" class="text-xs font-bold">Offline</span></div>
                 <div class="text-xs font-bold">Queue <span id="automation-queue-count">0 / 0</span> | Cards processed <span id="automation-cards-processed">0</span> | Earnings <span id="automation-sales-total">$0</span></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-3 border-t border-purple-100"><label class="text-xs font-bold">Preset<select id="auto-preset" onchange="setAutomationPreset(this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"><option value="conservative">Conservative</option><option value="balanced">Balanced</option><option value="aggressive">Aggressive</option><option value="custom">Custom</option></select></label><label class="text-xs font-bold">Cash reserve ($)<input id="auto-reserve" type="number" min="0" onchange="updateAutomationConfig('reserve',this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"></label><label class="text-xs font-bold">Budget / cycle ($)<input id="auto-budget" type="number" min="0" onchange="updateAutomationConfig('budget',this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"></label><label class="text-xs font-bold">Queue limit<select id="auto-queue-limit" onchange="updateAutomationConfig('queueLimit',this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"><option>5</option><option>10</option><option>20</option><option>40</option><option>75</option><option>150</option><option>300</option><option>500</option></select></label></div>
-                <div class="flex flex-wrap gap-3 text-xs font-semibold"><label><input id="auto-buy-enabled" type="checkbox" onchange="updateAutomationConfig('autoBuy',this.checked)"> Auto-buy</label><label><input id="auto-open-enabled" type="checkbox" onchange="updateAutomationConfig('autoOpen',this.checked)"> Auto-open</label><label><input id="auto-sell-enabled" type="checkbox" onchange="updateAutomationConfig('autoSell',this.checked)"> Auto-sell</label><label><input id="auto-protect-traits" type="checkbox" onchange="updateAutomationConfig('protectTraits',this.checked)"> Protect traits</label><label><input id="auto-protect-finishes" type="checkbox" onchange="updateAutomationConfig('protectFinishes',this.checked)"> Protect special finishes</label><label>Max sale value ($)<input id="auto-max-sale" type="number" min="0" onchange="updateAutomationConfig('maxSaleValue',this.value)" class="w-24 bg-white border rounded-lg p-1"></label><button id="auto-pause-btn" onclick="toggleAutomationPause()" class="px-3 py-1 rounded-lg bg-amber-100 text-amber-800 font-black">Pause line</button></div><p class="text-[10px] text-slate-500">Buyer buys packs into the queue. Unsealer opens queued packs. Sorters sell only cards that pass your safety rules. Reserve protects cash.</p><div id="automation-telemetry" class="text-[10px] font-mono text-slate-500 bg-white/60 rounded-xl p-3"></div>
+                <div class="flex flex-wrap gap-3 text-xs font-semibold"><label><input id="auto-buy-enabled" type="checkbox" onchange="updateAutomationConfig('autoBuy',this.checked)"> Auto-buy</label><label><input id="auto-open-enabled" type="checkbox" onchange="updateAutomationConfig('autoOpen',this.checked)"> Auto-open</label><label><input id="auto-sell-enabled" type="checkbox" onchange="updateAutomationConfig('autoSell',this.checked)"> Auto-sell</label><label><input id="auto-protect-traits" type="checkbox" onchange="updateAutomationConfig('protectTraits',this.checked)"> Protect traits</label><label><input id="auto-protect-finishes" type="checkbox" onchange="updateAutomationConfig('protectFinishes',this.checked)"> Protect special finishes</label><label><input id="auto-auto-reveal" type="checkbox" onchange="updateAutomationConfig('autoReveal',this.checked)"> Auto-reveal + summary</label><label>Max sale value ($)<input id="auto-max-sale" type="number" min="0" onchange="updateAutomationConfig('maxSaleValue',this.value)" class="w-24 bg-white border rounded-lg p-1"></label><button id="auto-pause-btn" onclick="toggleAutomationPause()" class="px-3 py-1 rounded-lg bg-amber-100 text-amber-800 font-black">Pause line</button></div><p class="text-[10px] text-slate-500">Buyer buys packs into the queue. Unsealer opens queued packs. Sorters sell only cards that pass your safety rules. Reserve protects cash. To start: install both Pack Purchasing Drone and Chromatic Unsealer, choose a buyer target, and keep Auto-buy / Auto-open enabled. The line then runs automatically.</p><div id="automation-telemetry" class="text-[10px] font-mono text-slate-500 bg-white/60 rounded-xl p-3"></div>
             </div>
             <div class="flex justify-between"><h3 class="font-black">Machine Floor</h3><span id="automation-machine-count" class="text-xs font-bold">0 / 12</span></div>
             <div id="automation-machines-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
@@ -584,11 +584,13 @@
         <div class="max-w-4xl w-full text-center space-y-6">
             <h2 id="pack-modal-title" class="text-2xl font-black text-white tracking-wider">UNSEALING BOOSTER PACK</h2>
 
-            <div id="revealed-cards-container" class="flex flex-wrap items-center justify-center gap-4 max-h-[70vh] overflow-y-auto p-4"></div>
+            <div id="revealed-cards-container" class="flex flex-wrap items-center justify-center gap-4 max-h-[58vh] overflow-y-auto p-4"></div>
+            <div id="pack-reveal-summary" class="hidden mx-auto max-w-2xl rounded-2xl bg-white/95 text-slate-800 p-4 text-left shadow-xl"></div>
+            <div class="flex flex-wrap items-center justify-center gap-3"><button id="reveal-all-btn" onclick="revealAllCards()" class="px-6 py-3 rounded-2xl bg-amber-300 text-amber-950 font-black text-sm shadow-xl hover:bg-amber-200 transition-all">Reveal All Cards</button>
 
             <button id="pack-modal-done-btn" onclick="closePackModal()" class="hidden px-8 py-3 rounded-2xl bg-white text-purple-700 font-black text-sm shadow-xl hover:bg-purple-50 transition-all">
                 Collect All Swatches
-            </button>
+            </button></div>
         </div>
     </div>
 
@@ -852,7 +854,7 @@
             normalPackOpens: 0,
             research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0, automationTheory: 0, marketAnalysis: 0, pigmentArchive: 0 },
             progression: { ascensions: 0, shards: 0, upgrades: { yield: 0, factory: 0, market: 0 } },
-            automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, maxSaleValue: 250 } },
+            automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, autoReveal: true, maxSaleValue: 250 } },
             claimedMasteries: [],
             selectedCardId: null,
             lastTickTimestamp: Date.now()
@@ -908,20 +910,9 @@
             const traitMultiplier = getCardTraitMultiplier(traits);
             const rarityMultiplier = RARITIES[validRarity]?.multiplier || 1;
             const finishMultiplier = VARIANTS[validVariant]?.multiplier || 1;
-            const incomePerSec = 0.05 * rarityMultiplier * finishMultiplier * traitMultiplier;
-            return {
-                id,
-                hex,
-                hexesList,
-                name: card.name || 'Sample Swatch',
-                rarity: validRarity,
-                variant: validVariant,
-                traits,
-                traitMultiplier,
-                incomePerSec: parseFloat(incomePerSec.toFixed(2)),
-                sellValue: parseFloat((incomePerSec * 100).toFixed(2)),
-                acquiredAt: card.acquiredAt || new Date().toLocaleDateString()
-            };
+            const recalculatedIncome = 0.05 * rarityMultiplier * finishMultiplier * traitMultiplier * Math.max(1, Number(card.incomeMultiplier) || 1);
+            const incomePerSec = Number.isFinite(Number(card.incomePerSec)) && Number(card.incomePerSec) >= 0 ? Number(card.incomePerSec) : recalculatedIncome;
+            return { id, hex, hexesList, name: card.name || 'Sample Swatch', rarity: validRarity, variant: validVariant, traits, traitMultiplier, incomeMultiplier: Math.max(1, Number(card.incomeMultiplier) || 1), incomePerSec: parseFloat(incomePerSec.toFixed(6)), sellValue: parseFloat((incomePerSec * 100).toFixed(6)), acquiredAt: card.acquiredAt || new Date().toLocaleDateString() };
         }
 
         function loadGameData() {
@@ -1096,8 +1087,9 @@
                 variant: variant,
                 traits: traits,
                 traitMultiplier: traitMult,
-                incomePerSec: parseFloat(incomePerSec.toFixed(2)),
-                sellValue: parseFloat((incomePerSec * 100).toFixed(2)),
+                incomeMultiplier: Math.max(1, Number(incomeMultiplier) || 1),
+                incomePerSec: parseFloat(incomePerSec.toFixed(6)),
+                sellValue: parseFloat((incomePerSec * 100).toFixed(6)),
                 acquiredAt: new Date().toLocaleDateString()
             };
         }
@@ -1159,16 +1151,18 @@
             return totalBonus;
         }
 
-        function calculateTotalIncomePerSecond() {
-            if (!Array.isArray(gameState.inventory)) return 0;
-            const baseIncome = gameState.inventory.reduce((sum, card) => sum + (card.incomePerSec || 0), 0);
+        function calculateIncomeBreakdown() {
+            if (!Array.isArray(gameState.inventory)) return { baseIncome: 0, totalIncome: 0, cardMultiplier: 1 };
+            const baseIncome = gameState.inventory.reduce((sum, card) => sum + Math.max(0, Number(card.incomePerSec) || 0), 0);
             const research = gameState.research || {};
-            const yieldBonus = 1 + ((research.yieldCore || 0) * 0.15);
-            const codexBonus = 1 + ((research.codexLens || 0) * 0.10);
-            const ascensionBonus = 1 + ((gameState.progression?.upgrades?.yield || 0) * 0.08);
-            const rawIncome = baseIncome * calculateCodexMultiplier() * yieldBonus * codexBonus * ascensionBonus;
-            return rawIncome <= 250 ? rawIncome : Math.min(250000, 250 + Math.pow(rawIncome - 250, 0.68));
+            const globalMultiplier = calculateCodexMultiplier() * (1 + ((research.yieldCore || 0) * 0.15)) * (1 + ((research.codexLens || 0) * 0.10)) * (1 + ((gameState.progression?.upgrades?.yield || 0) * 0.08));
+            const rawIncome = baseIncome * globalMultiplier;
+            const totalIncome = rawIncome <= 250 ? rawIncome : Math.min(250000, 250 + Math.pow(rawIncome - 250, 0.68));
+            return { baseIncome, totalIncome, globalMultiplier, cardMultiplier: baseIncome > 0 ? totalIncome / baseIncome : 1 };
         }
+        function calculateTotalIncomePerSecond() { return calculateIncomeBreakdown().totalIncome; }
+        function effectiveCardIncome(card) { return Math.max(0, Number(card?.incomePerSec) || 0) * calculateIncomeBreakdown().cardMultiplier; }
+        function formatIncomeRate(value) { const n = Math.max(0, Number(value) || 0); const digits = n < 0.01 ? 6 : n < 1 ? 4 : 2; return '$' + n.toFixed(digits); }
 
         function formatCurrency(num) {
             if (typeof num !== 'number' || isNaN(num)) return '0.00';
@@ -1209,8 +1203,9 @@
 
             if (curr) curr.innerText = `$${formatCurrency(gameState.currency)}`;
             if (inc) {
-                const totalIncome = calculateTotalIncomePerSecond();
-                inc.innerHTML = `+$${formatCurrency(totalIncome)}<span class="text-xs font-sans text-slate-400 font-normal">/s</span>`;
+                const breakdown = calculateIncomeBreakdown();
+                inc.innerHTML = `+${formatIncomeRate(breakdown.totalIncome)}<span class="text-xs font-sans text-slate-400 font-normal">/s</span>`;
+                inc.title = 'Sum of card production after global bonuses and diminishing returns. Base card rate: ' + formatIncomeRate(breakdown.baseIncome) + '/s · Global multiplier: ' + breakdown.globalMultiplier.toFixed(2) + 'x';
             }
             if (codex) codex.innerText = `${calculateCodexMultiplier().toFixed(2)}x`;
             if (invCount) invCount.innerText = gameState.inventory.length;
@@ -1260,6 +1255,7 @@
             }
 
             const traitBadges = (card.traits || []).map(name => '<span class="bg-amber-100 text-amber-800 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-amber-200">' + name + ' · ' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x</span>').join('');
+            const effectiveIncome = effectiveCardIncome(card);
             const traitVisualClasses = (card.traits || []).map(name => 'trait-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-')).join(' ');
             const isGradient = card.hex && card.hex.includes('gradient');
             const bgStyle = isGradient ? `background: ${card.hex};` : `background-color: ${card.hex};`;
@@ -1277,7 +1273,7 @@
                             ${traitBadges ? '<div class="flex flex-wrap gap-1">' + traitBadges + '</div>' : ''}
                             <div class="flex items-center justify-between text-[10px]">
                                 <span class="px-2 py-0.5 rounded-md font-bold ${rarityInfo.bg}">${card.rarity}</span>
-                                <span class="font-mono text-emerald-600 font-bold">+$${formatCurrency(card.incomePerSec)}/s</span>
+                                <span class="font-mono text-emerald-600 font-bold" title="Includes global bonuses and income diminishing returns">+${formatIncomeRate(effectiveIncome)}/s</span>
                             </div>
                         </div>
                     </div>
@@ -1676,7 +1672,7 @@ function runAutomation(now){
 const a=gameState.automation,q=a.queue,cfg=a.config||(a.config={});if(cfg.paused)return;let changed=false;const buyer=AUTOMATION_MACHINES[0],opener=AUTOMATION_MACHINES[1],bs=autoState(buyer.id),os=autoState(opener.id);
 const due=m=>!a.lastRun[m.id]||now-a.lastRun[m.id]>=autoCycle(m)*1000,mark=m=>{a.lastRun[m.id]=now;};
 if(cfg.autoBuy!==false&&bs.level&&os.level&&due(buyer)){mark(buyer);const pack=PACKS.find(p=>p.id===a.selectedPackId&&!p.secret&&gameState.packsOpened>=(p.unlockPacks||0))||PACKS[0],disc=Math.min(.55,(bs.upgrades.efficiency||0)*.025+(bs.upgrades.value||0)*.01),free=Math.max(0,Math.min(autoCapacity(),Number(cfg.queueLimit)||20)-q.length),available=Math.max(0,gameState.currency-Math.max(0,Number(cfg.reserve)||0)),budget=Number(cfg.budget)>0?Math.min(available,Number(cfg.budget)):available,n=Math.min(1+(bs.upgrades.throughput||0),free,Math.floor(budget/(pack.price*(1-disc))));if(n){for(let i=0;i<n;i++)q.push(pack.id);gameState.currency-=pack.price*(1-disc)*n;changed=true;}}
-if(cfg.autoOpen!==false&&os.level&&q.length&&due(opener)){mark(opener);const n=Math.min(1+(os.upgrades.throughput||0),q.length);for(let p=0;p<n;p++){const pack=PACKS.find(x=>x.id===q.shift()&&!x.secret);if(!pack)continue;gameState.packsOpened++;gameState.normalPackOpens=(gameState.normalPackOpens||0)+1;let count=(Number(pack.cardsCount)||3)+(pack.bonusCards||0)+(gameState.research.packPress||0);if(gameState.normalPackOpens%5===0)count++;count+=Math.floor((os.upgrades.efficiency||0)/5);const rb=Math.min(4.5,1+Math.log2(Math.max(1,pack.rarityBoost*(1+(gameState.research.rarityLab||0)*.2)))*.55),sb=Math.min(3,1+Math.log2(Math.max(1,pack.shinyBoost*(1+(gameState.research.foilLab||0)*.2)))*.35),tier=Math.max(0,PACKS.filter(x=>!x.secret).findIndex(x=>x.id===pack.id));for(let i=0;i<count;i++){const card=createPaintCard(rb,sb,null,0,pack.rarityFloor||"Common",pack.incomeMultiplier||1,tier,.18);card.sellValue*=1+(os.upgrades.value||0)*.025;gameState.inventory.push(card);}a.cardsProcessed+=count;changed=true;}}
+if(cfg.autoOpen!==false&&os.level&&q.length&&due(opener)){mark(opener);const n=Math.min(1+(os.upgrades.throughput||0),q.length),autoOpened=[];for(let p=0;p<n;p++){const pack=PACKS.find(x=>x.id===q.shift()&&!x.secret);if(!pack)continue;gameState.packsOpened++;gameState.normalPackOpens=(gameState.normalPackOpens||0)+1;let count=(Number(pack.cardsCount)||3)+(pack.bonusCards||0)+(gameState.research.packPress||0);if(gameState.normalPackOpens%5===0)count++;count+=Math.floor((os.upgrades.efficiency||0)/5);const rb=Math.min(4.5,1+Math.log2(Math.max(1,pack.rarityBoost*(1+(gameState.research.rarityLab||0)*.2)))*.55),sb=Math.min(3,1+Math.log2(Math.max(1,pack.shinyBoost*(1+(gameState.research.foilLab||0)*.2)))*.35),tier=Math.max(0,PACKS.filter(x=>!x.secret).findIndex(x=>x.id===pack.id)),packCards=[];for(let i=0;i<count;i++){const card=createPaintCard(rb,sb,null,0,pack.rarityFloor||"Common",pack.incomeMultiplier||1,tier,.18);card.sellValue*=1+(os.upgrades.value||0)*.025;gameState.inventory.push(card);packCards.push(card);}a.cardsProcessed+=count;autoOpened.push({name:pack.name,cards:packCards});changed=true;}if(autoOpened.length&&cfg.autoReveal!==false)showAutomationPackSummary(autoOpened);}
 const sellers=AUTOMATION_MACHINES.filter(m=>["sorter","finish","traitless","duplicates"].includes(m.role));
 for(const m of sellers){const s=autoState(m.id);if(cfg.autoSell===false||!s.level||!due(m))continue;mark(m);const limit=5+(s.upgrades.throughput||0)*5,cap=100000/(1+(s.upgrades.safety||0)*.35),ids=[],seen=new Set();for(let i=0;i<gameState.inventory.length&&ids.length<limit;i++){const card=gameState.inventory[i];if((cfg.protectTraits!==false&&(card.traits||[]).length)||(cfg.protectFinishes!==false&&card.variant!=="Standard")||card.sellValue>Math.min(cap,Number(cfg.maxSaleValue)||250))continue;let ok=false;if(m.role==="sorter")ok=card.rarity===m.rarity;if(m.role==="finish")ok=card.rarity==="Common";if(m.role==="traitless")ok=["Common","Uncommon"].includes(card.rarity);if(m.role==="duplicates"){const key=(card.hexesList||[card.hex]).join("|");ok=seen.has(key);if(!ok)seen.add(key);}if(ok)ids.push(i);}if(ids.length){let cash=0;ids.forEach(i=>cash+=effectiveSaleValue(gameState.inventory[i])*autoSaleMultiplier(m));const removed=new Set(ids);gameState.inventory=gameState.inventory.filter((card,i)=>!removed.has(i));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;}}
 if(changed){updateEconomyUI();if(!document.getElementById("tab-inventory").classList.contains("hidden"))renderInventory();if(!document.getElementById("tab-codex").classList.contains("hidden"))renderCodex();if(!document.getElementById("tab-stats").classList.contains("hidden"))renderStats();if(!document.getElementById("tab-store").classList.contains("hidden"))renderStore();if(!document.getElementById("tab-progression").classList.contains("hidden"))renderProgression();saveGameData();if(!document.getElementById("tab-automation").classList.contains("hidden"))renderAutomation();}
@@ -1688,10 +1684,10 @@ function renderAutomation(){
  const cfg=gameState.automation.config||(gameState.automation.config={});
 const grid=document.getElementById("automation-machines-grid"),a=gameState.automation,select=document.getElementById("automation-pack-select");if(!grid)return;
 select.innerHTML=PACKS.filter(p=>!p.secret&&gameState.packsOpened>=(p.unlockPacks||0)).map(p=>'<option value="'+p.id+'">'+p.name+' - $'+formatCurrency(p.price)+'</option>').join("");select.value=a.selectedPackId||"starter";
- const fields={preset:"preset",reserve:"reserve",budget:"budget",queueLimit:"queue-limit",autoBuy:"buy-enabled",autoOpen:"open-enabled",autoSell:"sell-enabled",protectTraits:"protect-traits",protectFinishes:"protect-finishes",maxSaleValue:"max-sale"};Object.entries(fields).forEach(([k,id])=>{const el=document.getElementById("auto-"+id);if(el){if(el.type==="checkbox")el.checked=cfg[k]!==false;else el.value=cfg[k]??(k==="queueLimit"?20:k==="maxSaleValue"?250:k==="preset"?"balanced":0);}});const pause=document.getElementById("auto-pause-btn");if(pause)pause.innerText=cfg.paused?"Resume line":"Pause line";const tele=document.getElementById("automation-telemetry");if(tele)tele.innerText="BUYER "+(autoState("packBuyer").level?"ONLINE":"OFFLINE")+" · OPENER "+(autoState("autoOpener").level?"ONLINE":"OFFLINE")+" · "+(cfg.paused?"PAUSED":"RUNNING")+" · RESERVE $"+formatCurrency(Number(cfg.reserve)||0)+" · QUEUE "+a.queue.length+"/"+Math.min(autoCapacity(),Number(cfg.queueLimit)||20);
+ const fields={preset:"preset",reserve:"reserve",budget:"budget",queueLimit:"queue-limit",autoBuy:"buy-enabled",autoOpen:"open-enabled",autoSell:"sell-enabled",protectTraits:"protect-traits",protectFinishes:"protect-finishes",autoReveal:"auto-auto-reveal",maxSaleValue:"max-sale"};Object.entries(fields).forEach(([k,id])=>{const el=document.getElementById("auto-"+id);if(el){if(el.type==="checkbox")el.checked=cfg[k]!==false;else el.value=cfg[k]??(k==="queueLimit"?20:k==="maxSaleValue"?250:k==="preset"?"balanced":0);}});const pause=document.getElementById("auto-pause-btn");if(pause)pause.innerText=cfg.paused?"Resume line":"Pause line";const tele=document.getElementById("automation-telemetry");if(tele)tele.innerText="BUYER "+(autoState("packBuyer").level?"ONLINE":"OFFLINE")+" · OPENER "+(autoState("autoOpener").level?"ONLINE":"OFFLINE")+" · "+(cfg.paused?"PAUSED":"RUNNING")+" · RESERVE $"+formatCurrency(Number(cfg.reserve)||0)+" · QUEUE "+a.queue.length+"/"+Math.min(autoCapacity(),Number(cfg.queueLimit)||20);
 const installed=AUTOMATION_MACHINES.filter(m=>autoState(m.id).level>0).length;
 document.getElementById("automation-machine-count").innerText=installed+" / 12 installed";document.getElementById("automation-queue-count").innerText=a.queue.length+" / "+autoCapacity();
-document.getElementById("automation-line-status").innerText=autoState("packBuyer").level&&autoState("autoOpener").level?"Online":"Install buyer and opener";
+document.getElementById("automation-line-status").innerText=cfg.paused?"Paused":(autoState("packBuyer").level&&autoState("autoOpener").level?(cfg.autoBuy===false?"Opener online · buyer disabled":cfg.autoOpen===false?"Buyer online · opener disabled":"Running automatically"):"Install buyer and opener");
 document.getElementById("automation-cards-processed").innerText=(a.cardsProcessed||0).toLocaleString();document.getElementById("automation-sales-total").innerText="$"+formatCurrency(a.salesTotal||0);
 grid.innerHTML=AUTOMATION_MACHINES.map(m=>{const s=autoState(m.id),lv=s.level||0,unlocked=gameState.packsOpened>=m.unlock,cost=autoMachineCost(m);let h='<article class="glass-panel p-4 rounded-2xl space-y-2"><div class="flex justify-between gap-2"><b class="text-sm">'+m.name+'</b>';h+=lv?'<span>Installed</span>':'<button data-install="'+m.id+'" '+(!unlocked||gameState.currency<cost?'disabled':'')+'>Install $'+formatCurrency(cost)+'</button>';h+='</div><div class="text-[10px]">Unlock: '+m.unlock+' packs | Cycle: '+autoCycle(m).toFixed(1)+'s</div>';if(lv){h+='<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">';AUTOMATION_UPGRADES.forEach(u=>{const ul=s.upgrades[u.id]||0,uc=autoUpgradeCost(m,u);h+='<div class="bg-white/80 rounded-xl p-2"><b class="text-[9px]">'+u.name+' '+ul+'/25</b><p class="text-[9px]">'+u.desc+'</p><button data-machine="'+m.id+'" data-upgrade="'+u.id+'" '+(ul>=25||gameState.currency<uc?'disabled':'')+'>$'+formatCurrency(uc)+'</button></div>';});h+='</div>';}else h+='<p class="text-[10px]">Install to unlock five upgrade tracks, each with 25 levels.</p>';return h+'</article>';}).join("");
 grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.closest("[data-machine]");if(b)buyAutomationMachine(b.dataset.install);if(u)buyAutomationUpgrade(u.dataset.machine,u.dataset.upgrade);};
@@ -1704,7 +1700,7 @@ function canPrestige(){return gameState.packsOpened>=500&&gameState.lifetimeReve
 function prestigeReward(){return Math.max(1,Math.min(50,1+Math.floor(Math.log10(Math.max(1,gameState.lifetimeRevenue/100000000)))));}
 function prestigeCost(up){return 1+(gameState.progression.upgrades[up.id]||0)*2;}
 function buyPrestigeUpgrade(id){const up=ASCENSION_UPGRADES.find(x=>x.id===id);if(!up)return;const lv=gameState.progression.upgrades[id]||0,cost=prestigeCost(up);if(lv>=up.max||gameState.progression.shards<cost)return;gameState.progression.shards-=cost;gameState.progression.upgrades[id]=lv+1;saveGameData();renderProgression();updateEconomyUI();}
-function performPrestige(){if(!canPrestige())return;const reward=prestigeReward();if(!confirm("Refracture for "+reward+" Prism Shards? Cash, collection, pack progress, research and automation reset. Lifetime revenue, ascension upgrades and claimed mastery records remain."))return;gameState.progression.shards+=reward;gameState.progression.ascensions++;gameState.currency=25;gameState.inventory=[createPaintCard(1,1),createPaintCard(1,1)];gameState.packsOpened=0;gameState.normalPackOpens=0;gameState.research={yieldCore:0,packPress:0,rarityLab:0,foilLab:0,codexLens:0,automationTheory:0,marketAnalysis:0,pigmentArchive:0};gameState.automation={selectedPackId:"starter",queue:[],machines:{},lastRun:{},cardsProcessed:0,salesTotal:0,config:{preset:"balanced",paused:false,reserve:0,budget:0,queueLimit:20,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true,maxSaleValue:250}};gameState.lastTickTimestamp=Date.now();saveGameData();updateEconomyUI();renderInventory();renderStore();renderProgression();}
+function performPrestige(){if(!canPrestige())return;const reward=prestigeReward();if(!confirm("Refracture for "+reward+" Prism Shards? Cash, collection, pack progress, research and automation reset. Lifetime revenue, ascension upgrades and claimed mastery records remain."))return;gameState.progression.shards+=reward;gameState.progression.ascensions++;gameState.currency=25;gameState.inventory=[createPaintCard(1,1),createPaintCard(1,1)];gameState.packsOpened=0;gameState.normalPackOpens=0;gameState.research={yieldCore:0,packPress:0,rarityLab:0,foilLab:0,codexLens:0,automationTheory:0,marketAnalysis:0,pigmentArchive:0};gameState.automation={selectedPackId:"starter",queue:[],machines:{},lastRun:{},cardsProcessed:0,salesTotal:0,config:{preset:"balanced",paused:false,reserve:0,budget:0,queueLimit:20,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true,autoReveal:true,maxSaleValue:250}};gameState.lastTickTimestamp=Date.now();saveGameData();updateEconomyUI();renderInventory();renderStore();renderProgression();}
 function renderProgression(){const p=gameState.progression;const put=(id,v)=>{const e=document.getElementById(id);if(e)e.innerText=v;};put("prestige-count",p.ascensions||0);put("prestige-shards",formatCurrency(p.shards||0));put("progression-packs",gameState.packsOpened.toLocaleString());put("progression-colors",uniqueColorCount().toLocaleString());const nums=[0,10,25,50,100,200,400,800,1500,3000],names=["First Pigment","Palette Apprentice","Color Technician","Spectrum Analyst","Factory Supervisor","Chromatic Engineer","Prism Architect","Spectrum Director","Dimensional Curator","Origin Keeper"];const road=document.getElementById("progression-roadmap");if(road)road.innerHTML=nums.map((n,i)=>{const done=gameState.packsOpened>=n;return '<article class="rounded-2xl border '+(done?"border-emerald-200 bg-emerald-50/70":"border-purple-100 bg-white/70")+' p-3"><div class="flex justify-between"><b class="text-xs">'+names[i]+'</b><b class="text-[9px]">'+(done?"UNLOCKED":"LOCKED")+'</b></div><p class="text-[10px] text-slate-500">Open '+n.toLocaleString()+' packs to reach this milestone.</p><div class="h-1.5 bg-slate-100 rounded-full mt-2"><div class="h-full bg-purple-400" style="width:'+Math.min(100,n?gameState.packsOpened/n*100:100)+'%"></div></div></article>';}).join("");put("prestige-requirements","Requirements: 500 packs ("+gameState.packsOpened+"/500), $100M lifetime revenue ($"+formatCurrency(gameState.lifetimeRevenue)+"), 75 unique colors ("+uniqueColorCount()+"/75). Reward: "+prestigeReward()+" Prism Shards.");const btn=document.getElementById("prestige-button");if(btn)btn.disabled=!canPrestige();const grid=document.getElementById("prestige-upgrades");if(grid)grid.innerHTML=ASCENSION_UPGRADES.map(up=>{const lv=p.upgrades[up.id]||0,cost=prestigeCost(up);return '<article class="bg-white/70 border border-amber-100 rounded-2xl p-4 space-y-2"><b class="text-xs">'+up.name+'</b><p class="text-[10px] text-slate-500">'+up.desc+'</p><div class="flex justify-between text-[10px]"><span>Lv '+lv+'/'+up.max+'</span><span>'+cost+' shards</span></div><button onclick="buyPrestigeUpgrade(&quot;'+up.id+'&quot;)" '+(lv>=up.max||p.shards<cost?"disabled":"")+' class="w-full px-3 py-2 rounded-xl text-xs font-black bg-amber-500 text-white disabled:bg-slate-200">'+(lv>=up.max?"MAXED":"Upgrade")+'</button></article>';}).join("");}
 
         // NAVIGATION & PACK ACTIONS
@@ -1733,6 +1729,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         }
 
         let pendingPackCards = [];
+        let pendingAutomationSummaries = [];
         let pendingSecretPackPurchase = null;
         let secretMiniGameInterval = null;
         let secretMiniGameTimeLeft = 10;
@@ -2046,10 +2043,9 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             const container = document.getElementById('revealed-cards-container');
             if (container) container.innerHTML = pendingPackCards.map((card, idx) => '<div id="unrevealed-card-' + idx + '" onclick="revealCard(' + idx + ')" class="w-36 h-52 bg-white/10 backdrop-blur-md rounded-2xl border-2 border-purple-300/40 shadow-2xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 group"><div class="w-12 h-12 rounded-2xl bg-purple-400/20 text-purple-200 flex items-center justify-center text-xl group-hover:rotate-12 transition-transform"><i class="fa-solid fa-gift"></i></div><span class="text-[10px] font-bold text-purple-200 mt-3 uppercase tracking-wider">Tap to Reveal</span></div>').join('');
             const title = document.getElementById('pack-modal-title');
-            const doneBtn = document.getElementById('pack-modal-done-btn');
-            const packModal = document.getElementById('pack-modal');
+            const doneBtn = document.getElementById('pack-modal-done-btn'), revealAllBtn = document.getElementById('reveal-all-btn'), summary = document.getElementById('pack-reveal-summary'), packModal = document.getElementById('pack-modal');
             if (title) title.innerText = quantity > 1 ? 'BULK UNSEAL · ' + quantity + ' ' + pack.name.toUpperCase() + ' PACKS · ' + actualCardCount + ' CARDS' : 'UNSEALING ' + pack.name.toUpperCase() + (pack.secret ? ' (' + actualCardCount + ' CARDS UNSEALED)' : '');
-            if (doneBtn) doneBtn.classList.add('hidden');
+            if (doneBtn) { doneBtn.classList.add('hidden'); doneBtn.innerText = 'Collect All Swatches'; } if (revealAllBtn) revealAllBtn.classList.remove('hidden'); if (summary) { summary.classList.add('hidden'); summary.innerHTML = ''; }
             if (packModal) packModal.classList.remove('hidden');
             updateStoreButtonStates();
         }
@@ -2066,12 +2062,38 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
 
             const remaining = document.querySelectorAll('[id^="unrevealed-card-"]');
             if (remaining.length === 0) {
-                const doneBtn = document.getElementById('pack-modal-done-btn');
-                if (doneBtn) doneBtn.classList.remove('hidden');
-                if (typeof confetti === 'function') {
-                    confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
-                }
+                const container = document.getElementById('revealed-cards-container');
+                if (container) container.innerHTML = pendingPackCards.map(card => renderCardHTML(card, false)).join('');
+                finishPackRevealSummary();
             }
+        }
+
+        function revealAllCards() { for (let i = 0; i < pendingPackCards.length; i++) if (document.getElementById('unrevealed-card-' + i)) revealCard(i); }
+
+        function finishPackRevealSummary() {
+            const doneBtn = document.getElementById('pack-modal-done-btn'), revealAllBtn = document.getElementById('reveal-all-btn'), summary = document.getElementById('pack-reveal-summary');
+            if (doneBtn) doneBtn.classList.remove('hidden'); if (revealAllBtn) revealAllBtn.classList.add('hidden');
+            if (summary) {
+                const counts = {}; pendingPackCards.forEach(card => counts[card.rarity] = (counts[card.rarity] || 0) + 1);
+                const best = pendingPackCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a))[0];
+                const top = pendingPackCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a)).slice(0,3), packRate = pendingPackCards.reduce((sum, card) => sum + effectiveCardIncome(card), 0);
+                summary.classList.remove('hidden');
+                summary.innerHTML = '<div class="flex items-center justify-between gap-2 mb-2"><b class="text-sm">Pack contents</b><span class="text-xs text-slate-500">' + pendingPackCards.length + ' cards collected</span></div><p class="text-xs text-emerald-700 font-bold mb-2">Adds ' + formatIncomeRate(packRate) + '/s to your collection</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><p class="text-xs font-bold text-slate-700 mb-1">Top pulls</p>' + top.map(card => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + card.name + ' · ' + card.rarity + (card.variant !== 'Standard' ? ' · ' + card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + formatIncomeRate(effectiveCardIncome(card)) + '/s</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">Best pull: ' + (best?.name || '—') + '</p>';
+            }
+            if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
+        }
+
+        function showAutomationPackSummary(packResults) {
+            const activeModal = document.getElementById('pack-modal');
+            if (activeModal && !activeModal.classList.contains('hidden')) { if (pendingAutomationSummaries.length) pendingAutomationSummaries[pendingAutomationSummaries.length - 1].push(...packResults); else pendingAutomationSummaries.push(packResults); return; }
+            const title = document.getElementById('pack-modal-title'), container = document.getElementById('revealed-cards-container'), summary = document.getElementById('pack-reveal-summary'), done = document.getElementById('pack-modal-done-btn'), revealAll = document.getElementById('reveal-all-btn'), modal = document.getElementById('pack-modal');
+            const allCards = packResults.flatMap(result => result.cards);
+            const counts = {}; allCards.forEach(card => counts[card.rarity] = (counts[card.rarity] || 0) + 1);
+            const top = allCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a)).slice(0,5), packRate = allCards.reduce((sum, card) => sum + effectiveCardIncome(card), 0);
+            if (title) title.innerText = 'FACTORY AUTO-REVEAL · ' + packResults.length + ' PACK' + (packResults.length === 1 ? '' : 'S') + ' · ' + allCards.length + ' CARDS';
+            if (container) container.innerHTML = '';
+            if (summary) { summary.classList.remove('hidden'); summary.innerHTML = '<b class="text-sm">Factory pack summary</b><p class="text-xs text-slate-500 mb-2">' + packResults.map(x => x.name).join(' · ') + '</p><p class="text-xs text-emerald-700 font-bold mb-2">Adds ' + formatIncomeRate(packRate) + '/s to your collection</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><b class="text-xs">Best pulls</b>' + top.map(card => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + card.name + ' · ' + card.rarity + (card.variant !== 'Standard' ? ' · ' + card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + formatIncomeRate(effectiveCardIncome(card)) + '/s</b></div>').join(''); }
+            if (done) { done.classList.remove('hidden'); done.innerText = 'Close Summary'; } if (revealAll) revealAll.classList.add('hidden'); if (modal) modal.classList.remove('hidden');
         }
 
         function closePackModal() {
@@ -2082,6 +2104,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             renderInventory();
             renderStore();
             if (!document.getElementById('tab-progression').classList.contains('hidden')) renderProgression();
+            if (pendingAutomationSummaries.length) showAutomationPackSummary(pendingAutomationSummaries.shift());
         }
 
         function openCardModal(cardId) {
@@ -2102,7 +2125,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (hexCode) hexCode.innerText = card.hex;
             if (rarity) rarity.innerText = card.rarity;
             if (variant) variant.innerText = `${card.variant} (${VARIANTS[card.variant]?.multiplier || 1}x)` + ((card.traits || []).length ? ' · Traits: ' + card.traits.map(name => name + ' (' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x)').join(', ') : ' · No special traits');
-            if (income) income.innerText = `+$${formatCurrency(card.incomePerSec)}/s`;
+            if (income) { income.innerText = '+' + formatIncomeRate(effectiveCardIncome(card)) + '/s'; income.title = 'Effective income after current global bonuses and diminishing returns'; }
             if (sellPrice) sellPrice.innerText = `${formatCurrency(effectiveSaleValue(card))}`;
 
             if (sellBtn) {
