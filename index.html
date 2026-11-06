@@ -378,6 +378,7 @@
                 <i class="fa-solid fa-flask mr-1.5"></i> Research Lab
             </button>
             <button id="tab-automation-btn" onclick="switchTab('automation')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:text-slate-900 transition-all duration-200 hover:bg-white/80">Automation Factory</button>
+            <button id="tab-progression-btn" onclick="switchTab('progression')" class="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 hover:bg-white/80">Progression</button>
         </nav>
     </div>
 
@@ -545,9 +546,16 @@
                 <p class="text-xs text-slate-500">Automate normal pack buying, opening, sorting, and selling. Secret packs remain manual.</p>
                 <div class="flex flex-wrap gap-2 items-center"><label class="text-xs font-bold">Buyer target</label><select id="automation-pack-select" onchange="setAutomationPack(this.value)" class="bg-white border rounded-xl p-2 text-xs"></select><span id="automation-line-status" class="text-xs font-bold">Offline</span></div>
                 <div class="text-xs font-bold">Queue <span id="automation-queue-count">0 / 0</span> | Cards processed <span id="automation-cards-processed">0</span> | Earnings <span id="automation-sales-total">$0</span></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-3 border-t border-purple-100"><label class="text-xs font-bold">Preset<select id="auto-preset" onchange="setAutomationPreset(this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"><option value="conservative">Conservative</option><option value="balanced">Balanced</option><option value="aggressive">Aggressive</option><option value="custom">Custom</option></select></label><label class="text-xs font-bold">Cash reserve ($)<input id="auto-reserve" type="number" min="0" onchange="updateAutomationConfig('reserve',this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"></label><label class="text-xs font-bold">Budget / cycle ($)<input id="auto-budget" type="number" min="0" onchange="updateAutomationConfig('budget',this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"></label><label class="text-xs font-bold">Queue limit<select id="auto-queue-limit" onchange="updateAutomationConfig('queueLimit',this.value)" class="block w-full mt-1 bg-white border rounded-xl p-2"><option>5</option><option>10</option><option>20</option><option>40</option><option>75</option><option>150</option><option>300</option><option>500</option></select></label></div>
+                <div class="flex flex-wrap gap-3 text-xs font-semibold"><label><input id="auto-buy-enabled" type="checkbox" onchange="updateAutomationConfig('autoBuy',this.checked)"> Auto-buy</label><label><input id="auto-open-enabled" type="checkbox" onchange="updateAutomationConfig('autoOpen',this.checked)"> Auto-open</label><label><input id="auto-sell-enabled" type="checkbox" onchange="updateAutomationConfig('autoSell',this.checked)"> Auto-sell</label><label><input id="auto-protect-traits" type="checkbox" onchange="updateAutomationConfig('protectTraits',this.checked)"> Protect traits</label><label><input id="auto-protect-finishes" type="checkbox" onchange="updateAutomationConfig('protectFinishes',this.checked)"> Protect special finishes</label><label>Max sale value ($)<input id="auto-max-sale" type="number" min="0" onchange="updateAutomationConfig('maxSaleValue',this.value)" class="w-24 bg-white border rounded-lg p-1"></label><button id="auto-pause-btn" onclick="toggleAutomationPause()" class="px-3 py-1 rounded-lg bg-amber-100 text-amber-800 font-black">Pause line</button></div><p class="text-[10px] text-slate-500">Buyer buys packs into the queue. Unsealer opens queued packs. Sorters sell only cards that pass your safety rules. Reserve protects cash.</p><div id="automation-telemetry" class="text-[10px] font-mono text-slate-500 bg-white/60 rounded-xl p-3"></div>
             </div>
             <div class="flex justify-between"><h3 class="font-black">Machine Floor</h3><span id="automation-machine-count" class="text-xs font-bold">0 / 12</span></div>
             <div id="automation-machines-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
+        </section>
+        <section id="tab-progression" class="hidden space-y-4">
+            <div class="glass-panel p-6 rounded-3xl space-y-3"><h2 class="font-black text-slate-800 text-lg">Chromatic Progression</h2><p class="text-xs text-slate-500">A long-form roadmap. Pack tiers unlock through actual collection progress, not just a lucky bank balance.</p><div class="grid grid-cols-2 sm:grid-cols-4 gap-2"><div class="bg-white/70 rounded-xl p-3">Ascensions<b id="prestige-count" class="block text-xl">0</b></div><div class="bg-white/70 rounded-xl p-3">Prism Shards<b id="prestige-shards" class="block text-xl">0</b></div><div class="bg-white/70 rounded-xl p-3">Packs this run<b id="progression-packs" class="block text-xl">0</b></div><div class="bg-white/70 rounded-xl p-3">Unique colors<b id="progression-colors" class="block text-xl">0</b></div></div></div>
+            <div class="glass-panel p-5 rounded-3xl space-y-3"><h3 class="font-black">Progression Roadmap</h3><div id="progression-roadmap" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div>
+            <div class="glass-panel p-5 rounded-3xl space-y-3"><h3 class="font-black">Chromatic Refracture</h3><p class="text-xs text-slate-500">A voluntary prestige reset for Prism Shards and permanent upgrades. Lifetime revenue and claimed mastery records remain.</p><div id="prestige-requirements" class="text-xs text-slate-600"></div><button id="prestige-button" onclick="performPrestige()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs" disabled>Refracture</button><div id="prestige-upgrades" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div></div>
         </section>
     </main>
 
@@ -825,6 +833,7 @@
         let normalPackIndex = 0;
         PACKS.filter(pack => !pack.secret).forEach(pack => {
             const tier = normalPackIndex++;
+            pack.unlockPacks = tier === 0 ? 0 : Math.round(8 * tier + 2.8 * tier * tier);
             pack.rarityFloor = NORMAL_PACK_RARITY_FLOORS[tier] || 'Mythic';
             pack.bonusCards = 1 + Math.floor(tier / 5);
             pack.incomeMultiplier = 1 + (tier * 0.12);
@@ -841,8 +850,9 @@
             inventory: [],
             packsOpened: 0,
             normalPackOpens: 0,
-            research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0 },
-            automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0 },
+            research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0, automationTheory: 0, marketAnalysis: 0, pigmentArchive: 0 },
+            progression: { ascensions: 0, shards: 0, upgrades: { yield: 0, factory: 0, market: 0 } },
+            automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, maxSaleValue: 250 } },
             claimedMasteries: [],
             selectedCardId: null,
             lastTickTimestamp: Date.now()
@@ -926,13 +936,15 @@
                         if (typeof parsed.packsOpened === 'number' && !isNaN(parsed.packsOpened)) gameState.packsOpened = parsed.packsOpened;
                         if (typeof parsed.normalPackOpens === 'number' && !isNaN(parsed.normalPackOpens)) gameState.normalPackOpens = parsed.normalPackOpens;
                         if (parsed.research && typeof parsed.research === 'object') {
-                            ['yieldCore', 'packPress', 'rarityLab', 'foilLab', 'codexLens'].forEach(key => {
+                            ['yieldCore', 'packPress', 'rarityLab', 'foilLab', 'codexLens', 'automationTheory', 'marketAnalysis', 'pigmentArchive'].forEach(key => {
                                 const level = Number(parsed.research[key]);
-                                if (Number.isFinite(level)) gameState.research[key] = Math.max(0, Math.min(10, Math.floor(level)));
+                                if (Number.isFinite(level)) gameState.research[key] = Math.max(0, Math.min(15, Math.floor(level)));
                             });
                         }
+                        if (parsed.progression && typeof parsed.progression === "object") { gameState.progression = Object.assign(gameState.progression, parsed.progression); gameState.progression.upgrades = Object.assign({ yield: 0, factory: 0, market: 0 }, parsed.progression.upgrades || {}); }
                         if (parsed.automation && typeof parsed.automation === 'object') {
                             gameState.automation = Object.assign(gameState.automation, parsed.automation);
+                            gameState.automation.config = Object.assign(gameState.automation.config, parsed.automation.config || {});
                             gameState.automation.selectedPackId = PACKS.some(p => p.id === gameState.automation.selectedPackId && !p.secret) ? gameState.automation.selectedPackId : 'starter';
                             gameState.automation.queue = Array.isArray(parsed.automation.queue) ? parsed.automation.queue.filter(id => PACKS.some(p => p.id === id && !p.secret)).slice(0, 500) : [];
                             gameState.automation.machines = parsed.automation.machines || {};
@@ -1143,6 +1155,7 @@
                 const count = getCodexFamilyColorCount(family, uniqueHexes);
                 totalBonus += getCodexMilestones(count) * 0.25;
             });
+            totalBonus *= 1 + ((gameState.research?.pigmentArchive || 0) * 0.02);
             return totalBonus;
         }
 
@@ -1152,7 +1165,9 @@
             const research = gameState.research || {};
             const yieldBonus = 1 + ((research.yieldCore || 0) * 0.15);
             const codexBonus = 1 + ((research.codexLens || 0) * 0.10);
-            return baseIncome * calculateCodexMultiplier() * yieldBonus * codexBonus;
+            const ascensionBonus = 1 + ((gameState.progression?.upgrades?.yield || 0) * 0.08);
+            const rawIncome = baseIncome * calculateCodexMultiplier() * yieldBonus * codexBonus * ascensionBonus;
+            return rawIncome <= 250 ? rawIncome : Math.min(250000, 250 + Math.pow(rawIncome - 250, 0.68));
         }
 
         function formatCurrency(num) {
@@ -1200,6 +1215,8 @@
             if (codex) codex.innerText = `${calculateCodexMultiplier().toFixed(2)}x`;
             if (invCount) invCount.innerText = gameState.inventory.length;
         }
+
+        function effectiveSaleValue(card){const raw=Math.max(0,Number(card.sellValue)||0);return raw<=10000?raw:10000+Math.pow(raw-10000,0.55);}
 
         // RENDERERS
         function getEffectClass(variant) {
@@ -1344,6 +1361,7 @@
 
             grid.innerHTML = PACKS.map(pack => {
                 const unlocked = isSecretPackUnlocked(pack);
+                if (!pack.secret && gameState.packsOpened < (pack.unlockPacks || 0)) return '<div class="glass-panel p-5 rounded-3xl space-y-3 opacity-60 border-dashed border-2 border-purple-200"><div class="flex justify-between"><b class="text-slate-500">' + pack.name + '</b><i class="fa-solid fa-lock text-slate-400"></i></div><p class="text-xs text-slate-400">Unlock after opening ' + pack.unlockPacks.toLocaleString() + ' packs. Current run: ' + gameState.packsOpened.toLocaleString() + '.</p><div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-purple-300" style="width:' + Math.min(100, gameState.packsOpened / Math.max(1, pack.unlockPacks) * 100) + '%"></div></div></div>';
                 if (pack.secret && !unlocked) {
                     return `
                         <div class="glass-panel p-5 rounded-3xl space-y-3 opacity-60 border-dashed border-2 border-purple-200">
@@ -1402,13 +1420,13 @@
                 [5, 10, 25].forEach(quantity => {
                     const bulkBtn = document.getElementById(`pack-bulk-btn-${pack.id}-${quantity}`);
                     if (bulkBtn) {
-                        const canBuyBulk = !pack.secret && !pendingSecretPackPurchase && gameState.currency >= pack.price * quantity;
+                        const canBuyBulk = !pack.secret && gameState.packsOpened >= (pack.unlockPacks || 0) && !pendingSecretPackPurchase && gameState.currency >= pack.price * quantity;
                         bulkBtn.disabled = !canBuyBulk;
                         bulkBtn.className = 'px-2 py-1 rounded-lg text-[9px] font-black ' + (canBuyBulk ? 'bg-slate-100 text-purple-700 hover:bg-purple-100' : 'bg-slate-100 text-slate-300 cursor-not-allowed');
                     }
                 });
                 if (btn) {
-                    const canAfford = gameState.currency >= pack.price && !pendingSecretPackPurchase;
+                    const canAfford = gameState.currency >= pack.price && !pendingSecretPackPurchase && (pack.secret ? isSecretPackUnlocked(pack) : gameState.packsOpened >= (pack.unlockPacks || 0));
                     if (canAfford) {
                         btn.removeAttribute('disabled');
                         btn.className = 'px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200';
@@ -1523,7 +1541,10 @@
             { id: 'packPress', name: 'Automated Pack Press', icon: 'fa-boxes-stacked', description: '+1 extra card in every normal pack per level.', baseCost: 25000 },
             { id: 'rarityLab', name: 'Rarity Analyzer', icon: 'fa-microscope', description: '+20% pack rarity odds per level.', baseCost: 150000 },
             { id: 'foilLab', name: 'Foil Resonator', icon: 'fa-gem', description: '+20% finish odds per level.', baseCost: 1000000 },
-            { id: 'codexLens', name: 'Codex Lens', icon: 'fa-book-open', description: '+10% Codex income bonus per level.', baseCost: 5000000 }
+            { id: 'codexLens', name: 'Codex Lens', icon: 'fa-book-open', description: '+10% Codex income bonus per level.', baseCost: 5000000 },
+            { id: 'automationTheory', name: 'Automation Theory', icon: 'fa-gears', description: 'Reduce all factory cycle times by 2% per level.', baseCost: 25000000 },
+            { id: 'marketAnalysis', name: 'Market Analysis', icon: 'fa-chart-line', description: '+4% automated sale payouts per level.', baseCost: 125000000 },
+            { id: 'pigmentArchive', name: 'Pigment Archive', icon: 'fa-book-atlas', description: '+2% Codex multiplier per level.', baseCost: 750000000 }
         ];
 
         function getResearchCost(upgrade) {
@@ -1537,7 +1558,7 @@
             gameState.research = gameState.research || {};
             const level = gameState.research[id] || 0;
             const cost = getResearchCost(upgrade);
-            if (level >= 10 || gameState.currency < cost) return;
+            if (level >= 15 || gameState.currency < cost) return;
             gameState.currency -= cost;
             gameState.research[id] = level + 1;
             playSfx('cash');
@@ -1582,14 +1603,14 @@
                 grid.innerHTML = RESEARCH_UPGRADES.map(upgrade => {
                     const level = gameState.research?.[upgrade.id] || 0;
                     const cost = getResearchCost(upgrade);
-                    const maxed = level >= 10;
+                    const maxed = level >= 15;
                     const canBuy = !maxed && gameState.currency >= cost;
                     const costLabel = maxed ? 'MAX LEVEL' : '$' + formatCurrency(cost);
                     const buttonLabel = maxed ? 'Maxed' : 'Research';
                     return '<div class="glass-panel p-5 rounded-3xl space-y-3">' +
                         '<div class="flex items-center justify-between gap-2">' +
                             '<div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center"><i class="fa-solid ' + upgrade.icon + '"></i></div>' +
-                            '<span class="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg">Lv. ' + level + '/10</span>' +
+                            '<span class="text-[10px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg">Lv. ' + level + '/15</span>' +
                         '</div>' +
                         '<div><h3 class="font-black text-slate-800 text-sm">' + upgrade.name + '</h3>' +
                             '<p class="text-xs text-slate-500 mt-1">' + upgrade.description + '</p></div>' +
@@ -1643,26 +1664,31 @@ const AUTOMATION_UPGRADES = [
 {id:"value",name:"Premium Calibration",desc:"Higher sale prices."}
 ];
 function autoState(id){gameState.automation.machines[id]=gameState.automation.machines[id]||{level:0,upgrades:{}};const s=gameState.automation.machines[id];s.upgrades=s.upgrades||{};return s;}
-function autoMachineCost(m){return m.baseCost*Math.pow(2.65,autoState(m.id).level);}
+function autoMachineCost(m){return m.baseCost*Math.pow(2.65,autoState(m.id).level)*(1-(gameState.progression?.upgrades?.factory||0)*.04);}
 function autoUpgradeCost(m,u){return m.baseCost*.45*Math.pow(1.82,autoState(m.id).upgrades[u.id]||0);}
 function autoCapacity(){const l=autoState("bulkLoader"),b=autoState("packBuyer"),o=autoState("autoOpener");return 3+l.level*5+(l.upgrades.throughput||0)*3+(l.upgrades.safety||0)*2+(l.upgrades.speed||0)+(l.upgrades.efficiency||0)*2+(l.upgrades.value||0)+(b.upgrades.safety||0)*2+(o.upgrades.safety||0)*2;}
-function autoCycle(m){return Math.max(.65,m.cycle*Math.pow(.88,autoState(m.id).upgrades.speed||0));}
-function setAutomationPack(id){if(PACKS.some(p=>p.id===id&&!p.secret)){gameState.automation.selectedPackId=id;saveGameData();renderAutomation();}}
+function autoCycle(m){return Math.max(.65,m.cycle*Math.pow(.88,autoState(m.id).upgrades.speed||0)*Math.pow(.98,gameState.research?.automationTheory||0));}
+function setAutomationPack(id){if(PACKS.some(p=>p.id===id&&!p.secret&&gameState.packsOpened>=(p.unlockPacks||0))){gameState.automation.selectedPackId=id;saveGameData();renderAutomation();}}
 function buyAutomationMachine(id){const m=AUTOMATION_MACHINES.find(x=>x.id===id);if(!m)return;const s=autoState(id),cost=autoMachineCost(m);if(s.level||gameState.packsOpened<m.unlock||gameState.currency<cost)return;gameState.currency-=cost;s.level=1;updateEconomyUI();saveGameData();renderAutomation();}
 function buyAutomationUpgrade(id,key){const m=AUTOMATION_MACHINES.find(x=>x.id===id),u=AUTOMATION_UPGRADES.find(x=>x.id===key);if(!m||!u)return;const s=autoState(id),cost=autoUpgradeCost(m,u),lv=s.upgrades[key]||0;if(!s.level||lv>=25||gameState.currency<cost)return;gameState.currency-=cost;s.upgrades[key]=lv+1;updateEconomyUI();saveGameData();renderAutomation();}
-function autoSaleMultiplier(m){const u=autoState(m.id).upgrades,market=autoState("marketExchange"),bonus=market.level?0.05+(market.upgrades.value||0)*.08+(market.upgrades.efficiency||0)*.025+(market.upgrades.speed||0)*.01+(market.upgrades.throughput||0)*.02+(market.upgrades.safety||0)*.01:0;return(1+(u.efficiency||0)*.04+(u.value||0)*.12)*(1+bonus);}
+function autoSaleMultiplier(m){const u=autoState(m.id).upgrades,market=autoState("marketExchange"),bonus=market.level?0.05+(market.upgrades.value||0)*.08+(market.upgrades.efficiency||0)*.025+(market.upgrades.speed||0)*.01+(market.upgrades.throughput||0)*.02+(market.upgrades.safety||0)*.01:0;return(1+(u.efficiency||0)*.04+(u.value||0)*.12)*(1+bonus)*(1+(gameState.progression?.upgrades?.market||0)*.05)*(1+(gameState.research?.marketAnalysis||0)*.04);}
 function runAutomation(now){
-const a=gameState.automation,q=a.queue;let changed=false;const buyer=AUTOMATION_MACHINES[0],opener=AUTOMATION_MACHINES[1],bs=autoState(buyer.id),os=autoState(opener.id);
+const a=gameState.automation,q=a.queue,cfg=a.config||(a.config={});if(cfg.paused)return;let changed=false;const buyer=AUTOMATION_MACHINES[0],opener=AUTOMATION_MACHINES[1],bs=autoState(buyer.id),os=autoState(opener.id);
 const due=m=>!a.lastRun[m.id]||now-a.lastRun[m.id]>=autoCycle(m)*1000,mark=m=>{a.lastRun[m.id]=now;};
-if(bs.level&&os.level&&due(buyer)){mark(buyer);const pack=PACKS.find(p=>p.id===a.selectedPackId&&!p.secret)||PACKS[0],disc=Math.min(.55,(bs.upgrades.efficiency||0)*.025+(bs.upgrades.value||0)*.01),free=Math.max(0,autoCapacity()-q.length),n=Math.min(1+(bs.upgrades.throughput||0),free,Math.floor(gameState.currency/(pack.price*(1-disc))));if(n){for(let i=0;i<n;i++)q.push(pack.id);gameState.currency-=pack.price*(1-disc)*n;changed=true;}}
-if(os.level&&q.length&&due(opener)){mark(opener);const n=Math.min(1+(os.upgrades.throughput||0),q.length);for(let p=0;p<n;p++){const pack=PACKS.find(x=>x.id===q.shift()&&!x.secret);if(!pack)continue;gameState.packsOpened++;gameState.normalPackOpens=(gameState.normalPackOpens||0)+1;let count=(Number(pack.cardsCount)||3)+(pack.bonusCards||0)+(gameState.research.packPress||0);if(gameState.normalPackOpens%5===0)count++;count+=Math.floor((os.upgrades.efficiency||0)/5);const rb=Math.min(4.5,1+Math.log2(Math.max(1,pack.rarityBoost*(1+(gameState.research.rarityLab||0)*.2)))*.55),sb=Math.min(3,1+Math.log2(Math.max(1,pack.shinyBoost*(1+(gameState.research.foilLab||0)*.2)))*.35),tier=Math.max(0,PACKS.filter(x=>!x.secret).findIndex(x=>x.id===pack.id));for(let i=0;i<count;i++){const card=createPaintCard(rb,sb,null,0,pack.rarityFloor||"Common",pack.incomeMultiplier||1,tier,.18);card.sellValue*=1+(os.upgrades.value||0)*.025;gameState.inventory.push(card);}a.cardsProcessed+=count;changed=true;}}
+if(cfg.autoBuy!==false&&bs.level&&os.level&&due(buyer)){mark(buyer);const pack=PACKS.find(p=>p.id===a.selectedPackId&&!p.secret&&gameState.packsOpened>=(p.unlockPacks||0))||PACKS[0],disc=Math.min(.55,(bs.upgrades.efficiency||0)*.025+(bs.upgrades.value||0)*.01),free=Math.max(0,Math.min(autoCapacity(),Number(cfg.queueLimit)||20)-q.length),available=Math.max(0,gameState.currency-Math.max(0,Number(cfg.reserve)||0)),budget=Number(cfg.budget)>0?Math.min(available,Number(cfg.budget)):available,n=Math.min(1+(bs.upgrades.throughput||0),free,Math.floor(budget/(pack.price*(1-disc))));if(n){for(let i=0;i<n;i++)q.push(pack.id);gameState.currency-=pack.price*(1-disc)*n;changed=true;}}
+if(cfg.autoOpen!==false&&os.level&&q.length&&due(opener)){mark(opener);const n=Math.min(1+(os.upgrades.throughput||0),q.length);for(let p=0;p<n;p++){const pack=PACKS.find(x=>x.id===q.shift()&&!x.secret);if(!pack)continue;gameState.packsOpened++;gameState.normalPackOpens=(gameState.normalPackOpens||0)+1;let count=(Number(pack.cardsCount)||3)+(pack.bonusCards||0)+(gameState.research.packPress||0);if(gameState.normalPackOpens%5===0)count++;count+=Math.floor((os.upgrades.efficiency||0)/5);const rb=Math.min(4.5,1+Math.log2(Math.max(1,pack.rarityBoost*(1+(gameState.research.rarityLab||0)*.2)))*.55),sb=Math.min(3,1+Math.log2(Math.max(1,pack.shinyBoost*(1+(gameState.research.foilLab||0)*.2)))*.35),tier=Math.max(0,PACKS.filter(x=>!x.secret).findIndex(x=>x.id===pack.id));for(let i=0;i<count;i++){const card=createPaintCard(rb,sb,null,0,pack.rarityFloor||"Common",pack.incomeMultiplier||1,tier,.18);card.sellValue*=1+(os.upgrades.value||0)*.025;gameState.inventory.push(card);}a.cardsProcessed+=count;changed=true;}}
 const sellers=AUTOMATION_MACHINES.filter(m=>["sorter","finish","traitless","duplicates"].includes(m.role));
-for(const m of sellers){const s=autoState(m.id);if(!s.level||!due(m))continue;mark(m);const limit=5+(s.upgrades.throughput||0)*5,cap=100000/(1+(s.upgrades.safety||0)*.35),ids=[],seen=new Set();for(let i=0;i<gameState.inventory.length&&ids.length<limit;i++){const card=gameState.inventory[i];if((card.traits||[]).length||card.variant!=="Standard"||card.sellValue>cap)continue;let ok=false;if(m.role==="sorter")ok=card.rarity===m.rarity;if(m.role==="finish")ok=card.rarity==="Common";if(m.role==="traitless")ok=["Common","Uncommon"].includes(card.rarity);if(m.role==="duplicates"){const key=(card.hexesList||[card.hex]).join("|");ok=seen.has(key);if(!ok)seen.add(key);}if(ok)ids.push(i);}if(ids.length){let cash=0;ids.forEach(i=>cash+=gameState.inventory[i].sellValue*autoSaleMultiplier(m));const removed=new Set(ids);gameState.inventory=gameState.inventory.filter((card,i)=>!removed.has(i));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;}}
-if(changed){updateEconomyUI();if(!document.getElementById("tab-inventory").classList.contains("hidden"))renderInventory();if(!document.getElementById("tab-codex").classList.contains("hidden"))renderCodex();if(!document.getElementById("tab-stats").classList.contains("hidden"))renderStats();saveGameData();if(!document.getElementById("tab-automation").classList.contains("hidden"))renderAutomation();}
+for(const m of sellers){const s=autoState(m.id);if(cfg.autoSell===false||!s.level||!due(m))continue;mark(m);const limit=5+(s.upgrades.throughput||0)*5,cap=100000/(1+(s.upgrades.safety||0)*.35),ids=[],seen=new Set();for(let i=0;i<gameState.inventory.length&&ids.length<limit;i++){const card=gameState.inventory[i];if((cfg.protectTraits!==false&&(card.traits||[]).length)||(cfg.protectFinishes!==false&&card.variant!=="Standard")||card.sellValue>Math.min(cap,Number(cfg.maxSaleValue)||250))continue;let ok=false;if(m.role==="sorter")ok=card.rarity===m.rarity;if(m.role==="finish")ok=card.rarity==="Common";if(m.role==="traitless")ok=["Common","Uncommon"].includes(card.rarity);if(m.role==="duplicates"){const key=(card.hexesList||[card.hex]).join("|");ok=seen.has(key);if(!ok)seen.add(key);}if(ok)ids.push(i);}if(ids.length){let cash=0;ids.forEach(i=>cash+=effectiveSaleValue(gameState.inventory[i])*autoSaleMultiplier(m));const removed=new Set(ids);gameState.inventory=gameState.inventory.filter((card,i)=>!removed.has(i));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;}}
+if(changed){updateEconomyUI();if(!document.getElementById("tab-inventory").classList.contains("hidden"))renderInventory();if(!document.getElementById("tab-codex").classList.contains("hidden"))renderCodex();if(!document.getElementById("tab-stats").classList.contains("hidden"))renderStats();if(!document.getElementById("tab-store").classList.contains("hidden"))renderStore();if(!document.getElementById("tab-progression").classList.contains("hidden"))renderProgression();saveGameData();if(!document.getElementById("tab-automation").classList.contains("hidden"))renderAutomation();}
 }
+function setAutomationPreset(name){const cfg=gameState.automation.config;const presets={conservative:{reserve:10000,budget:2500,queueLimit:5,maxSaleValue:50,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true},balanced:{reserve:0,budget:0,queueLimit:20,maxSaleValue:250,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true},aggressive:{reserve:0,budget:0,queueLimit:150,maxSaleValue:25000,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:false}};cfg.preset=presets[name]?name:"custom";if(presets[name])Object.assign(cfg,presets[name]);saveGameData();renderAutomation();}
+function updateAutomationConfig(key,value){const cfg=gameState.automation.config;cfg[key]=["reserve","budget","queueLimit","maxSaleValue"].includes(key)?Math.max(0,Number(value)||0):value;cfg.preset="custom";saveGameData();renderAutomation();}
+function toggleAutomationPause(){gameState.automation.config.paused=!gameState.automation.config.paused;saveGameData();renderAutomation();}
 function renderAutomation(){
+ const cfg=gameState.automation.config||(gameState.automation.config={});
 const grid=document.getElementById("automation-machines-grid"),a=gameState.automation,select=document.getElementById("automation-pack-select");if(!grid)return;
-select.innerHTML=PACKS.filter(p=>!p.secret).map(p=>'<option value="'+p.id+'">'+p.name+' - $'+formatCurrency(p.price)+'</option>').join("");select.value=a.selectedPackId||"starter";
+select.innerHTML=PACKS.filter(p=>!p.secret&&gameState.packsOpened>=(p.unlockPacks||0)).map(p=>'<option value="'+p.id+'">'+p.name+' - $'+formatCurrency(p.price)+'</option>').join("");select.value=a.selectedPackId||"starter";
+ const fields={preset:"preset",reserve:"reserve",budget:"budget",queueLimit:"queue-limit",autoBuy:"buy-enabled",autoOpen:"open-enabled",autoSell:"sell-enabled",protectTraits:"protect-traits",protectFinishes:"protect-finishes",maxSaleValue:"max-sale"};Object.entries(fields).forEach(([k,id])=>{const el=document.getElementById("auto-"+id);if(el){if(el.type==="checkbox")el.checked=cfg[k]!==false;else el.value=cfg[k]??(k==="queueLimit"?20:k==="maxSaleValue"?250:k==="preset"?"balanced":0);}});const pause=document.getElementById("auto-pause-btn");if(pause)pause.innerText=cfg.paused?"Resume line":"Pause line";const tele=document.getElementById("automation-telemetry");if(tele)tele.innerText="BUYER "+(autoState("packBuyer").level?"ONLINE":"OFFLINE")+" · OPENER "+(autoState("autoOpener").level?"ONLINE":"OFFLINE")+" · "+(cfg.paused?"PAUSED":"RUNNING")+" · RESERVE $"+formatCurrency(Number(cfg.reserve)||0)+" · QUEUE "+a.queue.length+"/"+Math.min(autoCapacity(),Number(cfg.queueLimit)||20);
 const installed=AUTOMATION_MACHINES.filter(m=>autoState(m.id).level>0).length;
 document.getElementById("automation-machine-count").innerText=installed+" / 12 installed";document.getElementById("automation-queue-count").innerText=a.queue.length+" / "+autoCapacity();
 document.getElementById("automation-line-status").innerText=autoState("packBuyer").level&&autoState("autoOpener").level?"Online":"Install buyer and opener";
@@ -1671,10 +1697,20 @@ grid.innerHTML=AUTOMATION_MACHINES.map(m=>{const s=autoState(m.id),lv=s.level||0
 grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.closest("[data-machine]");if(b)buyAutomationMachine(b.dataset.install);if(u)buyAutomationUpgrade(u.dataset.machine,u.dataset.upgrade);};
 }
 
+
+const ASCENSION_UPGRADES=[{id:"yield",name:"Retained Yield Formula",desc:"+8% passive yield per level.",max:25},{id:"factory",name:"Factory Blueprints",desc:"Reduce machine installation costs by 4% per level.",max:10},{id:"market",name:"Market Memory",desc:"+5% automated sale value per level.",max:20}];
+function uniqueColorCount(){return new Set(gameState.inventory.flatMap(c=>c.hexesList||[c.hex])).size;}
+function canPrestige(){return gameState.packsOpened>=500&&gameState.lifetimeRevenue>=100000000&&uniqueColorCount()>=75;}
+function prestigeReward(){return Math.max(1,Math.min(50,1+Math.floor(Math.log10(Math.max(1,gameState.lifetimeRevenue/100000000)))));}
+function prestigeCost(up){return 1+(gameState.progression.upgrades[up.id]||0)*2;}
+function buyPrestigeUpgrade(id){const up=ASCENSION_UPGRADES.find(x=>x.id===id);if(!up)return;const lv=gameState.progression.upgrades[id]||0,cost=prestigeCost(up);if(lv>=up.max||gameState.progression.shards<cost)return;gameState.progression.shards-=cost;gameState.progression.upgrades[id]=lv+1;saveGameData();renderProgression();updateEconomyUI();}
+function performPrestige(){if(!canPrestige())return;const reward=prestigeReward();if(!confirm("Refracture for "+reward+" Prism Shards? Cash, collection, pack progress, research and automation reset. Lifetime revenue, ascension upgrades and claimed mastery records remain."))return;gameState.progression.shards+=reward;gameState.progression.ascensions++;gameState.currency=25;gameState.inventory=[createPaintCard(1,1),createPaintCard(1,1)];gameState.packsOpened=0;gameState.normalPackOpens=0;gameState.research={yieldCore:0,packPress:0,rarityLab:0,foilLab:0,codexLens:0,automationTheory:0,marketAnalysis:0,pigmentArchive:0};gameState.automation={selectedPackId:"starter",queue:[],machines:{},lastRun:{},cardsProcessed:0,salesTotal:0,config:{preset:"balanced",paused:false,reserve:0,budget:0,queueLimit:20,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true,maxSaleValue:250}};gameState.lastTickTimestamp=Date.now();saveGameData();updateEconomyUI();renderInventory();renderStore();renderProgression();}
+function renderProgression(){const p=gameState.progression;const put=(id,v)=>{const e=document.getElementById(id);if(e)e.innerText=v;};put("prestige-count",p.ascensions||0);put("prestige-shards",formatCurrency(p.shards||0));put("progression-packs",gameState.packsOpened.toLocaleString());put("progression-colors",uniqueColorCount().toLocaleString());const nums=[0,10,25,50,100,200,400,800,1500,3000],names=["First Pigment","Palette Apprentice","Color Technician","Spectrum Analyst","Factory Supervisor","Chromatic Engineer","Prism Architect","Spectrum Director","Dimensional Curator","Origin Keeper"];const road=document.getElementById("progression-roadmap");if(road)road.innerHTML=nums.map((n,i)=>{const done=gameState.packsOpened>=n;return '<article class="rounded-2xl border '+(done?"border-emerald-200 bg-emerald-50/70":"border-purple-100 bg-white/70")+' p-3"><div class="flex justify-between"><b class="text-xs">'+names[i]+'</b><b class="text-[9px]">'+(done?"UNLOCKED":"LOCKED")+'</b></div><p class="text-[10px] text-slate-500">Open '+n.toLocaleString()+' packs to reach this milestone.</p><div class="h-1.5 bg-slate-100 rounded-full mt-2"><div class="h-full bg-purple-400" style="width:'+Math.min(100,n?gameState.packsOpened/n*100:100)+'%"></div></div></article>';}).join("");put("prestige-requirements","Requirements: 500 packs ("+gameState.packsOpened+"/500), $100M lifetime revenue ($"+formatCurrency(gameState.lifetimeRevenue)+"), 75 unique colors ("+uniqueColorCount()+"/75). Reward: "+prestigeReward()+" Prism Shards.");const btn=document.getElementById("prestige-button");if(btn)btn.disabled=!canPrestige();const grid=document.getElementById("prestige-upgrades");if(grid)grid.innerHTML=ASCENSION_UPGRADES.map(up=>{const lv=p.upgrades[up.id]||0,cost=prestigeCost(up);return '<article class="bg-white/70 border border-amber-100 rounded-2xl p-4 space-y-2"><b class="text-xs">'+up.name+'</b><p class="text-[10px] text-slate-500">'+up.desc+'</p><div class="flex justify-between text-[10px]"><span>Lv '+lv+'/'+up.max+'</span><span>'+cost+' shards</span></div><button onclick="buyPrestigeUpgrade(&quot;'+up.id+'&quot;)" '+(lv>=up.max||p.shards<cost?"disabled":"")+' class="w-full px-3 py-2 rounded-xl text-xs font-black bg-amber-500 text-white disabled:bg-slate-200">'+(lv>=up.max?"MAXED":"Upgrade")+'</button></article>';}).join("");}
+
         // NAVIGATION & PACK ACTIONS
         function switchTab(tabId) {
             playSfx('click');
-            ['inventory', 'codex', 'store', 'stats', 'research', 'automation'].forEach(t => {
+            ['inventory', 'codex', 'store', 'stats', 'research', 'automation', 'progression'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if (el) el.classList.add('hidden');
                 const btn = document.getElementById(`tab-${t}-btn`);
@@ -1693,6 +1729,7 @@ grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.c
             if (tabId === 'stats') renderStats();
             if (tabId === 'research') renderResearchLab();
             if (tabId === 'automation') renderAutomation();
+            if (tabId === 'progression') renderProgression();
         }
 
         let pendingPackCards = [];
@@ -1964,6 +2001,7 @@ grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.c
             if (pendingSecretPackPurchase) return;
             const pack = PACKS.find(p => p.id === packId);
             if (!pack) return;
+            if (!pack.secret && gameState.packsOpened < (pack.unlockPacks || 0)) return;
             const quantity = pack.secret ? 1 : Math.max(1, Math.min(25, parseInt(requestedQuantity, 10) || 1));
             const totalCost = pack.price * quantity;
             if (gameState.currency < totalCost) return;
@@ -2042,6 +2080,8 @@ grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.c
             if (packModal) packModal.classList.add('hidden');
             saveGameData();
             renderInventory();
+            renderStore();
+            if (!document.getElementById('tab-progression').classList.contains('hidden')) renderProgression();
         }
 
         function openCardModal(cardId) {
@@ -2063,7 +2103,7 @@ grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.c
             if (rarity) rarity.innerText = card.rarity;
             if (variant) variant.innerText = `${card.variant} (${VARIANTS[card.variant]?.multiplier || 1}x)` + ((card.traits || []).length ? ' · Traits: ' + card.traits.map(name => name + ' (' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x)').join(', ') : ' · No special traits');
             if (income) income.innerText = `+$${formatCurrency(card.incomePerSec)}/s`;
-            if (sellPrice) sellPrice.innerText = `$${formatCurrency(card.sellValue)}`;
+            if (sellPrice) sellPrice.innerText = `${formatCurrency(effectiveSaleValue(card))}`;
 
             if (sellBtn) {
                 sellBtn.onclick = function() {
@@ -2083,7 +2123,7 @@ grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.c
             const index = gameState.inventory.findIndex(c => c.id === cardId);
             if (index !== -1) {
                 const card = gameState.inventory[index];
-                gameState.currency += card.sellValue;
+                gameState.currency += effectiveSaleValue(card);
                 gameState.inventory.splice(index, 1);
                 playSfx('cash');
                 closeCardModal();
@@ -2097,7 +2137,7 @@ grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.c
             let earned = 0;
             gameState.inventory = gameState.inventory.filter(card => {
                 if (card.rarity === 'Common') {
-                    earned += card.sellValue;
+                    earned += effectiveSaleValue(card);
                     return false;
                 }
                 return true;
@@ -2123,7 +2163,7 @@ grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.c
                 const matchesRarity = rarityFilter === 'ALL' || card.rarity === rarityFilter;
                 const matchesVariant = variantFilter === 'ALL' || card.variant === variantFilter;
                 if (matchesSearch && matchesRarity && matchesVariant) {
-                    earned += card.sellValue;
+                    earned += effectiveSaleValue(card);
                     return false;
                 }
                 return true;
