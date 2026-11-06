@@ -1282,7 +1282,7 @@
             const research = gameState.research || {};
             const globalMultiplier = calculateCodexMultiplier() * (1 + ((research.yieldCore || 0) * 0.15)) * (1 + ((research.codexLens || 0) * 0.10)) * (1 + ((gameState.progression?.upgrades?.yield || 0) * 0.50));
             const rawIncome = baseIncome * globalMultiplier;
-            const totalIncome = rawIncome <= 250 ? rawIncome : Math.min(250000, 250 + Math.pow(rawIncome - 250, 0.68));
+            const totalIncome = rawIncome <= 250 ? rawIncome : 250 + Math.pow(rawIncome - 250, 0.68);
             return { baseIncome, totalIncome, globalMultiplier, cardMultiplier: rawIncome > 0 ? totalIncome / rawIncome : 1 };
         }
         function calculateTotalIncomePerSecond() { return calculateIncomeBreakdown().totalIncome; }
@@ -1326,7 +1326,7 @@
                 target.cardIds.push(card.id); return {rate:Math.max(0,calculateIncomeBreakdownFor(simulated).totalIncome-before),box,canPlace:(box.cardIds||[]).length<Number(box.slots||0)};
             }
             const {breakdown,inventoryById,displayedByCard,bestCase}=context;
-            const totalAtBase = raw => raw <= 250 ? raw : Math.min(250000,250+Math.pow(raw-250,0.68));
+            const totalAtBase = raw => raw <= 250 ? raw : 250 + Math.pow(raw-250,0.68);
             const displayedBox=displayedByCard.get(card.id);
             if(displayedBox){
                 const cards=(displayedBox.cardIds||[]).map(id=>inventoryById.get(id)).filter(Boolean);
@@ -1974,7 +1974,7 @@ if(cfg.autoSell!==false&&cfg.customSellEnabled!==false&&ls.level&&due(liquidator
  const groups=new Map();eligible.forEach(item=>{if(!groups.has(item.key))groups.set(item.key,[]);groups.get(item.key).push(item);});
  const candidates=[];groups.forEach(items=>{items.sort((a,b)=>b.value-a.value);candidates.push(...items.slice(keep));});
  const limit=5+(ls.upgrades.throughput||0)*5,selected=candidates.sort((a,b)=>a.value-b.value).slice(0,limit),removeIds=new Set(selected.map(x=>x.card.id));
- if(removeIds.size){const gross=Math.round((selected.reduce((sum,x)=>sum+x.value*autoSaleMultiplier(liquidator),0)+Number.EPSILON)*100)/100,tax=Math.round((gross*0.10+Number.EPSILON)*100)/100,net=Math.round((gross-tax+Number.EPSILON)*100)/100;gameState.inventory=gameState.inventory.filter(card=>!removeIds.has(card.id));gameState.currency=Math.round((gameState.currency+net+Number.EPSILON)*100)/100;gameState.lifetimeRevenue+=net;a.salesTotal+=net;a.taxPaid=Math.round(((Number(a.taxPaid)||0)+tax+Number.EPSILON)*100)/100;notifyPlayer('Inventory Liquidator',selected.length+' cards sold · Gross $'+formatCurrency(gross)+' · 10% tax $'+formatCurrency(tax)+' · You received $'+formatCurrency(net),'success');changed=true;inventoryChanged=true;}
+ if(removeIds.size){const gross=Math.round((selected.reduce((sum,x)=>sum+x.value*autoSaleMultiplier(liquidator),0)+Number.EPSILON)*100)/100,tax=Math.round((gross*0.10+Number.EPSILON)*100)/100,net=Math.round((gross-tax+Number.EPSILON)*100)/100;gameState.inventory=gameState.inventory.filter(card=>!removeIds.has(card.id));gameState.currency=Math.round((gameState.currency+net+Number.EPSILON)*100)/100;gameState.lifetimeRevenue+=net;a.salesTotal+=net;a.taxPaid=Math.round(((Number(a.taxPaid)||0)+tax+Number.EPSILON)*100)/100;changed=true;inventoryChanged=true;}
 }
 if(changed){updateEconomyUI();if(inventoryChanged){if(!document.getElementById("tab-inventory").classList.contains("hidden"))renderInventory();if(!document.getElementById("tab-codex").classList.contains("hidden"))renderCodex();if(!document.getElementById("tab-stats").classList.contains("hidden"))renderStats();if(!document.getElementById("tab-progression").classList.contains("hidden"))renderProgression();}if(!document.getElementById("tab-store").classList.contains("hidden"))renderStore();saveGameData();if(!document.getElementById("tab-automation").classList.contains("hidden"))renderAutomation();}
 }
