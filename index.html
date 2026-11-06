@@ -1931,7 +1931,7 @@ const AUTOMATION_UPGRADES = [
 {id:"value",name:"Premium Calibration",desc:"Higher sale prices."}
 ];
 function autoState(id){gameState.automation.machines[id]=gameState.automation.machines[id]||{level:0,upgrades:{}};const s=gameState.automation.machines[id];s.upgrades=s.upgrades||{};return s;}
-function autoMachineCost(m){const discount=Math.min(.9,Math.max(0,Number(gameState.progression?.upgrades?.factory)||0)*.08);return m.baseCost*Math.pow(2.65,autoState(m.id).level)*(1-discount);}
+function autoMachineCost(m){const discount=Math.min(.9,Math.max(0,Number(gameState.progression?.upgrades?.factory)||0)*.036);return m.baseCost*Math.pow(2.65,autoState(m.id).level)*(1-discount);}
 function autoUpgradeCost(m,u){return m.baseCost*.45*Math.pow(1.82,autoState(m.id).upgrades[u.id]||0);}
 function autoCapacity(){const l=autoState("bulkLoader"),b=autoState("packBuyer"),o=autoState("autoOpener");return 3+l.level*5+(l.upgrades.throughput||0)*3+(l.upgrades.safety||0)*2+(l.upgrades.speed||0)+(l.upgrades.efficiency||0)*2+(l.upgrades.value||0)+(b.upgrades.safety||0)*2+(o.upgrades.safety||0)*2;}
 function autoCycle(m){const ascensionSpeed=Math.max(0,Number(gameState.progression?.upgrades?.singularity)||0);return Math.max(.35,m.cycle*Math.pow(.88,autoState(m.id).upgrades.speed||0)*Math.pow(.98,gameState.research?.automationTheory||0)*Math.pow(.97,ascensionSpeed));}
@@ -1996,7 +1996,7 @@ function renderAutomation(){
 
 const ASCENSION_UPGRADES=[
 {id:"yield",name:"Eternal Yield",desc:"+50% passive display-case income per level.",max:50},
-{id:"factory",name:"Factory Blueprints",desc:"Reduce automation machine installation costs by 8% per level (up to 90%).",max:25},
+{id:"factory",name:"Factory Blueprints",desc:"Reduce automation machine installation costs by 3.6% per level (up to 90%).",max:25},
 {id:"market",name:"Market Singularity",desc:"+25% automated sale value per level.",max:40},
 {id:"capital",name:"Genesis Capital",desc:"Start every Refracture with +$100,000 per level.",max:25},
 {id:"fortune",name:"Prismatic Fortune",desc:"+15% rarity-roll boost per level on every pack card.",max:30},
