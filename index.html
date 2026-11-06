@@ -2064,6 +2064,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             for(let i=0;i<3;i++){
                 const bot=MARKET_BOTS[(i+2)%MARKET_BOTS.length],card=makeNpcCard(['Epic','Legendary','Mythic'][i]);
                 m.auctions.push({id:'npc_auction_'+now+'_'+i,kind:'npc',seller:bot.name,botId:bot.id,card,startBid:Math.max(100,Math.round(marketCardPrice(card)*0.55)),currentBid:0,highestBidder:null,bids:0,endsAt:now+120000+Math.floor(Math.random()*60000),buyout:Math.round(marketCardPrice(card)*1.8)});
+                if(['Legendary','Mythic'].includes(card.rarity))notifyPlayer('Ultra-rare auction arrival',bot.name+' opened a '+card.rarity+' auction. Starting bid $'+formatCurrency(Math.max(100,Math.round(marketCardPrice(card)*0.55)))+'.','warning');
             }
             m.lastNpcRefresh=now;marketLog('The trading floor opened with fresh rare-card lots.');
         }
@@ -2502,7 +2503,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             }
             updateEconomyUI(); playSfx('cash');
             const research = gameState.research || {};
-            const rawRarityBoost = pack.rarityBoost * (1 + ((research.rarityLab || 0) * 0.20)) * (1 + ((research.rarityFocus || 0) * 0.12));
+            const rawRarityBoost = pack.rarityBoost * (1 + ((research.rarityLab || 0) * 0.20)) * (1 + (!pack.secret ? ((research.rarityFocus || 0) * 0.12) : 0));
             const rawShinyBoost = pack.shinyBoost * (1 + ((research.foilLab || 0) * 0.20));
             // Normal packs receive diminishing returns so late-game boosts stay exciting without flooding the economy.
             const rarityBoost = pack.secret ? rawRarityBoost : Math.min(4.5, 1 + (Math.log2(Math.max(1, rawRarityBoost)) * 0.55));
