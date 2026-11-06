@@ -591,6 +591,7 @@
         </section>
         <section id="tab-progression" class="hidden space-y-4">
             <div class="glass-panel p-6 rounded-3xl space-y-3"><h2 class="font-black text-slate-800 text-lg">Chromatic Progression</h2><p class="text-xs text-slate-500">A long-form roadmap. Pack tiers unlock through actual collection progress, not just a lucky bank balance.</p><div class="grid grid-cols-2 sm:grid-cols-4 gap-2"><div class="bg-white/70 rounded-xl p-3">Ascensions<b id="prestige-count" class="block text-xl">0</b></div><div class="bg-white/70 rounded-xl p-3">Prism Shards<b id="prestige-shards" class="block text-xl">0</b></div><div class="bg-white/70 rounded-xl p-3">Packs this run<b id="progression-packs" class="block text-xl">0</b></div><div class="bg-white/70 rounded-xl p-3">Unique colors<b id="progression-colors" class="block text-xl">0</b></div></div></div>
+            <div class="glass-panel p-5 rounded-3xl space-y-3"><h3 class="font-black">Daily Fieldwork</h3><p class="text-xs text-slate-500">Small collection, research, and display goals that refresh every day. Claim each reward when its task is complete.</p><div id="daily-commissions-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div></div>
             <div class="glass-panel p-5 rounded-3xl space-y-3"><h3 class="font-black">Progression Roadmap</h3><div id="progression-roadmap" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div>
             <div class="glass-panel p-5 rounded-3xl space-y-3"><h3 class="font-black">Chromatic Refracture</h3><p class="text-xs text-slate-500">A voluntary prestige reset for Prism Shards and permanent upgrades. Lifetime revenue and claimed mastery records remain.</p><div id="prestige-requirements" class="text-xs text-slate-600"></div><button id="prestige-button" onclick="performPrestige()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs" disabled>Refracture</button><div id="prestige-upgrades" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div></div>
         </section>
@@ -899,6 +900,7 @@
             progression: { ascensions: 0, shards: 0, upgrades: { yield: 0, factory: 0, market: 0 } },
             automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, autoReveal: true, maxSaleValue: 250 } },
             claimedMasteries: [],
+            dailyCommissions: null,
             selectedCardId: null,
             lastTickTimestamp: Date.now()
         };
@@ -985,6 +987,7 @@
                             gameState.automation.lastRun = parsed.automation.lastRun || {};
                         }
                         if (Array.isArray(parsed.claimedMasteries)) gameState.claimedMasteries = parsed.claimedMasteries.filter(id => typeof id === 'string');
+                        if (parsed.dailyCommissions && typeof parsed.dailyCommissions === 'object') gameState.dailyCommissions = parsed.dailyCommissions;
                         if (typeof parsed.lastTickTimestamp === 'number') gameState.lastTickTimestamp = parsed.lastTickTimestamp;
 
                         if (Array.isArray(parsed.inventory)) {
@@ -1197,13 +1200,14 @@
         }
 
         // Original income equations, restricted to cards placed in display cases.
-        function calculateIncomeBreakdown() {
+        function calculateIncomeBreakdown() { return calculateIncomeBreakdownFor(gameState.displayCases || []); }
+        function calculateIncomeBreakdownFor(displayCases) {
             let baseIncome = 0;
-            (gameState.displayCases || []).forEach(box => {
+            (displayCases || []).forEach(box => {
                 if (!(Number(box.level) > 0)) return;
                 const cards = (box.cardIds || []).map(id => gameState.inventory.find(card => card.id === id)).filter(Boolean);
                 const caseRate = Math.max(0, Number(box.baseRate) || 0) * Math.max(1, Number(box.level) || 1) * (1 + Math.max(0, cards.length - 1) * 0.12);
-                cards.forEach(card => baseIncome += Math.max(0, Number(card.incomePerSec) || 0) * caseRate);
+                cards.forEach(card => baseIncome += cardCollectorValue(card) * caseRate);
             });
             const research = gameState.research || {};
             const globalMultiplier = calculateCodexMultiplier() * (1 + ((research.yieldCore || 0) * 0.15)) * (1 + ((research.codexLens || 0) * 0.10)) * (1 + ((gameState.progression?.upgrades?.yield || 0) * 0.08));
@@ -1212,6 +1216,20 @@
             return { baseIncome, totalIncome, globalMultiplier, cardMultiplier: rawIncome > 0 ? totalIncome / rawIncome : 1 };
         }
         function calculateTotalIncomePerSecond() { return calculateIncomeBreakdown().totalIncome; }
+        function getPackIncomePreview(cards) {
+            const simulatedCases = (gameState.displayCases || []).map(box => ({ ...box, cardIds: (box.cardIds || []).slice() }));
+            const currentRate = calculateIncomeBreakdown().totalIncome, contributions = [];
+            cards.forEach(card => {
+                const available = simulatedCases.filter(box => Number(box.level) > 0 && box.cardIds.length < Number(box.slots || 0)).sort((a,b) => (Number(b.baseRate)||0)*(Number(b.level)||1) - (Number(a.baseRate)||0)*(Number(a.level)||1));
+                if (!available.length) { contributions.push({ card, rate: 0, placed: false }); return; }
+                const before = calculateIncomeBreakdownFor(simulatedCases).totalIncome;
+                available[0].cardIds.push(card.id);
+                const after = calculateIncomeBreakdownFor(simulatedCases).totalIncome;
+                contributions.push({ card, rate: Math.max(0, after-before), placed: true });
+            });
+            const projectedRate = calculateIncomeBreakdownFor(simulatedCases).totalIncome;
+            return { currentRate, projectedRate, addedRate: Math.max(0,projectedRate-currentRate), contributions, placedCount: contributions.filter(x=>x.placed).length };
+        }
         function effectiveCardIncome(card) {
             if (!card || !isCardDisplayed(card.id)) return 0;
             const box = (gameState.displayCases || []).find(item => (item.cardIds || []).includes(card.id));
@@ -1219,7 +1237,7 @@
             const cards = (box.cardIds || []).map(id => gameState.inventory.find(item => item.id === id)).filter(Boolean);
             const caseRate = Math.max(0, Number(box.baseRate) || 0) * Math.max(1, Number(box.level) || 1) * (1 + Math.max(0, cards.length - 1) * 0.12);
             const breakdown = calculateIncomeBreakdown();
-            return Math.max(0, Number(card.incomePerSec) || 0) * caseRate * breakdown.globalMultiplier * breakdown.cardMultiplier;
+            return cardCollectorValue(card) * caseRate * breakdown.globalMultiplier * breakdown.cardMultiplier;
         }
         function getDisplayCasePreview(card) {
             if (isCardDisplayed(card.id)) {
@@ -1232,21 +1250,23 @@
             const box = choices[0], nextCount = (box.cardIds || []).length + 1;
             const caseRate = Math.max(0, Number(box.baseRate)||0) * Math.max(1, Number(box.level)||1) * (1 + Math.max(0,nextCount-1)*0.12);
             const breakdown = calculateIncomeBreakdown();
-            return { rate: Math.max(0,Number(card.incomePerSec)||0) * caseRate * breakdown.globalMultiplier * breakdown.cardMultiplier, box };
+            return { rate: cardCollectorValue(card) * caseRate * breakdown.globalMultiplier * breakdown.cardMultiplier, box };
         }
-        function formatIncomeRate(value) { const n = Math.max(0, Number(value) || 0); const digits = n < 0.01 ? 6 : n < 1 ? 4 : 2; return '$' + n.toFixed(digits); }
+        function formatIncomeRate(value) { const n = Math.max(0, Number(value) || 0); const digits = n === 0 ? 0 : n < 0.01 ? 6 : n < 1 ? 4 : 2; return '$' + n.toFixed(digits).replace(/\.?0+$/, ''); }
 
         function formatCurrency(num) {
-            if (typeof num !== 'number' || isNaN(num)) return '0.00';
-            if (num >= 1e27) return (num / 1e27).toFixed(2) + ' Oct';
-            if (num >= 1e24) return (num / 1e24).toFixed(2) + ' Sep';
-            if (num >= 1e21) return (num / 1e21).toFixed(2) + ' Sex';
-            if (num >= 1e18) return (num / 1e18).toFixed(2) + ' Quin';
-            if (num >= 1e15) return (num / 1e15).toFixed(2) + ' Quad';
-            if (num >= 1e12) return (num / 1e12).toFixed(2) + ' Tri';
-            if (num >= 1e9) return (num / 1e9).toFixed(2) + ' Bil';
-            if (num >= 1e6) return (num / 1e6).toFixed(2) + ' Mil';
-            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const value = Number(num);
+            if (!Number.isFinite(value)) return '0';
+            const compact = (n) => n.toFixed(2).replace(/\.?0+$/, '');
+            if (value >= 1e27) return compact(value / 1e27) + ' Oct';
+            if (value >= 1e24) return compact(value / 1e24) + ' Sep';
+            if (value >= 1e21) return compact(value / 1e21) + ' Sex';
+            if (value >= 1e18) return compact(value / 1e18) + ' Quin';
+            if (value >= 1e15) return compact(value / 1e15) + ' Quad';
+            if (value >= 1e12) return compact(value / 1e12) + ' Tri';
+            if (value >= 1e9) return compact(value / 1e9) + ' Bil';
+            if (value >= 1e6) return compact(value / 1e6) + ' Mil';
+            return value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
 
         function gameTick() {
@@ -1830,6 +1850,43 @@ function buyPrestigeUpgrade(id){const up=ASCENSION_UPGRADES.find(x=>x.id===id);i
 function performPrestige(){if(!canPrestige())return;const reward=prestigeReward();if(!confirm("Refracture for "+reward+" Prism Shards? Cash, collection, pack progress, research and automation reset. Lifetime revenue, ascension upgrades and claimed mastery records remain."))return;gameState.progression.shards+=reward;gameState.progression.ascensions++;gameState.currency=25;gameState.inventory=[createPaintCard(1,1),createPaintCard(1,1)];gameState.packsOpened=0;gameState.normalPackOpens=0;gameState.research={yieldCore:0,packPress:0,rarityLab:0,foilLab:0,codexLens:0,automationTheory:0,marketAnalysis:0,pigmentArchive:0};gameState.automation={selectedPackId:"starter",queue:[],machines:{},lastRun:{},cardsProcessed:0,salesTotal:0,config:{preset:"balanced",paused:false,reserve:0,budget:0,queueLimit:20,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true,autoReveal:true,maxSaleValue:250}};gameState.lastTickTimestamp=Date.now();saveGameData();updateEconomyUI();renderInventory();renderStore();renderProgression();}
 function renderProgression(){const p=gameState.progression;const put=(id,v)=>{const e=document.getElementById(id);if(e)e.innerText=v;};put("prestige-count",p.ascensions||0);put("prestige-shards",formatCurrency(p.shards||0));put("progression-packs",gameState.packsOpened.toLocaleString());put("progression-colors",uniqueColorCount().toLocaleString());const nums=[0,10,25,50,100,200,400,800,1500,3000],names=["First Pigment","Palette Apprentice","Color Technician","Spectrum Analyst","Factory Supervisor","Chromatic Engineer","Prism Architect","Spectrum Director","Dimensional Curator","Origin Keeper"];const road=document.getElementById("progression-roadmap");if(road)road.innerHTML=nums.map((n,i)=>{const done=gameState.packsOpened>=n;return '<article class="rounded-2xl border '+(done?"border-emerald-200 bg-emerald-50/70":"border-purple-100 bg-white/70")+' p-3"><div class="flex justify-between"><b class="text-xs">'+names[i]+'</b><b class="text-[9px]">'+(done?"UNLOCKED":"LOCKED")+'</b></div><p class="text-[10px] text-slate-500">Open '+n.toLocaleString()+' packs to reach this milestone.</p><div class="h-1.5 bg-slate-100 rounded-full mt-2"><div class="h-full bg-purple-400" style="width:'+Math.min(100,n?gameState.packsOpened/n*100:100)+'%"></div></div></article>';}).join("");put("prestige-requirements","Requirements: 500 packs ("+gameState.packsOpened+"/500), $100M lifetime revenue ($"+formatCurrency(gameState.lifetimeRevenue)+"), 75 unique colors ("+uniqueColorCount()+"/75). Reward: "+prestigeReward()+" Prism Shards.");const btn=document.getElementById("prestige-button");if(btn)btn.disabled=!canPrestige();const grid=document.getElementById("prestige-upgrades");if(grid)grid.innerHTML=ASCENSION_UPGRADES.map(up=>{const lv=p.upgrades[up.id]||0,cost=prestigeCost(up);return '<article class="bg-white/70 border border-amber-100 rounded-2xl p-4 space-y-2"><b class="text-xs">'+up.name+'</b><p class="text-[10px] text-slate-500">'+up.desc+'</p><div class="flex justify-between text-[10px]"><span>Lv '+lv+'/'+up.max+'</span><span>'+cost+' shards</span></div><button onclick="buyPrestigeUpgrade(&quot;'+up.id+'&quot;)" '+(lv>=up.max||p.shards<cost?"disabled":"")+' class="w-full px-3 py-2 rounded-xl text-xs font-black bg-amber-500 text-white disabled:bg-slate-200">'+(lv>=up.max?"MAXED":"Upgrade")+'</button></article>';}).join("");}
 
+        function localDayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+        function totalResearchLevels() { return Object.values(gameState.research || {}).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0); }
+        function displayedCardCount() { return (gameState.displayCases || []).reduce((sum, box) => sum + (box.cardIds || []).filter(id => gameState.inventory.some(card => card.id === id)).length, 0); }
+        function ensureDailyCommissions() {
+            const today = localDayKey();
+            if (!gameState.dailyCommissions || gameState.dailyCommissions.date !== today) {
+                gameState.dailyCommissions = { date: today, claimed: [], startColors: uniqueColorCount(), startResearch: totalResearchLevels(), startDisplayed: displayedCardCount(), startRevenue: gameState.lifetimeRevenue || 0 };
+                saveGameData();
+            }
+            if (!Array.isArray(gameState.dailyCommissions.claimed)) gameState.dailyCommissions.claimed = [];
+            return gameState.dailyCommissions;
+        }
+        function getDailyCommissionTasks() {
+            const d = ensureDailyCommissions();
+            return [
+                { id: 'palette-scout', name: 'Palette Scout', description: 'Discover 5 new unique colors.', progress: Math.max(0, uniqueColorCount() - d.startColors), target: 5, reward: 350 },
+                { id: 'curator-shift', name: 'Curator Shift', description: 'Place 2 new cards in display cases.', progress: Math.max(0, displayedCardCount() - d.startDisplayed), target: 2, reward: 500 },
+                { id: 'lab-notes', name: 'Lab Notes', description: 'Purchase 1 research upgrade.', progress: Math.max(0, totalResearchLevels() - d.startResearch), target: 1, reward: 650 },
+                { id: 'steady-growth', name: 'Steady Growth', description: 'Generate $25 in passive income.', progress: Math.max(0, (gameState.lifetimeRevenue || 0) - d.startRevenue), target: 25, reward: 800 }
+            ];
+        }
+        function renderDailyCommissions() {
+            const grid = document.getElementById('daily-commissions-grid');
+            if (!grid) return;
+            const d = ensureDailyCommissions(), tasks = getDailyCommissionTasks();
+            grid.innerHTML = tasks.map(task => {
+                const claimed = d.claimed.includes(task.id), done = task.progress >= task.target, pct = Math.min(100, task.progress / task.target * 100);
+                return '<article class="rounded-2xl border '+(claimed?'border-emerald-200 bg-emerald-50/70':'border-purple-100 bg-white/80')+' p-4 space-y-2"><div class="flex justify-between gap-2"><b class="text-xs">'+task.name+'</b><span class="text-[10px] font-black text-amber-700">$'+formatCurrency(task.reward)+'</span></div><p class="text-[10px] text-slate-500">'+task.description+'</p><div class="flex justify-between text-[10px] font-mono text-slate-500"><span>'+ (task.id === 'steady-growth' ? formatIncomeRate(task.progress) : Math.min(task.progress,task.target).toLocaleString()) + ' / ' + (task.id === 'steady-growth' ? formatIncomeRate(task.target) : task.target) + '</span><span>'+(claimed?'CLAIMED':done?'COMPLETE':'IN PROGRESS')+'</span></div><div class="h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full bg-purple-400" style="width:'+pct+'%"></div></div><button onclick="claimDailyCommission(\''+task.id+'\')" '+(!done||claimed?'disabled':'')+' class="w-full rounded-xl py-2 text-[10px] font-black '+(done&&!claimed?'bg-purple-600 text-white':'bg-slate-100 text-slate-400')+' disabled:opacity-60">'+(claimed?'Reward claimed':done?'Claim $'+formatCurrency(task.reward):'Keep going')+'</button></article>';
+            }).join('');
+        }
+        function claimDailyCommission(taskId) {
+            const d = ensureDailyCommissions(), task = getDailyCommissionTasks().find(item => item.id === taskId);
+            if (!task || task.progress < task.target || d.claimed.includes(taskId)) return;
+            d.claimed.push(taskId); gameState.currency += task.reward;
+            playSfx('cash'); saveGameData(); updateEconomyUI(); renderDailyCommissions();
+        }
+
         // NAVIGATION & PACK ACTIONS
         function switchTab(tabId) {
             playSfx('click');
@@ -1852,7 +1909,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (tabId === 'stats') renderStats();
             if (tabId === 'research') renderResearchLab();
             if (tabId === 'automation') renderAutomation();
-            if (tabId === 'progression') renderProgression();
+            if (tabId === 'progression') { renderProgression(); renderDailyCommissions(); }
             if (tabId === 'cases') renderDisplayCases();
             if (tabId === 'market') renderMarket();
         }
@@ -2204,10 +2261,9 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (doneBtn) doneBtn.classList.remove('hidden'); if (revealAllBtn) revealAllBtn.classList.add('hidden');
             if (summary) {
                 const counts = {}; pendingPackCards.forEach(card => counts[card.rarity] = (counts[card.rarity] || 0) + 1);
-                const best = pendingPackCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a))[0];
-                const top = pendingPackCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a)).slice(0,3), packRate = pendingPackCards.reduce((sum, card) => sum + effectiveCardIncome(card), 0);
+                const preview = getPackIncomePreview(pendingPackCards), top = preview.contributions.slice().sort((a,b)=>b.rate-a.rate).slice(0,3);
                 summary.classList.remove('hidden');
-                summary.innerHTML = '<div class="flex items-center justify-between gap-2 mb-2"><b class="text-sm">Pack contents</b><span class="text-xs text-slate-500">' + pendingPackCards.length + ' cards collected</span></div><p class="text-xs text-emerald-700 font-bold mb-2">Adds ' + formatIncomeRate(packRate) + '/s to your collection</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><p class="text-xs font-bold text-slate-700 mb-1">Top pulls</p>' + top.map(card => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + card.name + ' · ' + card.rarity + (card.variant !== 'Standard' ? ' · ' + card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + formatIncomeRate(effectiveCardIncome(card)) + '/s</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">Best pull: ' + (best?.name || '—') + '</p>';
+                summary.innerHTML = '<div class="flex items-center justify-between gap-2 mb-2"><b class="text-sm">Pack contents</b><span class="text-xs text-slate-500">' + pendingPackCards.length + ' cards collected</span></div><p class="text-xs text-emerald-700 font-bold mb-1">Potential +' + formatIncomeRate(preview.addedRate) + '/s if placed in available display slots</p><p class="text-[10px] text-slate-500 mb-2">Currently earning +' + formatIncomeRate(calculateTotalIncomePerSecond()) + '/s. Unplaced cards do not generate passive income.</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><p class="text-xs font-bold text-slate-700 mb-1">Top pulls · estimated case contribution</p>' + top.map(item => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + item.card.name + ' · ' + item.card.rarity + (item.card.variant !== 'Standard' ? ' · ' + item.card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + (item.placed ? '+' + formatIncomeRate(item.rate) + '/s' : 'No free slot') + '</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">' + preview.placedCount + ' of ' + pendingPackCards.length + ' new cards fit in currently available display slots.</p>';
             }
             if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
         }
@@ -2218,10 +2274,10 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             const title = document.getElementById('pack-modal-title'), container = document.getElementById('revealed-cards-container'), summary = document.getElementById('pack-reveal-summary'), done = document.getElementById('pack-modal-done-btn'), revealAll = document.getElementById('reveal-all-btn'), modal = document.getElementById('pack-modal');
             const allCards = packResults.flatMap(result => result.cards);
             const counts = {}; allCards.forEach(card => counts[card.rarity] = (counts[card.rarity] || 0) + 1);
-            const top = allCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a)).slice(0,5), packRate = allCards.reduce((sum, card) => sum + effectiveCardIncome(card), 0);
+            const preview = getPackIncomePreview(allCards), top = preview.contributions.slice().sort((a,b)=>b.rate-a.rate).slice(0,5);
             if (title) title.innerText = 'FACTORY AUTO-REVEAL · ' + packResults.length + ' PACK' + (packResults.length === 1 ? '' : 'S') + ' · ' + allCards.length + ' CARDS';
             if (container) container.innerHTML = '';
-            if (summary) { summary.classList.remove('hidden'); summary.innerHTML = '<b class="text-sm">Factory pack summary</b><p class="text-xs text-slate-500 mb-2">' + packResults.map(x => x.name).join(' · ') + '</p><p class="text-xs text-emerald-700 font-bold mb-2">Adds ' + formatIncomeRate(packRate) + '/s to your collection</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><b class="text-xs">Best pulls</b>' + top.map(card => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + card.name + ' · ' + card.rarity + (card.variant !== 'Standard' ? ' · ' + card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + formatIncomeRate(effectiveCardIncome(card)) + '/s</b></div>').join(''); }
+            if (summary) { summary.classList.remove('hidden'); summary.innerHTML = '<b class="text-sm">Factory pack summary</b><p class="text-xs text-slate-500 mb-2">' + packResults.map(x => x.name).join(' · ') + '</p><p class="text-xs text-emerald-700 font-bold mb-1">Potential +' + formatIncomeRate(preview.addedRate) + '/s if placed in available display slots</p><p class="text-[10px] text-slate-500 mb-2">Currently earning +' + formatIncomeRate(calculateTotalIncomePerSecond()) + '/s. Unplaced cards do not generate passive income.</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><b class="text-xs">Best pulls · estimated case contribution</b>' + top.map(item => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + item.card.name + ' · ' + item.card.rarity + (item.card.variant !== 'Standard' ? ' · ' + item.card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + (item.placed ? '+' + formatIncomeRate(item.rate) + '/s' : 'No free slot') + '</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">' + preview.placedCount + ' of ' + allCards.length + ' new cards fit in currently available display slots.</p>'; }
             if (done) { done.classList.remove('hidden'); done.innerText = 'Close Summary'; } if (revealAll) revealAll.classList.add('hidden'); if (modal) modal.classList.remove('hidden');
         }
 
