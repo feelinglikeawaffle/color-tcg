@@ -2326,6 +2326,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-functions.js";
 const firebaseConfig = {
   apiKey: "AIzaSyBOB7aVVLMNGnvYdDjrvuqr7eZteDJEFRM",
   authDomain: "color-tcg.firebaseapp.com",
@@ -2337,15 +2338,30 @@ const firebaseConfig = {
 };
 try {
  const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app), provider=new GoogleAuthProvider();
+ const functions=getFunctions(app,'us-central1');
+ const ensurePlayerAccount=httpsCallable(functions,'ensurePlayerAccount');
  window.colorTCGAuth={
   db,
   async signIn(){try{await signInWithPopup(auth,provider);}catch(e){console.error(e);alert('Google sign-in failed: '+e.message);}},
   async signOut(){try{await signOut(auth);}catch(e){console.error(e);}}
  };
- onAuthStateChanged(auth,user=>{
+ onAuthStateChanged(auth,async user=>{
   const login=document.getElementById('google-signin-btn'),logout=document.getElementById('google-signout-btn'),avatar=document.getElementById('account-avatar'),name=document.getElementById('account-name');
-  if(user){window.colorTCGUser=user;if(login)login.classList.add('hidden');if(logout)logout.classList.remove('hidden');if(avatar){avatar.src=user.photoURL||'';avatar.classList.toggle('hidden',!user.photoURL);}if(name){name.textContent=user.displayName||user.email||'Collector';name.classList.remove('hidden');} }
-  else{window.colorTCGUser=null;if(login)login.classList.remove('hidden');if(logout)logout.classList.add('hidden');if(avatar)avatar.classList.add('hidden');if(name)name.classList.add('hidden');}
+  if(user){
+   window.colorTCGUser=user;
+   if(login)login.classList.add('hidden');
+   if(logout)logout.classList.remove('hidden');
+   if(avatar){avatar.src=user.photoURL||'';avatar.classList.toggle('hidden',!user.photoURL);}
+   if(name){name.textContent=user.displayName||user.email||'Collector';name.classList.remove('hidden');}
+   try{await ensurePlayerAccount();window.colorTCGAccountReady=true;}
+   catch(e){window.colorTCGAccountReady=false;console.warn('Cloud account setup is not deployed yet:',e);}
+  } else {
+   window.colorTCGUser=null;window.colorTCGAccountReady=false;
+   if(login)login.classList.remove('hidden');
+   if(logout)logout.classList.add('hidden');
+   if(avatar)avatar.classList.add('hidden');
+   if(name)name.classList.add('hidden');
+  }
  });
 } catch(e){console.error('Firebase initialization failed',e);const b=document.getElementById('google-signin-btn');if(b){b.disabled=true;b.textContent='Firebase setup needed';}}
 </script>
