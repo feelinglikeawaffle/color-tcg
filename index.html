@@ -441,6 +441,8 @@
                         <option value="Big Bang Essence">Big Bang Essence</option>
                     </select>
 
+                    <select id="filter-lock" onchange="renderInventory()" class="bg-white/80 px-3 py-2 rounded-xl text-xs font-bold border border-purple-100 text-slate-700 focus:outline-none"><option value="ALL">Vault: All Cards</option><option value="LOCKED">Vaulted Only</option><option value="UNLOCKED">Unprotected Only</option></select>
+
                     <select id="sort-by" onchange="renderInventory()" class="bg-white/80 px-3 py-2 rounded-xl text-xs font-bold border border-purple-100 text-slate-700 focus:outline-none">
                         <option value="rarity-desc">Sort: Power / Rarity (High)</option>
                         <option value="rarity-asc">Sort: Power / Rarity (Low)</option>
@@ -669,6 +671,7 @@
             </div>
 
             <div class="flex gap-2">
+                <button id="modal-lock-btn" class="px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-xs shadow-sm transition-all">Lock in Vault</button>
                 <button id="modal-sell-btn" class="flex-grow py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition-all">
                     Sell Swatch
                 </button>
@@ -965,7 +968,7 @@
             const finishMultiplier = VARIANTS[validVariant]?.multiplier || 1;
             const recalculatedIncome = 0.05 * rarityMultiplier * finishMultiplier * traitMultiplier * Math.max(1, Number(card.incomeMultiplier) || 1);
             const incomePerSec = Number.isFinite(Number(card.incomePerSec)) && Number(card.incomePerSec) >= 0 ? Number(card.incomePerSec) : recalculatedIncome;
-            return { id, hex, hexesList, name: hexesList.join(' / '), rarity: validRarity, variant: validVariant, traits, traitMultiplier, incomeMultiplier: Math.max(1, Number(card.incomeMultiplier) || 1), incomePerSec: parseFloat(incomePerSec.toFixed(6)), sellValue: parseFloat((incomePerSec * 100).toFixed(6)), acquiredAt: card.acquiredAt || new Date().toLocaleDateString() };
+            return { id, hex, hexesList, name: hexesList.join(' / '), rarity: validRarity, variant: validVariant, traits, traitMultiplier, incomeMultiplier: Math.max(1, Number(card.incomeMultiplier) || 1), incomePerSec: parseFloat(incomePerSec.toFixed(6)), sellValue: parseFloat((incomePerSec * 100).toFixed(6)), locked: card.locked === true, acquiredAt: card.acquiredAt || new Date().toLocaleDateString() };
         }
 
         function loadGameData() {
@@ -1456,12 +1459,13 @@
             const isGradient = card.hex && card.hex.includes('gradient');
             const bgStyle = isGradient ? `background: ${card.hex};` : `background-color: ${card.hex};`;
             const displayHex = Array.isArray(card.hexesList) ? card.hexesList.join(' · ') : card.hex;
+            const lockAction = '<button onclick="event.stopPropagation();toggleCardLock(\'' + card.id + '\')" class="mt-2 w-full rounded-lg ' + (card.locked ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600') + ' text-[9px] font-black py-1.5">' + (card.locked ? '🔒 Vaulted · Unlock' : '＋ Lock in Vault') + '</button>';
 
             return `
                 <div onmousemove="handle3DTilt(event, this)" onmouseleave="reset3DTilt(this)" onclick="${isClickable ? `openCardModal('${card.id}')` : ''}" class="card-3d-wrapper cursor-pointer group">
                     <div class="card-3d-inner bg-white/80 rounded-2xl p-3 border border-purple-100 shadow-sm hover:shadow-xl relative overflow-hidden ${effectClass}">
                         <div class="w-full h-32 rounded-xl mb-2.5 shadow-inner relative flex items-end p-2 transition-transform duration-300 group-hover:scale-[1.02] trait-color-surface ${traitVisualClasses}" style="${bgStyle}">
-                            <div class="absolute top-2 right-2">${variantBadge}</div>
+                            <div class="absolute top-2 right-2 flex flex-col items-end gap-1">${variantBadge}${card.locked ? '<span class="bg-amber-500/95 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md">🔒 VAULTED</span>' : ''}</div>
                             <span class="bg-slate-900/60 backdrop-blur-md px-2 py-0.5 rounded-lg text-[9px] font-mono text-white font-bold tracking-wider truncate max-w-[110px]">${displayHex}</span>
                         </div>
                         <div class="space-y-1">
@@ -1472,6 +1476,7 @@
                                 <span class="font-mono text-emerald-600 font-bold" title="Estimated income after display-case and global multipliers">${incomeLabel}</span>
                             </div>
                             ${caseAction}
+                            ${lockAction}
                         </div>
                     </div>
                 </div>
@@ -1487,13 +1492,15 @@
             const search = searchInput ? searchInput.value.toLowerCase() : '';
             const rarityFilter = document.getElementById('filter-rarity')?.value || 'ALL';
             const variantFilter = document.getElementById('filter-variant')?.value || 'ALL';
+            const lockFilter = document.getElementById('filter-lock')?.value || 'ALL';
             const sortBy = document.getElementById('sort-by')?.value || 'rarity-desc';
 
             let filtered = gameState.inventory.filter(card => {
                 const matchesSearch = card.name.toLowerCase().includes(search) || card.hex.toLowerCase().includes(search);
                 const matchesRarity = rarityFilter === 'ALL' || card.rarity === rarityFilter;
                 const matchesVariant = variantFilter === 'ALL' || card.variant === variantFilter;
-                return matchesSearch && matchesRarity && matchesVariant;
+                const matchesLock = lockFilter === 'ALL' || (lockFilter === 'LOCKED' ? card.locked === true : card.locked !== true);
+                return matchesSearch && matchesRarity && matchesVariant && matchesLock;
             });
 
             const renderContext = buildInventoryRenderContext();
@@ -1879,12 +1886,12 @@ if(cfg.autoBuy!==false&&bs.level&&os.level&&due(buyer)){mark(buyer);const pack=P
 if(cfg.autoOpen!==false&&os.level&&q.length&&due(opener)){mark(opener);const n=Math.min(1+(os.upgrades.throughput||0),q.length),autoOpened=[];for(let p=0;p<n;p++){const pack=PACKS.find(x=>x.id===q.shift()&&!x.secret);if(!pack)continue;gameState.packsOpened++;gameState.normalPackOpens=(gameState.normalPackOpens||0)+1;let count=(Number(pack.cardsCount)||3)+(pack.bonusCards||0)+(gameState.research.packPress||0);if(gameState.normalPackOpens%5===0)count++;count+=Math.floor((os.upgrades.efficiency||0)/5);const rb=Math.min(4.5,1+Math.log2(Math.max(1,pack.rarityBoost*(1+(gameState.research.rarityLab||0)*.2)))*.55),sb=Math.min(3,1+Math.log2(Math.max(1,pack.shinyBoost*(1+(gameState.research.foilLab||0)*.2)))*.35),tier=Math.max(0,PACKS.filter(x=>!x.secret).findIndex(x=>x.id===pack.id)),packCards=[];for(let i=0;i<count;i++){const card=createPaintCard(rb,sb,null,0,pack.rarityFloor||"Common",pack.incomeMultiplier||1,tier,.18);card.sellValue*=1+(os.upgrades.value||0)*.025;gameState.inventory.push(card);packCards.push(card);}a.cardsProcessed+=count;autoOpened.push({name:pack.name,cards:packCards});changed=true;inventoryChanged=true;}if(autoOpened.length&&cfg.autoReveal!==false)showAutomationPackSummary(autoOpened);}
 let displayedIds=null,saleMultiplier=null;const isDisplayed=id=>{if(!displayedIds)displayedIds=new Set((gameState.displayCases||[]).flatMap(box=>box.cardIds||[]));return displayedIds.has(id);};const saleValue=card=>{if(saleMultiplier===null)saleMultiplier=calculateIncomeBreakdown().globalMultiplier;return Math.max(0,Number(card.sellValue)||(Number(card.incomePerSec)||0)*100)*50*saleMultiplier;};
 const sellers=AUTOMATION_MACHINES.filter(m=>["sorter","finish","traitless","duplicates"].includes(m.role));
-for(const m of sellers){const s=autoState(m.id);if(cfg.autoSell===false||!s.level||!due(m))continue;mark(m);const limit=5+(s.upgrades.throughput||0)*5,cap=100000/(1+(s.upgrades.safety||0)*.35),ids=[],seen=new Set();for(let i=0;i<gameState.inventory.length&&ids.length<limit;i++){const card=gameState.inventory[i],value=saleValue(card);if(isDisplayed(card.id)||(cfg.protectTraits!==false&&(card.traits||[]).length)||(cfg.protectFinishes!==false&&card.variant!=="Standard")||value>Math.min(cap,Number(cfg.maxSaleValue)||250))continue;let ok=false;if(m.role==="sorter")ok=card.rarity===m.rarity;if(m.role==="finish")ok=card.rarity==="Common";if(m.role==="traitless")ok=["Common","Uncommon"].includes(card.rarity);if(m.role==="duplicates"){const key=(card.hexesList||[card.hex]).join("|");ok=seen.has(key);if(!ok)seen.add(key);}if(ok)ids.push(i);}if(ids.length){const cash=ids.reduce((sum,i)=>sum+saleValue(gameState.inventory[i])*autoSaleMultiplier(m),0),removed=new Set(ids);gameState.inventory=gameState.inventory.filter((card,i)=>!removed.has(i));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;inventoryChanged=true;}}
+for(const m of sellers){const s=autoState(m.id);if(cfg.autoSell===false||!s.level||!due(m))continue;mark(m);const limit=5+(s.upgrades.throughput||0)*5,cap=100000/(1+(s.upgrades.safety||0)*.35),ids=[],seen=new Set();for(let i=0;i<gameState.inventory.length&&ids.length<limit;i++){const card=gameState.inventory[i],value=saleValue(card);if(card.locked||isDisplayed(card.id)||(cfg.protectTraits!==false&&(card.traits||[]).length)||(cfg.protectFinishes!==false&&card.variant!=="Standard")||value>Math.min(cap,Number(cfg.maxSaleValue)||250))continue;let ok=false;if(m.role==="sorter")ok=card.rarity===m.rarity;if(m.role==="finish")ok=card.rarity==="Common";if(m.role==="traitless")ok=["Common","Uncommon"].includes(card.rarity);if(m.role==="duplicates"){const key=(card.hexesList||[card.hex]).join("|");ok=seen.has(key);if(!ok)seen.add(key);}if(ok)ids.push(i);}if(ids.length){const cash=ids.reduce((sum,i)=>sum+saleValue(gameState.inventory[i])*autoSaleMultiplier(m),0),removed=new Set(ids);gameState.inventory=gameState.inventory.filter((card,i)=>!removed.has(i));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;inventoryChanged=true;}}
 const liquidator=AUTOMATION_MACHINES.find(m=>m.role==="customSell"),ls=autoState(liquidator.id);
 if(cfg.autoSell!==false&&cfg.customSellEnabled!==false&&ls.level&&due(liquidator)){
  mark(liquidator);const rarities=new Set(Array.isArray(cfg.customSellRarities)?cfg.customSellRarities:["Common","Uncommon"]);
  const minValue=Math.max(0,Number(cfg.customSellMinValue)||0),rawMax=Number(cfg.customSellMaxValue),maxValue=Number.isFinite(rawMax)?Math.max(0,rawMax):250,keep=Math.max(0,Math.min(100,Math.floor(Number(cfg.customSellKeepPerRarity??1)||0)));
- const eligible=gameState.inventory.filter(card=>!isDisplayed(card.id)&&rarities.has(card.rarity)&&(cfg.customSellTraits===true||(card.traits||[]).length===0)&&(cfg.customSellFinishes===true||card.variant==="Standard")).map(card=>({card,value:saleValue(card),key:card.rarity})).filter(x=>x.value>=minValue&&(maxValue===0||x.value<=maxValue));
+ const eligible=gameState.inventory.filter(card=>!card.locked&&!isDisplayed(card.id)&&rarities.has(card.rarity)&&(cfg.customSellTraits===true||(card.traits||[]).length===0)&&(cfg.customSellFinishes===true||card.variant==="Standard")).map(card=>({card,value:saleValue(card),key:card.rarity})).filter(x=>x.value>=minValue&&(maxValue===0||x.value<=maxValue));
  const groups=new Map();eligible.forEach(item=>{if(!groups.has(item.key))groups.set(item.key,[]);groups.get(item.key).push(item);});
  const candidates=[];groups.forEach(items=>{items.sort((a,b)=>b.value-a.value);candidates.push(...items.slice(keep));});
  const limit=5+(ls.upgrades.throughput||0)*5,selected=candidates.sort((a,b)=>a.value-b.value).slice(0,limit),removeIds=new Set(selected.map(x=>x.card.id));
@@ -2402,11 +2409,9 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (income) { const previewIncome = isCardDisplayed(card.id) ? effectiveCardIncome(card) : getDisplayCasePreview(card).rate; income.innerText = '+' + formatIncomeRate(previewIncome) + '/s' + (isCardDisplayed(card.id) ? '' : ' potential'); income.title = 'Estimated display-case income after current global bonuses and diminishing returns'; }
             if (sellPrice) sellPrice.innerText = `${formatCurrency(effectiveSaleValue(card))}`;
 
-            if (sellBtn) {
-                sellBtn.onclick = function() {
-                    sellSingleCard(cardId);
-                };
-            }
+            const lockBtn = document.getElementById('modal-lock-btn');
+            if (lockBtn) { lockBtn.innerText = card.locked ? 'Unlock from Vault' : 'Lock in Vault'; lockBtn.onclick = () => toggleCardLock(cardId); }
+            if (sellBtn) { sellBtn.disabled = card.locked === true; sellBtn.innerText = card.locked ? 'Unlock to Sell' : 'Sell Swatch'; sellBtn.classList.toggle('opacity-50', card.locked === true); sellBtn.onclick = function() { sellSingleCard(cardId); }; }
 
             if (cardModal) cardModal.classList.remove('hidden');
         }
@@ -2416,7 +2421,17 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (cardModal) cardModal.classList.add('hidden');
         }
 
+        function toggleCardLock(cardId) {
+            const card = gameState.inventory.find(item => item.id === cardId);
+            if (!card) return;
+            card.locked = card.locked !== true;
+            saveGameData(); renderInventory();
+            if (gameState.selectedCardId === cardId) openCardModal(cardId);
+        }
+
         function sellSingleCard(cardId) {
+            const target = gameState.inventory.find(c => c.id === cardId);
+            if (target?.locked) { alert('This card is protected in your Vault. Unlock it before selling.'); return; }
             if (isCardDisplayed(cardId)) { alert('Remove this card from its display case before selling it.'); return; }
             const index = gameState.inventory.findIndex(c => c.id === cardId);
             if (index !== -1) {
@@ -2430,7 +2445,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         function batchSellCommons() {
             let earned = 0;
             gameState.inventory = gameState.inventory.filter(card => {
-                if (card.rarity === 'Common' && !isCardDisplayed(card.id)) {
+                if (card.rarity === 'Common' && !card.locked && !isCardDisplayed(card.id)) {
                     earned += effectiveSaleValue(card);
                     return false;
                 }
@@ -2456,7 +2471,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
                 const matchesSearch = card.name.toLowerCase().includes(search) || card.hex.toLowerCase().includes(search);
                 const matchesRarity = rarityFilter === 'ALL' || card.rarity === rarityFilter;
                 const matchesVariant = variantFilter === 'ALL' || card.variant === variantFilter;
-                if (matchesSearch && matchesRarity && matchesVariant && !isCardDisplayed(card.id)) {
+                if (matchesSearch && matchesRarity && matchesVariant && !card.locked && !isCardDisplayed(card.id)) {
                     earned += effectiveSaleValue(card);
                     return false;
                 }
