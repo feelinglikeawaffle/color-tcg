@@ -1361,7 +1361,8 @@
             const now = Date.now();
             const deltaSec = Math.max(0, (now - (gameState.lastTickTimestamp || now)) / 1000);
             gameState.lastTickTimestamp = now;
-            if ((gameState.research?.autoCurator || 0) > 0 && now - autoCuratorLastRun >= 30000) { autoCuratorLastRun = now; autoCurateDisplayCases(); }
+            const curatorLevel = Math.max(0, Number(gameState.research?.autoCurator) || 0), curatorInterval = Math.max(5000, 30000 - Math.max(0, curatorLevel - 1) * 2000);
+            if (curatorLevel > 0 && now - autoCuratorLastRun >= curatorInterval) { autoCuratorLastRun = now; autoCurateDisplayCases(); }
             const income = calculateTotalIncomePerSecond();
             if (income > 0) { const earned = income * deltaSec; gameState.currency += earned; gameState.lifetimeRevenue += earned; }
             updateEconomyUI(income);
@@ -1800,7 +1801,7 @@
             { id: 'rarityEcho', name: 'Echo Chamber', icon: 'fa-wave-square', description: 'Every 5th normal pack gains +1 extra card per 3 levels.', baseCost: 12000000000 },
             { id: 'rarityCascade', name: 'Chromatic Cascade', icon: 'fa-water', description: 'Rarity Machine: each level adds a 2.5% chance for a card to rise one rarity tier after its roll. Does not affect secret-only rarities.', baseCost: 24000000000 },
             { id: 'rarityPity', name: 'Fortune Stabilizer', icon: 'fa-shield-heart', description: 'Rarity Machine: every level shortens the guaranteed Rare-or-better pity interval by 2 packs (starts at 30, minimum 5).', baseCost: 38000000000 },
-            { id: 'autoCurator', name: 'Automated Gallery Curator', icon: 'fa-wand-magic-sparkles', description: 'Automatically fills and optimizes your display cases with your highest-value eligible cards every 30 seconds. Vault-locked cards stay protected.', baseCost: 65000000000 }
+            { id: 'autoCurator', name: 'Automated Gallery Curator', icon: 'fa-wand-magic-sparkles', description: 'Automatically fills and optimizes your display cases with your highest-value eligible cards. Each level shortens its cycle by 2 seconds (30 seconds at Lv.1, down to 5 seconds). Vault-locked cards stay protected.', baseCost: 65000000000 }
         ];
 
         function getRarityMachineFloor(packFloor = 'Common') {
