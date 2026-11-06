@@ -440,6 +440,8 @@
                         <option value="rarity-asc">Sort: Power / Rarity (Low)</option>
                         <option value="income-desc">Sort: Yield (High to Low)</option>
                         <option value="income-asc">Sort: Yield (Low to High)</option>
+                        <option value="sell-desc">Sort: Sell Value (High to Low)</option>
+                        <option value="sell-asc">Sort: Sell Value (Low to High)</option>
                         <option value="multiplier-desc">Sort: Finish Multiplier</option>
                     </select>
 
@@ -619,15 +621,15 @@
 
     <!-- PACK OPENING MODAL -->
     <div id="pack-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-4">
-        <div class="max-w-4xl w-full text-center space-y-6">
-            <h2 id="pack-modal-title" class="text-2xl font-black text-white tracking-wider">UNSEALING BOOSTER PACK</h2>
+        <div class="max-w-4xl w-full max-h-[94dvh] flex flex-col gap-3 text-center">
+            <h2 id="pack-modal-title" class="text-xl sm:text-2xl font-black text-white tracking-wider flex-shrink-0">UNSEALING BOOSTER PACK</h2>
 
-            <div id="revealed-cards-container" class="flex flex-wrap items-center justify-center gap-4 max-h-[58vh] overflow-y-auto p-4"></div>
-            <div id="pack-reveal-summary" class="hidden mx-auto max-w-2xl rounded-2xl bg-white/95 text-slate-800 p-4 text-left shadow-xl"></div>
-            <div class="flex flex-wrap items-center justify-center gap-3"><button id="reveal-all-btn" onclick="revealAllCards()" class="px-6 py-3 rounded-2xl bg-amber-300 text-amber-950 font-black text-sm shadow-xl hover:bg-amber-200 transition-all">Reveal All Cards</button>
+            <div id="revealed-cards-container" class="flex flex-wrap items-center justify-center gap-4 flex-1 min-h-0 max-h-[58vh] overflow-y-auto p-4"></div>
+            <div id="pack-reveal-summary" class="hidden mx-auto w-full max-w-2xl max-h-[24dvh] overflow-y-auto rounded-2xl bg-white/95 text-slate-800 p-4 text-left shadow-xl"></div>
+            <div class="sticky bottom-0 z-20 flex flex-wrap items-center justify-center gap-3 flex-shrink-0 rounded-2xl bg-slate-900/95 backdrop-blur-md p-3 shadow-2xl border border-white/20"><button id="reveal-all-btn" onclick="revealAllCards()" class="px-6 py-3 rounded-2xl bg-amber-300 text-amber-950 font-black text-sm shadow-xl hover:bg-amber-200 transition-all">Reveal All Cards</button>
 
-            <button id="pack-modal-done-btn" onclick="closePackModal()" class="hidden px-8 py-3 rounded-2xl bg-white text-purple-700 font-black text-sm shadow-xl hover:bg-purple-50 transition-all">
-                Collect All Swatches
+            <button id="pack-modal-done-btn" onclick="closePackModal()" class="px-8 py-3 rounded-2xl bg-white text-purple-700 font-black text-sm shadow-xl hover:bg-purple-50 transition-all">
+                Exit · Collect Cards
             </button></div>
         </div>
     </div>
@@ -957,7 +959,7 @@
             const finishMultiplier = VARIANTS[validVariant]?.multiplier || 1;
             const recalculatedIncome = 0.05 * rarityMultiplier * finishMultiplier * traitMultiplier * Math.max(1, Number(card.incomeMultiplier) || 1);
             const incomePerSec = Number.isFinite(Number(card.incomePerSec)) && Number(card.incomePerSec) >= 0 ? Number(card.incomePerSec) : recalculatedIncome;
-            return { id, hex, hexesList, name: card.name || 'Sample Swatch', rarity: validRarity, variant: validVariant, traits, traitMultiplier, incomeMultiplier: Math.max(1, Number(card.incomeMultiplier) || 1), incomePerSec: parseFloat(incomePerSec.toFixed(6)), sellValue: parseFloat((incomePerSec * 100).toFixed(6)), acquiredAt: card.acquiredAt || new Date().toLocaleDateString() };
+            return { id, hex, hexesList, name: hexesList.join(' / '), rarity: validRarity, variant: validVariant, traits, traitMultiplier, incomeMultiplier: Math.max(1, Number(card.incomeMultiplier) || 1), incomePerSec: parseFloat(incomePerSec.toFixed(6)), sellValue: parseFloat((incomePerSec * 100).toFixed(6)), acquiredAt: card.acquiredAt || new Date().toLocaleDateString() };
         }
 
         function loadGameData() {
@@ -1007,6 +1009,7 @@
             if (!Array.isArray(gameState.inventory) || gameState.inventory.length === 0) {
                 gameState.inventory = [createPaintCard(1.0, 1.0), createPaintCard(1.0, 1.0)];
             }
+            normalizeInventoryHexColors();
 
             if (recoveryTriggered) {
                 setTimeout(() => {
@@ -1050,13 +1053,32 @@
         }
 
         // PROCEDURAL GENERATION & MATH
+        const reservedHexColors = new Set();
         function generateRandomHex() {
             const letters = '0123456789ABCDEF';
             let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
+            do {
+                color = '#';
+                for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * 16)];
+            } while (reservedHexColors.has(color));
+            reservedHexColors.add(color);
             return color;
+        }
+        function normalizeInventoryHexColors() {
+            reservedHexColors.clear();
+            (gameState.inventory || []).forEach(card => {
+                const source = Array.isArray(card.hexesList) && card.hexesList.length
+                    ? card.hexesList : [typeof card.hex === 'string' && /^#[0-9a-f]{6}$/i.test(card.hex) ? card.hex : '#8B5CF6'];
+                const unique = source.map(value => {
+                    const candidate = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value.toUpperCase() : generateRandomHex();
+                    if (reservedHexColors.has(candidate)) return generateRandomHex();
+                    reservedHexColors.add(candidate);
+                    return candidate;
+                });
+                card.hexesList = unique;
+                card.hex = unique.length > 1 ? 'linear-gradient(135deg, ' + unique.join(', ') + ')' : unique[0];
+                card.name = unique.join(' / ');
+            });
         }
 
         function generateProceduralName(hex) {
@@ -1118,8 +1140,7 @@
             const hex = splitCount > 1
                 ? 'linear-gradient(135deg, ' + hexesList.join(', ') + ')'
                 : hexesList[0];
-            const namePrefix = splitCount > 1 ? traitName + ' ' : '';
-            const name = namePrefix + generateProceduralName(hexesList[0]);
+            const name = hexesList.join(' / ');
 
             const rMult = RARITIES[rarity] ? RARITIES[rarity].multiplier : 1;
             const vMult = VARIANTS[variant] ? VARIANTS[variant].multiplier : 1;
@@ -1201,11 +1222,12 @@
 
         // Original income equations, restricted to cards placed in display cases.
         function calculateIncomeBreakdown() { return calculateIncomeBreakdownFor(gameState.displayCases || []); }
-        function calculateIncomeBreakdownFor(displayCases) {
+        function calculateIncomeBreakdownFor(displayCases, extraCards = []) {
             let baseIncome = 0;
+            const incomeCards = (gameState.inventory || []).concat(extraCards || []);
             (displayCases || []).forEach(box => {
                 if (!(Number(box.level) > 0)) return;
-                const cards = (box.cardIds || []).map(id => gameState.inventory.find(card => card.id === id)).filter(Boolean);
+                const cards = (box.cardIds || []).map(id => incomeCards.find(card => card.id === id)).filter(Boolean);
                 const caseRate = Math.max(0, Number(box.baseRate) || 0) * Math.max(1, Number(box.level) || 1) * (1 + Math.max(0, cards.length - 1) * 0.12);
                 cards.forEach(card => baseIncome += cardCollectorValue(card) * caseRate);
             });
@@ -1218,16 +1240,17 @@
         function calculateTotalIncomePerSecond() { return calculateIncomeBreakdown().totalIncome; }
         function getPackIncomePreview(cards) {
             const simulatedCases = (gameState.displayCases || []).map(box => ({ ...box, cardIds: (box.cardIds || []).slice() }));
-            const currentRate = calculateIncomeBreakdown().totalIncome, contributions = [];
+            const currentRate = calculateIncomeBreakdown().totalIncome, contributions = [], simulatedCards = [];
             cards.forEach(card => {
                 const available = simulatedCases.filter(box => Number(box.level) > 0 && box.cardIds.length < Number(box.slots || 0)).sort((a,b) => (Number(b.baseRate)||0)*(Number(b.level)||1) - (Number(a.baseRate)||0)*(Number(a.level)||1));
                 if (!available.length) { contributions.push({ card, rate: 0, placed: false }); return; }
-                const before = calculateIncomeBreakdownFor(simulatedCases).totalIncome;
+                const before = calculateIncomeBreakdownFor(simulatedCases, simulatedCards).totalIncome;
                 available[0].cardIds.push(card.id);
-                const after = calculateIncomeBreakdownFor(simulatedCases).totalIncome;
+                simulatedCards.push(card);
+                const after = calculateIncomeBreakdownFor(simulatedCases, simulatedCards).totalIncome;
                 contributions.push({ card, rate: Math.max(0, after-before), placed: true });
             });
-            const projectedRate = calculateIncomeBreakdownFor(simulatedCases).totalIncome;
+            const projectedRate = calculateIncomeBreakdownFor(simulatedCases, simulatedCards).totalIncome;
             return { currentRate, projectedRate, addedRate: Math.max(0,projectedRate-currentRate), contributions, placedCount: contributions.filter(x=>x.placed).length };
         }
         function effectiveCardIncome(card) {
@@ -1242,15 +1265,18 @@
         function getDisplayCasePreview(card) {
             if (isCardDisplayed(card.id)) {
                 const box = (gameState.displayCases || []).find(item => (item.cardIds || []).includes(card.id));
-                return { rate: effectiveCardIncome(card), box };
+                return { rate: effectiveCardIncome(card), box, canPlace: false };
             }
-            const choices = (gameState.displayCases || []).filter(box => Number(box.level) > 0 && (box.cardIds || []).length < Number(box.slots || 0));
-            if (!choices.length) return { rate: 0, box: null };
+            const choices = (gameState.displayCases || []).filter(box => Number(box.level) > 0);
+            if (!choices.length) return { rate: 0, box: null, canPlace: false };
             choices.sort((a,b) => (Number(b.baseRate)||0)*(Number(b.level)||1) - (Number(a.baseRate)||0)*(Number(a.level)||1));
-            const box = choices[0], nextCount = (box.cardIds || []).length + 1;
-            const caseRate = Math.max(0, Number(box.baseRate)||0) * Math.max(1, Number(box.level)||1) * (1 + Math.max(0,nextCount-1)*0.12);
-            const breakdown = calculateIncomeBreakdown();
-            return { rate: cardCollectorValue(card) * caseRate * breakdown.globalMultiplier * breakdown.cardMultiplier, box };
+            const box = choices[0], canPlace = (box.cardIds || []).length < Number(box.slots || 0);
+            const simulated = (gameState.displayCases || []).map(item => ({ ...item, cardIds: (item.cardIds || []).slice() }));
+            const target = simulated.find(item => item.id === box.id);
+            const before = calculateIncomeBreakdown().totalIncome;
+            target.cardIds.push(card.id);
+            const after = calculateIncomeBreakdownFor(simulated).totalIncome;
+            return { rate: Math.max(0, after-before), box, canPlace };
         }
         function formatIncomeRate(value) { const n = Math.max(0, Number(value) || 0); const digits = n === 0 ? 0 : n < 0.01 ? 6 : n < 1 ? 4 : 2; return '$' + n.toFixed(digits).replace(/\.?0+$/, ''); }
 
@@ -1396,14 +1422,14 @@
             const traitBadges = (card.traits || []).map(name => '<span class="bg-amber-100 text-amber-800 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-amber-200">' + name + ' · ' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x</span>').join('');
             const displayed = isCardDisplayed(card.id);
             const preview = getDisplayCasePreview(card);
-            const incomeLabel = displayed ? '+' + formatIncomeRate(preview.rate) + '/s in case' : (preview.box ? 'Preview ' + formatIncomeRate(preview.rate) + '/s' : 'No open case slot');
+            const incomeLabel = displayed ? '+' + formatIncomeRate(preview.rate) + '/s in case' : (preview.rate > 0 ? 'Potential +' + formatIncomeRate(preview.rate) + '/s' + (preview.canPlace ? '' : ' · case full') : 'Unlock a display case');
             const caseAction = displayed
                 ? '<button onclick="event.stopPropagation();removeFromDisplayCase(\'' + preview.box.id + '\',\'' + card.id + '\')" class="mt-2 w-full rounded-lg bg-rose-50 text-rose-600 text-[9px] font-black py-1.5">Remove from case</button>'
-                : (preview.box ? '<button onclick="event.stopPropagation();placeInDisplayCasePrompt(\'' + card.id + '\')" class="mt-2 w-full rounded-lg bg-purple-600 text-white text-[9px] font-black py-1.5">＋ Add to display case</button>' : '<div class="mt-2 text-[9px] text-slate-400 text-center">Unlock a case slot to display</div>');
+                : (preview.canPlace ? '<button onclick="event.stopPropagation();placeInDisplayCasePrompt(\'' + card.id + '\')" class="mt-2 w-full rounded-lg bg-purple-600 text-white text-[9px] font-black py-1.5">＋ Add to display case</button>' : (preview.box ? '<div class="mt-2 text-[9px] text-slate-400 text-center">All display slots are full</div>' : '<div class="mt-2 text-[9px] text-slate-400 text-center">Unlock a display case to earn</div>'));
             const traitVisualClasses = (card.traits || []).map(name => 'trait-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-')).join(' ');
             const isGradient = card.hex && card.hex.includes('gradient');
             const bgStyle = isGradient ? `background: ${card.hex};` : `background-color: ${card.hex};`;
-            const displayHex = isGradient ? card.rarity.toUpperCase() : card.hex;
+            const displayHex = Array.isArray(card.hexesList) ? card.hexesList.join(' · ') : card.hex;
 
             return `
                 <div onmousemove="handle3DTilt(event, this)" onmouseleave="reset3DTilt(this)" onclick="${isClickable ? `openCardModal('${card.id}')` : ''}" class="card-3d-wrapper cursor-pointer group">
@@ -1458,6 +1484,8 @@
                 }
                 if (sortBy === 'income-desc') return b.incomePerSec - a.incomePerSec;
                 if (sortBy === 'income-asc') return a.incomePerSec - b.incomePerSec;
+                if (sortBy === 'sell-desc') return effectiveSaleValue(b) - effectiveSaleValue(a);
+                if (sortBy === 'sell-asc') return effectiveSaleValue(a) - effectiveSaleValue(b);
                 if (sortBy === 'multiplier-desc') return (VARIANTS[b.variant]?.multiplier || 1) - (VARIANTS[a.variant]?.multiplier || 1);
                 return 0;
             });
@@ -2231,7 +2259,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             const title = document.getElementById('pack-modal-title');
             const doneBtn = document.getElementById('pack-modal-done-btn'), revealAllBtn = document.getElementById('reveal-all-btn'), summary = document.getElementById('pack-reveal-summary'), packModal = document.getElementById('pack-modal');
             if (title) title.innerText = quantity > 1 ? 'BULK UNSEAL · ' + quantity + ' ' + pack.name.toUpperCase() + ' PACKS · ' + actualCardCount + ' CARDS' : 'UNSEALING ' + pack.name.toUpperCase() + (pack.secret ? ' (' + actualCardCount + ' CARDS UNSEALED)' : '');
-            if (doneBtn) { doneBtn.classList.add('hidden'); doneBtn.innerText = 'Collect All Swatches'; } if (revealAllBtn) revealAllBtn.classList.remove('hidden'); if (summary) { summary.classList.add('hidden'); summary.innerHTML = ''; }
+            if (doneBtn) { doneBtn.classList.remove('hidden'); doneBtn.innerText = 'Exit · Collect Cards'; } if (revealAllBtn) revealAllBtn.classList.remove('hidden'); if (summary) { summary.classList.add('hidden'); summary.innerHTML = ''; }
             if (packModal) packModal.classList.remove('hidden');
             updateStoreButtonStates();
         }
@@ -2285,6 +2313,10 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             playSfx('click');
             const packModal = document.getElementById('pack-modal');
             if (packModal) packModal.classList.add('hidden');
+            (pendingPackCards || []).forEach(card => {
+                if (card && !gameState.inventory.some(existing => existing.id === card.id)) gameState.inventory.push(card);
+            });
+            pendingPackCards = [];
             saveGameData();
             renderInventory();
             renderStore();
@@ -2310,7 +2342,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (hexCode) hexCode.innerText = card.hex;
             if (rarity) rarity.innerText = card.rarity;
             if (variant) variant.innerText = `${card.variant} (${VARIANTS[card.variant]?.multiplier || 1}x)` + ((card.traits || []).length ? ' · Traits: ' + card.traits.map(name => name + ' (' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x)').join(', ') : ' · No special traits');
-            if (income) { income.innerText = '+' + formatIncomeRate(effectiveCardIncome(card)) + '/s'; income.title = 'Effective income after current global bonuses and diminishing returns'; }
+            if (income) { const previewIncome = isCardDisplayed(card.id) ? effectiveCardIncome(card) : getDisplayCasePreview(card).rate; income.innerText = '+' + formatIncomeRate(previewIncome) + '/s' + (isCardDisplayed(card.id) ? '' : ' potential'); income.title = 'Estimated display-case income after current global bonuses and diminishing returns'; }
             if (sellPrice) sellPrice.innerText = `${formatCurrency(effectiveSaleValue(card))}`;
 
             if (sellBtn) {
