@@ -628,7 +628,7 @@
             <div id="pack-reveal-summary" class="hidden mx-auto w-full max-w-2xl max-h-[24dvh] overflow-y-auto rounded-2xl bg-white/95 text-slate-800 p-4 text-left shadow-xl"></div>
             <div class="sticky bottom-0 z-20 flex flex-wrap items-center justify-center gap-3 flex-shrink-0 rounded-2xl bg-slate-900/95 backdrop-blur-md p-3 shadow-2xl border border-white/20"><button id="reveal-all-btn" onclick="revealAllCards()" class="px-6 py-3 rounded-2xl bg-amber-300 text-amber-950 font-black text-sm shadow-xl hover:bg-amber-200 transition-all">Reveal All Cards</button>
 
-            <button id="pack-modal-done-btn" onclick="closePackModal()" class="hidden px-8 py-3 rounded-2xl bg-white text-purple-700 font-black text-sm shadow-xl hover:bg-purple-50 transition-all">
+            <button id="pack-modal-done-btn" onclick="closePackModal()" class="px-8 py-3 rounded-2xl bg-white text-purple-700 font-black text-sm shadow-xl hover:bg-purple-50 transition-all">
                 Exit · Collect Cards
             </button></div>
         </div>
@@ -2259,7 +2259,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             const title = document.getElementById('pack-modal-title');
             const doneBtn = document.getElementById('pack-modal-done-btn'), revealAllBtn = document.getElementById('reveal-all-btn'), summary = document.getElementById('pack-reveal-summary'), packModal = document.getElementById('pack-modal');
             if (title) title.innerText = quantity > 1 ? 'BULK UNSEAL · ' + quantity + ' ' + pack.name.toUpperCase() + ' PACKS · ' + actualCardCount + ' CARDS' : 'UNSEALING ' + pack.name.toUpperCase() + (pack.secret ? ' (' + actualCardCount + ' CARDS UNSEALED)' : '');
-            if (doneBtn) { doneBtn.classList.add('hidden'); doneBtn.innerText = 'Collect All Swatches'; } if (revealAllBtn) revealAllBtn.classList.remove('hidden'); if (summary) { summary.classList.add('hidden'); summary.innerHTML = ''; }
+            if (doneBtn) { doneBtn.classList.remove('hidden'); doneBtn.innerText = 'Exit · Collect Cards'; } if (revealAllBtn) revealAllBtn.classList.remove('hidden'); if (summary) { summary.classList.add('hidden'); summary.innerHTML = ''; }
             if (packModal) packModal.classList.remove('hidden');
             updateStoreButtonStates();
         }
@@ -2313,6 +2313,10 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             playSfx('click');
             const packModal = document.getElementById('pack-modal');
             if (packModal) packModal.classList.add('hidden');
+            (pendingPackCards || []).forEach(card => {
+                if (card && !gameState.inventory.some(existing => existing.id === card.id)) gameState.inventory.push(card);
+            });
+            pendingPackCards = [];
             saveGameData();
             renderInventory();
             renderStore();
