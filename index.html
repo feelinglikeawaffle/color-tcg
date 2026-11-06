@@ -908,7 +908,7 @@
             normalPackOpens: 0,
             research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0, automationTheory: 0, marketAnalysis: 0, pigmentArchive: 0 },
             progression: { ascensions: 0, shards: 0, upgrades: { yield: 0, factory: 0, market: 0 } },
-            automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, autoReveal: true, maxSaleValue: 250, customSellEnabled: true, customSellRarities: ['Common','Uncommon'], customSellMinValue: 0, customSellMaxValue: 250, customSellKeepPerRarity: 1, customSellTraits: false, customSellFinishes: false } },
+            automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, taxPaid: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, autoReveal: true, maxSaleValue: 250, customSellEnabled: true, customSellRarities: ['Common','Uncommon'], customSellMinValue: 0, customSellMaxValue: 250, customSellKeepPerRarity: 1, customSellTraits: false, customSellFinishes: false } },
             claimedMasteries: [],
             dailyCommissions: null,
             selectedCardId: null,
@@ -983,7 +983,7 @@
                         if (typeof parsed.packsOpened === 'number' && !isNaN(parsed.packsOpened)) gameState.packsOpened = parsed.packsOpened;
                         if (typeof parsed.normalPackOpens === 'number' && !isNaN(parsed.normalPackOpens)) gameState.normalPackOpens = parsed.normalPackOpens;
                         if (parsed.research && typeof parsed.research === 'object') {
-                            ['yieldCore', 'packPress', 'rarityLab', 'foilLab', 'codexLens', 'automationTheory', 'marketAnalysis', 'pigmentArchive'].forEach(key => {
+                            ['yieldCore', 'packPress', 'rarityLab', 'foilLab', 'codexLens', 'automationTheory', 'marketAnalysis', 'pigmentArchive', 'rarityFocus', 'rarityFloor', 'rarityEcho'].forEach(key => {
                                 const level = Number(parsed.research[key]);
                                 if (Number.isFinite(level)) gameState.research[key] = Math.max(0, Math.min(15, Math.floor(level)));
                             });
@@ -1773,8 +1773,18 @@
             { id: 'codexLens', name: 'Codex Lens', icon: 'fa-book-open', description: '+10% Codex income bonus per level.', baseCost: 5000000 },
             { id: 'automationTheory', name: 'Automation Theory', icon: 'fa-gears', description: 'Reduce all factory cycle times by 2% per level.', baseCost: 25000000 },
             { id: 'marketAnalysis', name: 'Market Analysis', icon: 'fa-chart-line', description: '+4% automated sale payouts per level.', baseCost: 125000000 },
-            { id: 'pigmentArchive', name: 'Pigment Archive', icon: 'fa-book-atlas', description: '+2% Codex multiplier per level.', baseCost: 750000000 }
+            { id: 'pigmentArchive', name: 'Pigment Archive', icon: 'fa-book-atlas', description: '+2% Codex multiplier per level.', baseCost: 750000000 },
+            { id: 'rarityFocus', name: 'Rare Signal Amplifier', icon: 'fa-satellite-dish', description: 'Rarity Machine: adds +12% weight to Rare, Epic, Legendary and Mythic rolls per level. Does not improve finish odds.', baseCost: 1800000000 },
+            { id: 'rarityFloor', name: 'Floor Stabilizer', icon: 'fa-layer-group', description: 'Rarity Machine: every 5 levels raises the minimum rarity of normal packs one tier (Uncommon at Lv.5, Rare at Lv.10, Epic at Lv.15).', baseCost: 6500000000 },
+            { id: 'rarityEcho', name: 'Echo Chamber', icon: 'fa-wave-square', description: 'Rarity Machine: every 5th normal pack gains +1 extra card per 3 levels. Stacks with the existing pack milestone bonus.', baseCost: 12000000000 }
         ];
+
+        function getRarityMachineFloor(packFloor = 'Common') {
+            const order = Object.keys(RARITIES).filter(key => !RARITIES[key].secretOnly);
+            const base = Math.max(0, order.indexOf(packFloor));
+            const researched = Math.min(3, Math.floor((gameState.research?.rarityFloor || 0) / 5));
+            return order[Math.min(order.length - 1, Math.max(base, researched))] || 'Common';
+        }
 
         function getResearchCost(upgrade) {
             const level = gameState.research?.[upgrade.id] || 0;
@@ -1907,7 +1917,7 @@ const a=gameState.automation,q=a.queue,cfg=a.config||(a.config={});if(cfg.paused
 const buyer=AUTOMATION_MACHINES[0],opener=AUTOMATION_MACHINES[1],bs=autoState(buyer.id),os=autoState(opener.id);
 const due=m=>!a.lastRun[m.id]||now-a.lastRun[m.id]>=autoCycle(m)*1000,mark=m=>{a.lastRun[m.id]=now;};
 if(cfg.autoBuy!==false&&bs.level&&os.level&&due(buyer)){mark(buyer);const pack=PACKS.find(p=>p.id===a.selectedPackId&&!p.secret&&gameState.packsOpened>=(p.unlockPacks||0))||PACKS[0],disc=Math.min(.55,(bs.upgrades.efficiency||0)*.025+(bs.upgrades.value||0)*.01),free=Math.max(0,Math.min(autoCapacity(),Number(cfg.queueLimit)||20)-q.length),available=Math.max(0,gameState.currency-Math.max(0,Number(cfg.reserve)||0)),budget=Number(cfg.budget)>0?Math.min(available,Number(cfg.budget)):available,n=Math.min(1+(bs.upgrades.throughput||0),free,Math.floor(budget/(pack.price*(1-disc))));if(n){for(let i=0;i<n;i++)q.push(pack.id);gameState.currency-=pack.price*(1-disc)*n;changed=true;}}
-if(cfg.autoOpen!==false&&os.level&&q.length&&due(opener)){mark(opener);const n=Math.min(1+(os.upgrades.throughput||0),q.length),autoOpened=[];for(let p=0;p<n;p++){const pack=PACKS.find(x=>x.id===q.shift()&&!x.secret);if(!pack)continue;gameState.packsOpened++;gameState.normalPackOpens=(gameState.normalPackOpens||0)+1;let count=(Number(pack.cardsCount)||3)+(pack.bonusCards||0)+(gameState.research.packPress||0);if(gameState.normalPackOpens%5===0)count++;count+=Math.floor((os.upgrades.efficiency||0)/5);const rb=Math.min(4.5,1+Math.log2(Math.max(1,pack.rarityBoost*(1+(gameState.research.rarityLab||0)*.2)))*.55),sb=Math.min(3,1+Math.log2(Math.max(1,pack.shinyBoost*(1+(gameState.research.foilLab||0)*.2)))*.35),tier=Math.max(0,PACKS.filter(x=>!x.secret).findIndex(x=>x.id===pack.id)),packCards=[];for(let i=0;i<count;i++){const card=createPaintCard(rb,sb,null,0,pack.rarityFloor||"Common",pack.incomeMultiplier||1,tier,.18);card.sellValue*=1+(os.upgrades.value||0)*.025;gameState.inventory.push(card);packCards.push(card);}a.cardsProcessed+=count;autoOpened.push({name:pack.name,cards:packCards});changed=true;inventoryChanged=true;}if(autoOpened.length&&cfg.autoReveal!==false)showAutomationPackSummary(autoOpened);}
+if(cfg.autoOpen!==false&&os.level&&q.length&&due(opener)){mark(opener);const n=Math.min(1+(os.upgrades.throughput||0),q.length),autoOpened=[];for(let p=0;p<n;p++){const pack=PACKS.find(x=>x.id===q.shift()&&!x.secret);if(!pack)continue;gameState.packsOpened++;gameState.normalPackOpens=(gameState.normalPackOpens||0)+1;let count=(Number(pack.cardsCount)||3)+(pack.bonusCards||0)+(gameState.research.packPress||0);if(gameState.normalPackOpens%5===0)count+=1+Math.floor((gameState.research.rarityEcho||0)/3);count+=Math.floor((os.upgrades.efficiency||0)/5);const rb=Math.min(4.5,1+Math.log2(Math.max(1,pack.rarityBoost*(1+(gameState.research.rarityLab||0)*.2)*(1+(gameState.research.rarityFocus||0)*.12)))*.55),sb=Math.min(3,1+Math.log2(Math.max(1,pack.shinyBoost*(1+(gameState.research.foilLab||0)*.2)))*.35),tier=Math.max(0,PACKS.filter(x=>!x.secret).findIndex(x=>x.id===pack.id)),packCards=[];for(let i=0;i<count;i++){const card=createPaintCard(rb,sb,null,0,getRarityMachineFloor(pack.rarityFloor||"Common"),pack.incomeMultiplier||1,tier,.18);card.sellValue*=1+(os.upgrades.value||0)*.025;gameState.inventory.push(card);packCards.push(card);}a.cardsProcessed+=count;autoOpened.push({name:pack.name,cards:packCards});changed=true;inventoryChanged=true;}if(autoOpened.length&&cfg.autoReveal!==false)showAutomationPackSummary(autoOpened);}
 let displayedIds=null,saleMultiplier=null;const isDisplayed=id=>{if(!displayedIds)displayedIds=new Set((gameState.displayCases||[]).flatMap(box=>box.cardIds||[]));return displayedIds.has(id);};const saleValue=card=>{if(saleMultiplier===null)saleMultiplier=calculateIncomeBreakdown().globalMultiplier;return Math.max(0,Number(card.sellValue)||(Number(card.incomePerSec)||0)*100)*50*saleMultiplier;};
 const sellers=AUTOMATION_MACHINES.filter(m=>["sorter","finish","traitless","duplicates"].includes(m.role));
 for(const m of sellers){const s=autoState(m.id);if(cfg.autoSell===false||!s.level||!due(m))continue;mark(m);const limit=5+(s.upgrades.throughput||0)*5,cap=100000/(1+(s.upgrades.safety||0)*.35),ids=[],seen=new Set();for(let i=0;i<gameState.inventory.length&&ids.length<limit;i++){const card=gameState.inventory[i],value=saleValue(card);if(card.locked||isDisplayed(card.id)||(cfg.protectTraits!==false&&(card.traits||[]).length)||(cfg.protectFinishes!==false&&card.variant!=="Standard")||value>Math.min(cap,Number(cfg.maxSaleValue)||250))continue;let ok=false;if(m.role==="sorter")ok=card.rarity===m.rarity;if(m.role==="finish")ok=card.rarity==="Common";if(m.role==="traitless")ok=["Common","Uncommon"].includes(card.rarity);if(m.role==="duplicates"){const key=(card.hexesList||[card.hex]).join("|");ok=seen.has(key);if(!ok)seen.add(key);}if(ok)ids.push(i);}if(ids.length){const cash=ids.reduce((sum,i)=>sum+saleValue(gameState.inventory[i])*autoSaleMultiplier(m),0),removed=new Set(ids);gameState.inventory=gameState.inventory.filter((card,i)=>!removed.has(i));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;inventoryChanged=true;}}
@@ -1919,7 +1929,7 @@ if(cfg.autoSell!==false&&cfg.customSellEnabled!==false&&ls.level&&due(liquidator
  const groups=new Map();eligible.forEach(item=>{if(!groups.has(item.key))groups.set(item.key,[]);groups.get(item.key).push(item);});
  const candidates=[];groups.forEach(items=>{items.sort((a,b)=>b.value-a.value);candidates.push(...items.slice(keep));});
  const limit=5+(ls.upgrades.throughput||0)*5,selected=candidates.sort((a,b)=>a.value-b.value).slice(0,limit),removeIds=new Set(selected.map(x=>x.card.id));
- if(removeIds.size){const cash=selected.reduce((sum,x)=>sum+x.value*autoSaleMultiplier(liquidator),0);gameState.inventory=gameState.inventory.filter(card=>!removeIds.has(card.id));gameState.currency+=cash;gameState.lifetimeRevenue+=cash;a.salesTotal+=cash;changed=true;inventoryChanged=true;}
+ if(removeIds.size){const gross=selected.reduce((sum,x)=>sum+x.value*autoSaleMultiplier(liquidator),0),tax=gross*0.10,net=gross-tax;gameState.inventory=gameState.inventory.filter(card=>!removeIds.has(card.id));gameState.currency+=net;gameState.lifetimeRevenue+=net;a.salesTotal+=net;a.taxPaid=(Number(a.taxPaid)||0)+tax;notifyPlayer('Inventory Liquidator',selected.length+' cards sold · Gross $'+formatCurrency(gross)+' · 10% tax $'+formatCurrency(tax)+' · You received $'+formatCurrency(net),'success');changed=true;inventoryChanged=true;}
 }
 if(changed){updateEconomyUI();if(inventoryChanged){if(!document.getElementById("tab-inventory").classList.contains("hidden"))renderInventory();if(!document.getElementById("tab-codex").classList.contains("hidden"))renderCodex();if(!document.getElementById("tab-stats").classList.contains("hidden"))renderStats();if(!document.getElementById("tab-progression").classList.contains("hidden"))renderProgression();}if(!document.getElementById("tab-store").classList.contains("hidden"))renderStore();saveGameData();if(!document.getElementById("tab-automation").classList.contains("hidden"))renderAutomation();}
 }
@@ -2005,6 +2015,16 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
 
 
         // NPC market simulation. Player cards are escrowed in the local save while listed.
+        function notifyPlayer(title,message,type='info') {
+            let host=document.getElementById('game-notifications');
+            if(!host){host=document.createElement('div');host.id='game-notifications';host.className='fixed top-4 right-4 z-[10000] flex flex-col gap-2 pointer-events-none';document.body.appendChild(host);}
+            const item=document.createElement('div');item.className='pointer-events-auto w-[min(340px,calc(100vw-2rem))] rounded-2xl border border-purple-200 bg-slate-900/95 text-white shadow-2xl p-3';
+            const heading=document.createElement('div');heading.className='text-[10px] uppercase tracking-wider font-black '+(type==='success'?'text-emerald-300':type==='warning'?'text-amber-300':'text-fuchsia-300');heading.textContent=title;
+            const body=document.createElement('div');body.className='text-xs mt-1 text-slate-100';body.textContent=message;item.append(heading,body);host.appendChild(item);
+            while(host.children.length>4)host.removeChild(host.firstChild);
+            window.setTimeout(()=>{item.style.opacity='0';item.style.transform='translateX(12px)';item.style.transition='opacity .25s, transform .25s';window.setTimeout(()=>item.remove(),280);},5200);
+        }
+
         const MARKET_BOTS = [
             {id:'bot_iris',name:'Iris Vale',style:'patient collector',budget:180000},
             {id:'bot_cobalt',name:'CobaltJack',style:'finish hunter',budget:260000},
@@ -2039,6 +2059,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             for(let i=0;i<10;i++){
                 const bot=MARKET_BOTS[i%MARKET_BOTS.length],card=makeNpcCard(rarities[i%rarities.length]),price=Math.round(marketCardPrice(card)*(0.9+Math.random()*0.55));
                 m.listings.push({id:'npc_'+now+'_'+i,kind:'npc',seller:bot.name,botId:bot.id,card,price,createdAt:now});
+                if(['Legendary','Mythic'].includes(card.rarity))notifyPlayer('Ultra-rare market arrival',bot.name+' listed a '+card.rarity+' card for $'+formatCurrency(price)+'.','warning');
             }
             for(let i=0;i<3;i++){
                 const bot=MARKET_BOTS[(i+2)%MARKET_BOTS.length],card=makeNpcCard(['Epic','Legendary','Mythic'][i]);
@@ -2053,8 +2074,8 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
                 gameState.inventory.push(auction.card);
                 marketLog('You won '+auction.card.rarity+' at auction for $'+formatCurrency(amount)+'.');
             } else if(winner&&winner.type==='bot'&&auction.kind==='player'){
-                gameState.currency+=auction.currentBid;
-                marketLog(winner.name+' won your '+auction.card.rarity+' for $'+formatCurrency(auction.currentBid)+'.');
+                const gross=auction.currentBid,tax=gross*0.10,net=gross-tax;gameState.currency+=net;gameState.lifetimeRevenue+=net;gameState.automation.taxPaid=(Number(gameState.automation.taxPaid)||0)+tax;
+                marketLog(winner.name+' won your '+auction.card.rarity+' for $'+formatCurrency(gross)+'.');notifyPlayer('Auction sold!',winner.name+' won your '+auction.card.rarity+' for $'+formatCurrency(gross)+'. 10% tax $'+formatCurrency(tax)+' · You received $'+formatCurrency(net)+'.','success');
             } else if(auction.kind==='player'){
                 gameState.inventory.push(auction.card);marketLog('Your auction expired without a sale; the card was returned.');
             }
@@ -2073,9 +2094,9 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
                     const listing=active[Math.floor(Math.random()*active.length)],fair=marketCardPrice(listing.card),buyer=MARKET_BOTS[Math.floor(Math.random()*MARKET_BOTS.length)];
                     const offer=Math.round(fair*(0.82+Math.random()*0.55));
                     if(listing.price<=buyer.budget&&listing.price<=offer){
-                        gameState.currency+=listing.price;gameState.lifetimeRevenue+=listing.price;
+                        const tax=listing.price*0.10,net=listing.price-tax;gameState.currency+=net;gameState.lifetimeRevenue+=net;gameState.automation.taxPaid=(Number(gameState.automation.taxPaid)||0)+tax;
                         m.listings=m.listings.filter(x=>x.id!==listing.id);
-                        marketLog(buyer.name+' bought your '+listing.card.rarity+' card for $'+formatCurrency(listing.price)+'.');changed=true;
+                        marketLog(buyer.name+' bought your '+listing.card.rarity+' card for $'+formatCurrency(listing.price)+'.');notifyPlayer('Card sold!',buyer.name+' bought your '+listing.card.rarity+' card. Gross $'+formatCurrency(listing.price)+' · 10% tax $'+formatCurrency(tax)+' · Received $'+formatCurrency(net)+'.','success');changed=true;
                     }
                 }
                 const playerAuctions=m.auctions.filter(a=>a.kind==='player'&&!a.settled&&a.endsAt>now);
@@ -2083,8 +2104,8 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
                     const a=playerAuctions[Math.floor(Math.random()*playerAuctions.length)],bot=MARKET_BOTS[Math.floor(Math.random()*MARKET_BOTS.length)];
                     const fair=marketCardPrice(a.card),next=Math.max(a.startBid,a.currentBid?Math.ceil(a.currentBid*1.08):a.startBid);
                     if(next<=bot.budget&&next<=fair*(1.2+Math.random()*0.8)){
-                        if(a.highestBidder?.type==='player')gameState.currency+=a.currentBid;
-                        a.currentBid=next;a.highestBidder={type:'bot',id:bot.id,name:bot.name};a.bids++;marketLog(bot.name+' bid $'+formatCurrency(next)+' on your '+a.card.rarity+'.');changed=true;
+                        const wasPlayerLeader=a.highestBidder?.type==='player';if(wasPlayerLeader)gameState.currency+=a.currentBid;
+                        a.currentBid=next;a.highestBidder={type:'bot',id:bot.id,name:bot.name};a.bids++;marketLog(bot.name+' bid $'+formatCurrency(next)+' on your '+a.card.rarity+'.');if(wasPlayerLeader)notifyPlayer('You were outbid',bot.name+' outbid you on your '+a.card.rarity+' auction. Your previous bid was refunded.','warning');changed=true;
                     }
                 }
                 const npcAuctions=m.auctions.filter(a=>a.kind==='npc'&&!a.settled&&a.endsAt>now);
@@ -2476,12 +2497,12 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
                 else {
                     gameState.normalPackOpens = (gameState.normalPackOpens || 0) + 1;
                     actualCardCount += baseCardCount + (pack.bonusCards || 0) + (gameState.research?.packPress || 0);
-                    if (gameState.normalPackOpens % 5 === 0) actualCardCount += 1;
+                    if (gameState.normalPackOpens % 5 === 0) actualCardCount += 1 + Math.floor((gameState.research?.rarityEcho || 0) / 3);
                 }
             }
             updateEconomyUI(); playSfx('cash');
             const research = gameState.research || {};
-            const rawRarityBoost = pack.rarityBoost * (1 + ((research.rarityLab || 0) * 0.20));
+            const rawRarityBoost = pack.rarityBoost * (1 + ((research.rarityLab || 0) * 0.20)) * (1 + ((research.rarityFocus || 0) * 0.12));
             const rawShinyBoost = pack.shinyBoost * (1 + ((research.foilLab || 0) * 0.20));
             // Normal packs receive diminishing returns so late-game boosts stay exciting without flooding the economy.
             const rarityBoost = pack.secret ? rawRarityBoost : Math.min(4.5, 1 + (Math.log2(Math.max(1, rawRarityBoost)) * 0.55));
@@ -2492,7 +2513,8 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             // Secret rarity odds also ramp with progression so the first secret pack is exciting, not game-breaking.
             const exclusiveChance = pack.secret ? pack.exclusiveRarityChance * Math.min(1, progressionTier / 10) : pack.exclusiveRarityChance;
             pendingPackCards = [];
-            for (let i = 0; i < actualCardCount; i++) pendingPackCards.push(createPaintCard(rarityBoost, shinyBoost, pack.exclusiveRarity, exclusiveChance, pack.secret ? 'Common' : (pack.rarityFloor || 'Common'), pack.secret ? 1 : (pack.incomeMultiplier || 1), progressionTier, pack.secret ? 1 : 0.18));
+            const rarityFloor = pack.secret ? 'Common' : getRarityMachineFloor(pack.rarityFloor || 'Common');
+            for (let i = 0; i < actualCardCount; i++) pendingPackCards.push(createPaintCard(rarityBoost, shinyBoost, pack.exclusiveRarity, exclusiveChance, rarityFloor, pack.secret ? 1 : (pack.incomeMultiplier || 1), progressionTier, pack.secret ? 1 : 0.18));
             saveGameData();
             const container = document.getElementById('revealed-cards-container');
             if (container) container.innerHTML = pendingPackCards.map((card, idx) => '<div id="unrevealed-card-' + idx + '" onclick="revealCard(' + idx + ')" class="w-36 h-52 bg-white/10 backdrop-blur-md rounded-2xl border-2 border-purple-300/40 shadow-2xl flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-all duration-300 group"><div class="w-12 h-12 rounded-2xl bg-purple-400/20 text-purple-200 flex items-center justify-center text-xl group-hover:rotate-12 transition-transform"><i class="fa-solid fa-gift"></i></div><span class="text-[10px] font-bold text-purple-200 mt-3 uppercase tracking-wider">Tap to Reveal</span></div>').join('');
