@@ -908,20 +908,9 @@
             const traitMultiplier = getCardTraitMultiplier(traits);
             const rarityMultiplier = RARITIES[validRarity]?.multiplier || 1;
             const finishMultiplier = VARIANTS[validVariant]?.multiplier || 1;
-            const incomePerSec = 0.05 * rarityMultiplier * finishMultiplier * traitMultiplier;
-            return {
-                id,
-                hex,
-                hexesList,
-                name: card.name || 'Sample Swatch',
-                rarity: validRarity,
-                variant: validVariant,
-                traits,
-                traitMultiplier,
-                incomePerSec: parseFloat(incomePerSec.toFixed(2)),
-                sellValue: parseFloat((incomePerSec * 100).toFixed(2)),
-                acquiredAt: card.acquiredAt || new Date().toLocaleDateString()
-            };
+            const recalculatedIncome = 0.05 * rarityMultiplier * finishMultiplier * traitMultiplier * Math.max(1, Number(card.incomeMultiplier) || 1);
+            const incomePerSec = Number.isFinite(Number(card.incomePerSec)) && Number(card.incomePerSec) >= 0 ? Number(card.incomePerSec) : recalculatedIncome;
+            return { id, hex, hexesList, name: card.name || 'Sample Swatch', rarity: validRarity, variant: validVariant, traits, traitMultiplier, incomeMultiplier: Math.max(1, Number(card.incomeMultiplier) || 1), incomePerSec: parseFloat(incomePerSec.toFixed(6)), sellValue: parseFloat((incomePerSec * 100).toFixed(6)), acquiredAt: card.acquiredAt || new Date().toLocaleDateString() };
         }
 
         function loadGameData() {
@@ -1096,8 +1085,9 @@
                 variant: variant,
                 traits: traits,
                 traitMultiplier: traitMult,
-                incomePerSec: parseFloat(incomePerSec.toFixed(2)),
-                sellValue: parseFloat((incomePerSec * 100).toFixed(2)),
+                incomeMultiplier: Math.max(1, Number(incomeMultiplier) || 1),
+                incomePerSec: parseFloat(incomePerSec.toFixed(6)),
+                sellValue: parseFloat((incomePerSec * 100).toFixed(6)),
                 acquiredAt: new Date().toLocaleDateString()
             };
         }
@@ -1159,16 +1149,18 @@
             return totalBonus;
         }
 
-        function calculateTotalIncomePerSecond() {
-            if (!Array.isArray(gameState.inventory)) return 0;
-            const baseIncome = gameState.inventory.reduce((sum, card) => sum + (card.incomePerSec || 0), 0);
+        function calculateIncomeBreakdown() {
+            if (!Array.isArray(gameState.inventory)) return { baseIncome: 0, totalIncome: 0, cardMultiplier: 1 };
+            const baseIncome = gameState.inventory.reduce((sum, card) => sum + Math.max(0, Number(card.incomePerSec) || 0), 0);
             const research = gameState.research || {};
-            const yieldBonus = 1 + ((research.yieldCore || 0) * 0.15);
-            const codexBonus = 1 + ((research.codexLens || 0) * 0.10);
-            const ascensionBonus = 1 + ((gameState.progression?.upgrades?.yield || 0) * 0.08);
-            const rawIncome = baseIncome * calculateCodexMultiplier() * yieldBonus * codexBonus * ascensionBonus;
-            return rawIncome <= 250 ? rawIncome : Math.min(250000, 250 + Math.pow(rawIncome - 250, 0.68));
+            const globalMultiplier = calculateCodexMultiplier() * (1 + ((research.yieldCore || 0) * 0.15)) * (1 + ((research.codexLens || 0) * 0.10)) * (1 + ((gameState.progression?.upgrades?.yield || 0) * 0.08));
+            const rawIncome = baseIncome * globalMultiplier;
+            const totalIncome = rawIncome <= 250 ? rawIncome : Math.min(250000, 250 + Math.pow(rawIncome - 250, 0.68));
+            return { baseIncome, totalIncome, globalMultiplier, cardMultiplier: baseIncome > 0 ? totalIncome / baseIncome : 1 };
         }
+        function calculateTotalIncomePerSecond() { return calculateIncomeBreakdown().totalIncome; }
+        function effectiveCardIncome(card) { return Math.max(0, Number(card?.incomePerSec) || 0) * calculateIncomeBreakdown().cardMultiplier; }
+        function formatIncomeRate(value) { const n = Math.max(0, Number(value) || 0); const digits = n < 0.01 ? 6 : n < 1 ? 4 : 2; return '$' + n.toFixed(digits); }
 
         function formatCurrency(num) {
             if (typeof num !== 'number' || isNaN(num)) return '0.00';
@@ -1260,6 +1252,7 @@
             }
 
             const traitBadges = (card.traits || []).map(name => '<span class="bg-amber-100 text-amber-800 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-amber-200">' + name + ' · ' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x</span>').join('');
+            const effectiveIncome = effectiveCardIncome(card);
             const traitVisualClasses = (card.traits || []).map(name => 'trait-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-')).join(' ');
             const isGradient = card.hex && card.hex.includes('gradient');
             const bgStyle = isGradient ? `background: ${card.hex};` : `background-color: ${card.hex};`;
@@ -1277,7 +1270,7 @@
                             ${traitBadges ? '<div class="flex flex-wrap gap-1">' + traitBadges + '</div>' : ''}
                             <div class="flex items-center justify-between text-[10px]">
                                 <span class="px-2 py-0.5 rounded-md font-bold ${rarityInfo.bg}">${card.rarity}</span>
-                                <span class="font-mono text-emerald-600 font-bold">+$${formatCurrency(card.incomePerSec)}/s</span>
+                                <span class="font-mono text-emerald-600 font-bold" title="Includes global bonuses and income diminishing returns">+${formatIncomeRate(effectiveIncome)}/s</span>
                             </div>
                         </div>
                     </div>
