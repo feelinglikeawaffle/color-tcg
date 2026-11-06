@@ -2060,7 +2060,11 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             cardElement.outerHTML = renderCardHTML(card, false);
 
             const remaining = document.querySelectorAll('[id^="unrevealed-card-"]');
-            if (remaining.length === 0) finishPackRevealSummary();
+            if (remaining.length === 0) {
+                const container = document.getElementById('revealed-cards-container');
+                if (container) container.innerHTML = pendingPackCards.map(card => renderCardHTML(card, false)).join('');
+                finishPackRevealSummary();
+            }
         }
 
         function revealAllCards() { for (let i = 0; i < pendingPackCards.length; i++) if (document.getElementById('unrevealed-card-' + i)) revealCard(i); }
