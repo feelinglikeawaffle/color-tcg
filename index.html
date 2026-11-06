@@ -1911,21 +1911,41 @@ function updateCustomSellRarity(rarity,enabled){const cfg=gameState.automation.c
 function toggleAutomationPause(){gameState.automation.config.paused=!gameState.automation.config.paused;saveGameData();renderAutomation();}
 function renderAutomation(){
  const cfg=gameState.automation.config||(gameState.automation.config={});
-const grid=document.getElementById("automation-machines-grid"),a=gameState.automation,select=document.getElementById("automation-pack-select");if(!grid)return;
-select.innerHTML=PACKS.filter(p=>!p.secret&&gameState.packsOpened>=(p.unlockPacks||0)).map(p=>'<option value="'+p.id+'">'+p.name+' - $'+formatCurrency(p.price)+'</option>').join("");select.value=a.selectedPackId||"starter";
- const fields={preset:"preset",reserve:"reserve",budget:"budget",queueLimit:"queue-limit",autoBuy:"buy-enabled",autoOpen:"open-enabled",autoSell:"sell-enabled",protectTraits:"protect-traits",protectFinishes:"protect-finishes",autoReveal:"auto-auto-reveal",maxSaleValue:"max-sale"};Object.entries(fields).forEach(([k,id])=>{const el=document.getElementById("auto-"+id);if(el){if(el.type==="checkbox")el.checked=cfg[k]!==false;else el.value=cfg[k]??(k==="queueLimit"?20:k==="maxSaleValue"?250:k==="preset"?"balanced":0);}});
+ const grid=document.getElementById("automation-machines-grid"),a=gameState.automation,select=document.getElementById("automation-pack-select");
+ if(!grid)return;
+ select.innerHTML=PACKS.filter(p=>!p.secret&&gameState.packsOpened>=(p.unlockPacks||0)).map(p=>"<option value=\""+p.id+"\">"+p.name+" - $"+formatCurrency(p.price)+"</option>").join("");
+ select.value=a.selectedPackId||"starter";
+ const fields={preset:"preset",reserve:"reserve",budget:"budget",queueLimit:"queue-limit",autoBuy:"buy-enabled",autoOpen:"open-enabled",autoSell:"sell-enabled",protectTraits:"protect-traits",protectFinishes:"protect-finishes",autoReveal:"auto-auto-reveal",maxSaleValue:"max-sale"};
+ Object.entries(fields).forEach(([k,id])=>{const el=document.getElementById("auto-"+id);if(el){if(el.type==="checkbox")el.checked=cfg[k]!==false;else el.value=cfg[k]??(k==="queueLimit"?20:k==="maxSaleValue"?250:k==="preset"?"balanced":0);}});
  const customRarities=Array.isArray(cfg.customSellRarities)?cfg.customSellRarities:["Common","Uncommon"];
  ["Common","Uncommon","Rare","Epic","Legendary","Mythic"].forEach(r=>{const el=document.getElementById("custom-sell-"+r.toLowerCase());if(el)el.checked=customRarities.includes(r);});
  [["custom-sell-min",cfg.customSellMinValue??0],["custom-sell-max",cfg.customSellMaxValue??250],["custom-sell-keep",cfg.customSellKeepPerColor??1]].forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.value=value;});
- const traitToggle=document.getElementById("custom-sell-traits"),finishToggle=document.getElementById("custom-sell-finishes");if(traitToggle)traitToggle.checked=cfg.customSellTraits===true;if(finishToggle)finishToggle.checked=cfg.customSellFinishes===true;const pause=document.getElementById("auto-pause-btn");if(pause)pause.innerText=cfg.paused?"Resume line":"Pause line";const tele=document.getElementById("automation-telemetry");if(tele)tele.innerText="BUYER "+(autoState("packBuyer").level?"ONLINE":"OFFLINE")+" · OPENER "+(autoState("autoOpener").level?"ONLINE":"OFFLINE")+" · "+(cfg.paused?"PAUSED":"RUNNING")+" · RESERVE $"+formatCurrency(Number(cfg.reserve)||0)+" · QUEUE "+a.queue.length+"/"+Math.min(autoCapacity(),Number(cfg.queueLimit)||20);
-const installed=AUTOMATION_MACHINES.filter(m=>autoState(m.id).level>0).length;
-document.getElementById("automation-machine-count").innerText=installed+" / 13 installed";document.getElementById("automation-queue-count").innerText=a.queue.length+" / "+autoCapacity();
-document.getElementById("automation-line-status").innerText=cfg.paused?"Paused":(autoState("packBuyer").level&&autoState("autoOpener").level?(cfg.autoBuy===false?"Opener online · buyer disabled":cfg.autoOpen===false?"Buyer online · opener disabled":"Running automatically"):"Install buyer and opener");
-document.getElementById("automation-cards-processed").innerText=(a.cardsProcessed||0).toLocaleString();document.getElementById("automation-sales-total").innerText="$"+formatCurrency(a.salesTotal||0);
-grid.innerHTML=AUTOMATION_MACHINES.map(m=>{const s=autoState(m.id),lv=s.level||0,unlocked=gameState.packsOpened>=m.unlock,cost=autoMachineCost(m);let h='<article class="glass-panel p-4 rounded-2xl space-y-2"><div class="flex justify-between gap-2"><b class="text-sm">'+m.name+'</b>';h+=lv?'<span>Installed</span>':'<button data-install="'+m.id+'" '+(!unlocked||gameState.currency<cost?'disabled':'')+'>Install 
-grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.closest("[data-machine]");if(b)buyAutomationMachine(b.dataset.install);if(u)buyAutomationUpgrade(u.dataset.machine,u.dataset.upgrade);};
+ const traitToggle=document.getElementById("custom-sell-traits"),finishToggle=document.getElementById("custom-sell-finishes");
+ if(traitToggle)traitToggle.checked=cfg.customSellTraits===true;
+ if(finishToggle)finishToggle.checked=cfg.customSellFinishes===true;
+ const pause=document.getElementById("auto-pause-btn");if(pause)pause.innerText=cfg.paused?"Resume line":"Pause line";
+ const tele=document.getElementById("automation-telemetry");if(tele)tele.innerText="BUYER "+(autoState("packBuyer").level?"ONLINE":"OFFLINE")+" · OPENER "+(autoState("autoOpener").level?"ONLINE":"OFFLINE")+" · "+(cfg.paused?"PAUSED":"RUNNING")+" · RESERVE $"+formatCurrency(Number(cfg.reserve)||0)+" · QUEUE "+a.queue.length+"/"+Math.min(autoCapacity(),Number(cfg.queueLimit)||20);
+ const installed=AUTOMATION_MACHINES.filter(m=>autoState(m.id).level>0).length;
+ document.getElementById("automation-machine-count").innerText=installed+" / 13 installed";
+ document.getElementById("automation-queue-count").innerText=a.queue.length+" / "+autoCapacity();
+ document.getElementById("automation-line-status").innerText=cfg.paused?"Paused":(autoState("packBuyer").level&&autoState("autoOpener").level?(cfg.autoBuy===false?"Opener online · buyer disabled":cfg.autoOpen===false?"Buyer online · opener disabled":"Running automatically"):"Install buyer and opener");
+ document.getElementById("automation-cards-processed").innerText=(a.cardsProcessed||0).toLocaleString();
+ document.getElementById("automation-sales-total").innerText="$"+formatCurrency(a.salesTotal||0);
+ grid.innerHTML=AUTOMATION_MACHINES.map(m=>{
+  const s=autoState(m.id),lv=s.level||0,unlocked=gameState.packsOpened>=m.unlock,cost=autoMachineCost(m);
+  let h="<article class=\"glass-panel p-4 rounded-2xl space-y-2\"><div class=\"flex justify-between gap-2\"><b class=\"text-sm\">"+m.name+"</b>";
+  h+=lv?"<span>Installed</span>":"<button data-install=\""+m.id+"\" "+(!unlocked||gameState.currency<cost?"disabled":"")+">Install $"+formatCurrency(cost)+"</button>";
+  h+="</div><div class=\"text-[10px]\">Unlock: "+m.unlock+" packs | Cycle: "+autoCycle(m).toFixed(1)+"s</div>";
+  if(m.role==="customSell")h+="<p class=\"text-[10px] text-slate-500\">Uses the custom HEX, rarity, value, trait and finish rules above. Display-case cards are always protected.</p>";
+  if(lv){
+   h+="<div class=\"grid grid-cols-2 sm:grid-cols-3 gap-2\">";
+   AUTOMATION_UPGRADES.forEach(u=>{const ul=s.upgrades[u.id]||0,uc=autoUpgradeCost(m,u);h+="<div class=\"bg-white/80 rounded-xl p-2\"><b class=\"text-[9px]\">"+u.name+" "+ul+"/25</b><p class=\"text-[9px]\">"+u.desc+"</p><button data-machine=\""+m.id+"\" data-upgrade=\""+u.id+"\" "+(ul>=25||gameState.currency<uc?"disabled":"")+">$"+formatCurrency(uc)+"</button></div>";});
+   h+="</div>";
+  }else h+="<p class=\"text-[10px]\">Install to unlock five upgrade tracks, each with 25 levels.</p>";
+  return h+"</article>";
+ }).join("");
+ grid.onclick=function(e){const b=e.target.closest("[data-install]"),u=e.target.closest("[data-machine]");if(b)buyAutomationMachine(b.dataset.install);if(u)buyAutomationUpgrade(u.dataset.machine,u.dataset.upgrade);};
 }
-
 
 const ASCENSION_UPGRADES=[{id:"yield",name:"Retained Yield Formula",desc:"+8% passive yield per level.",max:25},{id:"factory",name:"Factory Blueprints",desc:"Reduce machine installation costs by 4% per level.",max:10},{id:"market",name:"Market Memory",desc:"+5% automated sale value per level.",max:20}];
 function uniqueColorCount(){return new Set(gameState.inventory.flatMap(c=>c.hexesList||[c.hex])).size;}
