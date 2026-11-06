@@ -1203,8 +1203,9 @@
 
             if (curr) curr.innerText = `$${formatCurrency(gameState.currency)}`;
             if (inc) {
-                const totalIncome = calculateTotalIncomePerSecond();
-                inc.innerHTML = `+$${formatCurrency(totalIncome)}<span class="text-xs font-sans text-slate-400 font-normal">/s</span>`;
+                const breakdown = calculateIncomeBreakdown();
+                inc.innerHTML = `+${formatIncomeRate(breakdown.totalIncome)}<span class="text-xs font-sans text-slate-400 font-normal">/s</span>`;
+                inc.title = 'Sum of card production after global bonuses and diminishing returns. Base card rate: ' + formatIncomeRate(breakdown.baseIncome) + '/s · Global multiplier: ' + breakdown.globalMultiplier.toFixed(2) + 'x';
             }
             if (codex) codex.innerText = `${calculateCodexMultiplier().toFixed(2)}x`;
             if (invCount) invCount.innerText = gameState.inventory.length;
@@ -2043,7 +2044,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             const title = document.getElementById('pack-modal-title');
             const doneBtn = document.getElementById('pack-modal-done-btn'), revealAllBtn = document.getElementById('reveal-all-btn'), summary = document.getElementById('pack-reveal-summary'), packModal = document.getElementById('pack-modal');
             if (title) title.innerText = quantity > 1 ? 'BULK UNSEAL · ' + quantity + ' ' + pack.name.toUpperCase() + ' PACKS · ' + actualCardCount + ' CARDS' : 'UNSEALING ' + pack.name.toUpperCase() + (pack.secret ? ' (' + actualCardCount + ' CARDS UNSEALED)' : '');
-            if (doneBtn) doneBtn.classList.add('hidden'); if (revealAllBtn) revealAllBtn.classList.remove('hidden'); if (summary) { summary.classList.add('hidden'); summary.innerHTML = ''; }
+            if (doneBtn) { doneBtn.classList.add('hidden'); doneBtn.innerText = 'Collect All Swatches'; } if (revealAllBtn) revealAllBtn.classList.remove('hidden'); if (summary) { summary.classList.add('hidden'); summary.innerHTML = ''; }
             if (packModal) packModal.classList.remove('hidden');
             updateStoreButtonStates();
         }
@@ -2070,9 +2071,9 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (summary) {
                 const counts = {}; pendingPackCards.forEach(card => counts[card.rarity] = (counts[card.rarity] || 0) + 1);
                 const best = pendingPackCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a))[0];
-                const top = pendingPackCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a)).slice(0,3);
+                const top = pendingPackCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a)).slice(0,3), packRate = pendingPackCards.reduce((sum, card) => sum + effectiveCardIncome(card), 0);
                 summary.classList.remove('hidden');
-                summary.innerHTML = '<div class="flex items-center justify-between gap-2 mb-2"><b class="text-sm">Pack contents</b><span class="text-xs text-slate-500">' + pendingPackCards.length + ' cards collected</span></div><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><p class="text-xs font-bold text-slate-700 mb-1">Top pulls</p>' + top.map(card => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + card.name + ' · ' + card.rarity + (card.variant !== 'Standard' ? ' · ' + card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + formatIncomeRate(effectiveCardIncome(card)) + '/s</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">Best pull: ' + (best?.name || '—') + '</p>';
+                summary.innerHTML = '<div class="flex items-center justify-between gap-2 mb-2"><b class="text-sm">Pack contents</b><span class="text-xs text-slate-500">' + pendingPackCards.length + ' cards collected</span></div><p class="text-xs text-emerald-700 font-bold mb-2">Adds ' + formatIncomeRate(packRate) + '/s to your collection</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><p class="text-xs font-bold text-slate-700 mb-1">Top pulls</p>' + top.map(card => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + card.name + ' · ' + card.rarity + (card.variant !== 'Standard' ? ' · ' + card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + formatIncomeRate(effectiveCardIncome(card)) + '/s</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">Best pull: ' + (best?.name || '—') + '</p>';
             }
             if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
         }
@@ -2081,10 +2082,10 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             const title = document.getElementById('pack-modal-title'), container = document.getElementById('revealed-cards-container'), summary = document.getElementById('pack-reveal-summary'), done = document.getElementById('pack-modal-done-btn'), revealAll = document.getElementById('reveal-all-btn'), modal = document.getElementById('pack-modal');
             const allCards = packResults.flatMap(result => result.cards);
             const counts = {}; allCards.forEach(card => counts[card.rarity] = (counts[card.rarity] || 0) + 1);
-            const top = allCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a)).slice(0,5);
+            const top = allCards.slice().sort((a,b) => effectiveCardIncome(b)-effectiveCardIncome(a)).slice(0,5), packRate = allCards.reduce((sum, card) => sum + effectiveCardIncome(card), 0);
             if (title) title.innerText = 'FACTORY AUTO-REVEAL · ' + packResults.length + ' PACK' + (packResults.length === 1 ? '' : 'S') + ' · ' + allCards.length + ' CARDS';
             if (container) container.innerHTML = '';
-            if (summary) { summary.classList.remove('hidden'); summary.innerHTML = '<b class="text-sm">Factory pack summary</b><p class="text-xs text-slate-500 mb-2">' + packResults.map(x => x.name).join(' · ') + '</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><b class="text-xs">Best pulls</b>' + top.map(card => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + card.name + ' · ' + card.rarity + (card.variant !== 'Standard' ? ' · ' + card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + formatIncomeRate(effectiveCardIncome(card)) + '/s</b></div>').join(''); }
+            if (summary) { summary.classList.remove('hidden'); summary.innerHTML = '<b class="text-sm">Factory pack summary</b><p class="text-xs text-slate-500 mb-2">' + packResults.map(x => x.name).join(' · ') + '</p><p class="text-xs text-emerald-700 font-bold mb-2">Adds ' + formatIncomeRate(packRate) + '/s to your collection</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><b class="text-xs">Best pulls</b>' + top.map(card => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + card.name + ' · ' + card.rarity + (card.variant !== 'Standard' ? ' · ' + card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + formatIncomeRate(effectiveCardIncome(card)) + '/s</b></div>').join(''); }
             if (done) { done.classList.remove('hidden'); done.innerText = 'Close Summary'; } if (revealAll) revealAll.classList.add('hidden'); if (modal) modal.classList.remove('hidden');
         }
 
