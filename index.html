@@ -906,7 +906,7 @@
             account: null,
             packsOpened: 0,
             normalPackOpens: 0,
-            research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0, automationTheory: 0, marketAnalysis: 0, pigmentArchive: 0 },
+            research: { yieldCore: 0, packPress: 0, rarityLab: 0, foilLab: 0, codexLens: 0, automationTheory: 0, marketAnalysis: 0, pigmentArchive: 0, rarityFocus: 0, rarityFloor: 0, rarityEcho: 0, rarityCascade: 0, rarityPity: 0, autoCurator: 0 },
             progression: { ascensions: 0, shards: 0, upgrades: { yield: 0, factory: 0, market: 0 } },
             automation: { selectedPackId: 'starter', queue: [], machines: {}, lastRun: {}, cardsProcessed: 0, salesTotal: 0, taxPaid: 0, config: { preset: 'balanced', paused: false, reserve: 0, budget: 0, queueLimit: 20, autoBuy: true, autoOpen: true, autoSell: true, protectTraits: true, protectFinishes: true, autoReveal: true, maxSaleValue: 250, customSellEnabled: true, customSellRarities: ['Common','Uncommon'], customSellMinValue: 0, customSellMaxValue: 250, customSellKeepPerRarity: 1, customSellTraits: false, customSellFinishes: false } },
             claimedMasteries: [],
@@ -983,7 +983,7 @@
                         if (typeof parsed.packsOpened === 'number' && !isNaN(parsed.packsOpened)) gameState.packsOpened = parsed.packsOpened;
                         if (typeof parsed.normalPackOpens === 'number' && !isNaN(parsed.normalPackOpens)) gameState.normalPackOpens = parsed.normalPackOpens;
                         if (parsed.research && typeof parsed.research === 'object') {
-                            ['yieldCore', 'packPress', 'rarityLab', 'foilLab', 'codexLens', 'automationTheory', 'marketAnalysis', 'pigmentArchive', 'rarityFocus', 'rarityFloor', 'rarityEcho'].forEach(key => {
+                            ['yieldCore', 'packPress', 'rarityLab', 'foilLab', 'codexLens', 'automationTheory', 'marketAnalysis', 'pigmentArchive', 'rarityFocus', 'rarityFloor', 'rarityEcho', 'rarityCascade', 'rarityPity', 'autoCurator'].forEach(key => {
                                 const level = Number(parsed.research[key]);
                                 if (Number.isFinite(level)) gameState.research[key] = Math.max(0, Math.min(15, Math.floor(level)));
                             });
@@ -1150,7 +1150,12 @@
 
         function createPaintCard(rarityBoost = 1.0, shinyBoost = 1.0, secretRarity = null, secretRarityChance = 0, minimumRarity = 'Common', incomeMultiplier = 1, progressionTier = 0, traitChanceMultiplier = 1) {
             const canRollSecretRarity = secretRarity && RARITIES[secretRarity]?.secretOnly && Math.random() < Math.max(0, Math.min(1, secretRarityChance));
-            const rarity = canRollSecretRarity ? secretRarity : rollRarity(rarityBoost, minimumRarity);
+            let rarity = canRollSecretRarity ? secretRarity : rollRarity(rarityBoost, minimumRarity);
+            if (!canRollSecretRarity && rarity !== 'Mythic') {
+                const order = Object.keys(RARITIES).filter(key => !RARITIES[key].secretOnly), index = order.indexOf(rarity);
+                const cascadeChance = Math.min(0.375, Math.max(0, Number(gameState.research?.rarityCascade) || 0) * 0.025);
+                if (index >= 0 && index < order.length - 1 && Math.random() < cascadeChance) rarity = order[index + 1];
+            }
             const variant = rollVariant(shinyBoost, progressionTier);
             const traits = rollCardTraits(progressionTier, traitChanceMultiplier);
             const traitName = traits[0] || '';
@@ -1337,10 +1342,27 @@
             return value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
 
+        let autoCuratorLastRun = 0;
+        function autoCurateDisplayCases() {
+            const boxes = (gameState.displayCases || []).filter(box => Number(box.level) > 0);
+            if (!boxes.length || !(gameState.research?.autoCurator > 0)) return false;
+            const fixedIds = new Set(boxes.flatMap(box => (box.cardIds || []).filter(id => gameState.inventory.find(card => card.id === id)?.locked)));
+            const candidates = gameState.inventory.filter(card => !card.locked && !fixedIds.has(card.id)).sort((a,b) => cardCollectorValue(b) - cardCollectorValue(a));
+            let cursor = 0, changed = false;
+            boxes.forEach(box => {
+                const next = (box.cardIds || []).filter(id => fixedIds.has(id));
+                while (next.length < Number(box.slots || 0) && cursor < candidates.length) next.push(candidates[cursor++].id);
+                if ((box.cardIds || []).join('|') !== next.join('|')) { box.cardIds = next; changed = true; }
+            });
+            if (changed) { saveGameData(); renderDisplayCases(); renderInventory(); updateEconomyUI(); }
+            return changed;
+        }
         function gameTick() {
             const now = Date.now();
             const deltaSec = Math.max(0, (now - (gameState.lastTickTimestamp || now)) / 1000);
             gameState.lastTickTimestamp = now;
+            const curatorLevel = Math.max(0, Number(gameState.research?.autoCurator) || 0), curatorInterval = Math.max(5000, 30000 - Math.max(0, curatorLevel - 1) * 2000);
+            if (curatorLevel > 0 && now - autoCuratorLastRun >= curatorInterval) { autoCuratorLastRun = now; autoCurateDisplayCases(); }
             const income = calculateTotalIncomePerSecond();
             if (income > 0) { const earned = income * deltaSec; gameState.currency += earned; gameState.lifetimeRevenue += earned; }
             updateEconomyUI(income);
@@ -1776,14 +1798,19 @@
             { id: 'pigmentArchive', name: 'Pigment Archive', icon: 'fa-book-atlas', description: '+2% Codex multiplier per level.', baseCost: 750000000 },
             { id: 'rarityFocus', name: 'Rare Signal Amplifier', icon: 'fa-satellite-dish', description: 'Rarity Machine: adds +12% weight to Rare, Epic, Legendary and Mythic rolls per level. Does not improve finish odds.', baseCost: 1800000000 },
             { id: 'rarityFloor', name: 'Floor Stabilizer', icon: 'fa-layer-group', description: 'Rarity Machine: every 5 levels raises the minimum rarity of normal packs one tier (Uncommon at Lv.5, Rare at Lv.10, Epic at Lv.15).', baseCost: 6500000000 },
-            { id: 'rarityEcho', name: 'Echo Chamber', icon: 'fa-wave-square', description: 'Rarity Machine: every 5th normal pack gains +1 extra card per 3 levels. Stacks with the existing pack milestone bonus.', baseCost: 12000000000 }
+            { id: 'rarityEcho', name: 'Echo Chamber', icon: 'fa-wave-square', description: 'Every 5th normal pack gains +1 extra card per 3 levels.', baseCost: 12000000000 },
+            { id: 'rarityCascade', name: 'Chromatic Cascade', icon: 'fa-water', description: 'Rarity Machine: each level adds a 2.5% chance for a card to rise one rarity tier after its roll. Does not affect secret-only rarities.', baseCost: 24000000000 },
+            { id: 'rarityPity', name: 'Fortune Stabilizer', icon: 'fa-shield-heart', description: 'Rarity Machine: every level shortens the guaranteed Rare-or-better pity interval by 2 packs (starts at 30, minimum 5).', baseCost: 38000000000 },
+            { id: 'autoCurator', name: 'Automated Gallery Curator', icon: 'fa-wand-magic-sparkles', description: 'Automatically fills and optimizes your display cases with your highest-value eligible cards. Each level shortens its cycle by 2 seconds (30 seconds at Lv.1, down to 5 seconds). Vault-locked cards stay protected.', baseCost: 65000000000 }
         ];
 
         function getRarityMachineFloor(packFloor = 'Common') {
             const order = Object.keys(RARITIES).filter(key => !RARITIES[key].secretOnly);
             const base = Math.max(0, order.indexOf(packFloor));
             const researched = Math.min(3, Math.floor((gameState.research?.rarityFloor || 0) / 5));
-            return order[Math.min(order.length - 1, Math.max(base, researched))] || 'Common';
+            const interval = Math.max(5, 30 - Math.max(0, Math.min(15, Number(gameState.research?.rarityPity) || 0)) * 2);
+            const pityFloor = (gameState.normalPackOpens > 0 && gameState.normalPackOpens % interval === 0) ? Math.max(1, order.indexOf('Rare')) : 0;
+            return order[Math.min(order.length - 1, Math.max(base, researched, pityFloor))] || 'Common';
         }
 
         function getResearchCost(upgrade) {
@@ -1929,7 +1956,7 @@ if(cfg.autoSell!==false&&cfg.customSellEnabled!==false&&ls.level&&due(liquidator
  const groups=new Map();eligible.forEach(item=>{if(!groups.has(item.key))groups.set(item.key,[]);groups.get(item.key).push(item);});
  const candidates=[];groups.forEach(items=>{items.sort((a,b)=>b.value-a.value);candidates.push(...items.slice(keep));});
  const limit=5+(ls.upgrades.throughput||0)*5,selected=candidates.sort((a,b)=>a.value-b.value).slice(0,limit),removeIds=new Set(selected.map(x=>x.card.id));
- if(removeIds.size){const gross=selected.reduce((sum,x)=>sum+x.value*autoSaleMultiplier(liquidator),0),tax=gross*0.10,net=gross-tax;gameState.inventory=gameState.inventory.filter(card=>!removeIds.has(card.id));gameState.currency+=net;gameState.lifetimeRevenue+=net;a.salesTotal+=net;a.taxPaid=(Number(a.taxPaid)||0)+tax;notifyPlayer('Inventory Liquidator',selected.length+' cards sold · Gross $'+formatCurrency(gross)+' · 10% tax $'+formatCurrency(tax)+' · You received $'+formatCurrency(net),'success');changed=true;inventoryChanged=true;}
+ if(removeIds.size){const gross=Math.round((selected.reduce((sum,x)=>sum+x.value*autoSaleMultiplier(liquidator),0)+Number.EPSILON)*100)/100,tax=Math.round((gross*0.10+Number.EPSILON)*100)/100,net=Math.round((gross-tax+Number.EPSILON)*100)/100;gameState.inventory=gameState.inventory.filter(card=>!removeIds.has(card.id));gameState.currency=Math.round((gameState.currency+net+Number.EPSILON)*100)/100;gameState.lifetimeRevenue+=net;a.salesTotal+=net;a.taxPaid=Math.round(((Number(a.taxPaid)||0)+tax+Number.EPSILON)*100)/100;notifyPlayer('Inventory Liquidator',selected.length+' cards sold · Gross $'+formatCurrency(gross)+' · 10% tax $'+formatCurrency(tax)+' · You received $'+formatCurrency(net),'success');changed=true;inventoryChanged=true;}
 }
 if(changed){updateEconomyUI();if(inventoryChanged){if(!document.getElementById("tab-inventory").classList.contains("hidden"))renderInventory();if(!document.getElementById("tab-codex").classList.contains("hidden"))renderCodex();if(!document.getElementById("tab-stats").classList.contains("hidden"))renderStats();if(!document.getElementById("tab-progression").classList.contains("hidden"))renderProgression();}if(!document.getElementById("tab-store").classList.contains("hidden"))renderStore();saveGameData();if(!document.getElementById("tab-automation").classList.contains("hidden"))renderAutomation();}
 }
@@ -1973,7 +2000,7 @@ function canPrestige(){return gameState.packsOpened>=500&&gameState.lifetimeReve
 function prestigeReward(){return Math.max(1,Math.min(50,1+Math.floor(Math.log10(Math.max(1,gameState.lifetimeRevenue/100000000)))));}
 function prestigeCost(up){return 1+(gameState.progression.upgrades[up.id]||0)*2;}
 function buyPrestigeUpgrade(id){const up=ASCENSION_UPGRADES.find(x=>x.id===id);if(!up)return;const lv=gameState.progression.upgrades[id]||0,cost=prestigeCost(up);if(lv>=up.max||gameState.progression.shards<cost)return;gameState.progression.shards-=cost;gameState.progression.upgrades[id]=lv+1;saveGameData();renderProgression();updateEconomyUI();}
-function performPrestige(){if(!canPrestige())return;const reward=prestigeReward();if(!confirm("Refracture for "+reward+" Prism Shards? Cash, collection, pack progress, research and automation reset. Lifetime revenue, ascension upgrades and claimed mastery records remain."))return;gameState.progression.shards+=reward;gameState.progression.ascensions++;gameState.currency=25;gameState.inventory=[createPaintCard(1,1),createPaintCard(1,1)];gameState.packsOpened=0;gameState.normalPackOpens=0;gameState.research={yieldCore:0,packPress:0,rarityLab:0,foilLab:0,codexLens:0,automationTheory:0,marketAnalysis:0,pigmentArchive:0};gameState.automation={selectedPackId:"starter",queue:[],machines:{},lastRun:{},cardsProcessed:0,salesTotal:0,config:{preset:"balanced",paused:false,reserve:0,budget:0,queueLimit:20,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true,autoReveal:true,maxSaleValue:250}};gameState.lastTickTimestamp=Date.now();saveGameData();updateEconomyUI();renderInventory();renderStore();renderProgression();}
+function performPrestige(){if(!canPrestige())return;const reward=prestigeReward();if(!confirm("Refracture for "+reward+" Prism Shards? Cash, collection, pack progress, research and automation reset. Lifetime revenue, ascension upgrades and claimed mastery records remain."))return;gameState.progression.shards+=reward;gameState.progression.ascensions++;gameState.currency=25;gameState.inventory=[createPaintCard(1,1),createPaintCard(1,1)];gameState.packsOpened=0;gameState.normalPackOpens=0;gameState.research={yieldCore:0,packPress:0,rarityLab:0,foilLab:0,codexLens:0,automationTheory:0,marketAnalysis:0,pigmentArchive:0,rarityFocus:0,rarityFloor:0,rarityEcho:0,rarityCascade:0,rarityPity:0,autoCurator:0};gameState.automation={selectedPackId:"starter",queue:[],machines:{},lastRun:{},cardsProcessed:0,salesTotal:0,config:{preset:"balanced",paused:false,reserve:0,budget:0,queueLimit:20,autoBuy:true,autoOpen:true,autoSell:true,protectTraits:true,protectFinishes:true,autoReveal:true,maxSaleValue:250}};gameState.lastTickTimestamp=Date.now();saveGameData();updateEconomyUI();renderInventory();renderStore();renderProgression();}
 function renderProgression(){const p=gameState.progression;const put=(id,v)=>{const e=document.getElementById(id);if(e)e.innerText=v;};put("prestige-count",p.ascensions||0);put("prestige-shards",formatCurrency(p.shards||0));put("progression-packs",gameState.packsOpened.toLocaleString());put("progression-colors",uniqueColorCount().toLocaleString());const nums=[0,10,25,50,100,200,400,800,1500,3000],names=["First Pigment","Palette Apprentice","Color Technician","Spectrum Analyst","Factory Supervisor","Chromatic Engineer","Prism Architect","Spectrum Director","Dimensional Curator","Origin Keeper"];const road=document.getElementById("progression-roadmap");if(road)road.innerHTML=nums.map((n,i)=>{const done=gameState.packsOpened>=n;return '<article class="rounded-2xl border '+(done?"border-emerald-200 bg-emerald-50/70":"border-purple-100 bg-white/70")+' p-3"><div class="flex justify-between"><b class="text-xs">'+names[i]+'</b><b class="text-[9px]">'+(done?"UNLOCKED":"LOCKED")+'</b></div><p class="text-[10px] text-slate-500">Open '+n.toLocaleString()+' packs to reach this milestone.</p><div class="h-1.5 bg-slate-100 rounded-full mt-2"><div class="h-full bg-purple-400" style="width:'+Math.min(100,n?gameState.packsOpened/n*100:100)+'%"></div></div></article>';}).join("");put("prestige-requirements","Requirements: 500 packs ("+gameState.packsOpened+"/500), $100M lifetime revenue ($"+formatCurrency(gameState.lifetimeRevenue)+"), 75 unique colors ("+uniqueColorCount()+"/75). Reward: "+prestigeReward()+" Prism Shards.");const btn=document.getElementById("prestige-button");if(btn)btn.disabled=!canPrestige();const grid=document.getElementById("prestige-upgrades");if(grid)grid.innerHTML=ASCENSION_UPGRADES.map(up=>{const lv=p.upgrades[up.id]||0,cost=prestigeCost(up);return '<article class="bg-white/70 border border-amber-100 rounded-2xl p-4 space-y-2"><b class="text-xs">'+up.name+'</b><p class="text-[10px] text-slate-500">'+up.desc+'</p><div class="flex justify-between text-[10px]"><span>Lv '+lv+'/'+up.max+'</span><span>'+cost+' shards</span></div><button onclick="buyPrestigeUpgrade(&quot;'+up.id+'&quot;)" '+(lv>=up.max||p.shards<cost?"disabled":"")+' class="w-full px-3 py-2 rounded-xl text-xs font-black bg-amber-500 text-white disabled:bg-slate-200">'+(lv>=up.max?"MAXED":"Upgrade")+'</button></article>';}).join("");}
 
         function localDayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
@@ -2552,9 +2579,9 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (doneBtn) doneBtn.classList.remove('hidden'); if (revealAllBtn) revealAllBtn.classList.add('hidden');
             if (summary) {
                 const counts = {}; pendingPackCards.forEach(card => counts[card.rarity] = (counts[card.rarity] || 0) + 1);
-                const preview = getPackIncomePreview(pendingPackCards), top = preview.contributions.slice().sort((a,b)=>b.rate-a.rate).slice(0,3);
+                const preview = getPackIncomePreview(pendingPackCards), top = preview.contributions.slice().sort((a,b)=>b.rate-a.rate).slice(0,3), totalSellValue = pendingPackCards.reduce((sum,card)=>sum+effectiveSaleValue(card),0);
                 summary.classList.remove('hidden');
-                summary.innerHTML = '<div class="flex items-center justify-between gap-2 mb-2"><b class="text-sm">Pack contents</b><span class="text-xs text-slate-500">' + pendingPackCards.length + ' cards collected</span></div><p class="text-xs text-emerald-700 font-bold mb-1">Potential +' + formatIncomeRate(preview.addedRate) + '/s if placed in available display slots</p><p class="text-[10px] text-slate-500 mb-2">Currently earning +' + formatIncomeRate(calculateTotalIncomePerSecond()) + '/s. Unplaced cards do not generate passive income.</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><p class="text-xs font-bold text-slate-700 mb-1">Top pulls · estimated case contribution</p>' + top.map(item => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + item.card.name + ' · ' + item.card.rarity + (item.card.variant !== 'Standard' ? ' · ' + item.card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + (item.placed ? '+' + formatIncomeRate(item.rate) + '/s' : 'No free slot') + '</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">' + preview.placedCount + ' of ' + pendingPackCards.length + ' new cards fit in currently available display slots.</p>';
+                summary.innerHTML = '<div class="flex items-center justify-between gap-2 mb-2"><b class="text-sm">Pack contents</b><span class="text-xs text-slate-500">' + pendingPackCards.length + ' cards collected</span></div><p class="text-xs font-black text-purple-700 mb-2">Combined sell value: $' + formatCurrency(totalSellValue) + '</p><p class="text-xs text-emerald-700 font-bold mb-1">Potential +' + formatIncomeRate(preview.addedRate) + '/s if placed in available display slots</p><p class="text-[10px] text-slate-500 mb-2">Currently earning +' + formatIncomeRate(calculateTotalIncomePerSecond()) + '/s. Unplaced cards do not generate passive income.</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><p class="text-xs font-bold text-slate-700 mb-1">Top pulls · estimated case contribution</p>' + top.map(item => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + item.card.name + ' · ' + item.card.rarity + (item.card.variant !== 'Standard' ? ' · ' + item.card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + (item.placed ? '+' + formatIncomeRate(item.rate) + '/s' : 'No free slot') + '</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">' + preview.placedCount + ' of ' + pendingPackCards.length + ' new cards fit in currently available display slots.</p>';
             }
             if (typeof confetti === 'function') confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
         }
@@ -2565,10 +2592,10 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             const title = document.getElementById('pack-modal-title'), container = document.getElementById('revealed-cards-container'), summary = document.getElementById('pack-reveal-summary'), done = document.getElementById('pack-modal-done-btn'), revealAll = document.getElementById('reveal-all-btn'), modal = document.getElementById('pack-modal');
             const allCards = packResults.flatMap(result => result.cards);
             const counts = {}; allCards.forEach(card => counts[card.rarity] = (counts[card.rarity] || 0) + 1);
-            const preview = getPackIncomePreview(allCards), top = preview.contributions.slice().sort((a,b)=>b.rate-a.rate).slice(0,5);
+            const preview = getPackIncomePreview(allCards), top = preview.contributions.slice().sort((a,b)=>b.rate-a.rate).slice(0,5), totalSellValue = allCards.reduce((sum,card)=>sum+effectiveSaleValue(card),0);
             if (title) title.innerText = 'FACTORY AUTO-REVEAL · ' + packResults.length + ' PACK' + (packResults.length === 1 ? '' : 'S') + ' · ' + allCards.length + ' CARDS';
             if (container) container.innerHTML = '';
-            if (summary) { summary.classList.remove('hidden'); summary.innerHTML = '<b class="text-sm">Factory pack summary</b><p class="text-xs text-slate-500 mb-2">' + packResults.map(x => x.name).join(' · ') + '</p><p class="text-xs text-emerald-700 font-bold mb-1">Potential +' + formatIncomeRate(preview.addedRate) + '/s if placed in available display slots</p><p class="text-[10px] text-slate-500 mb-2">Currently earning +' + formatIncomeRate(calculateTotalIncomePerSecond()) + '/s. Unplaced cards do not generate passive income.</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><b class="text-xs">Best pulls · estimated case contribution</b>' + top.map(item => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + item.card.name + ' · ' + item.card.rarity + (item.card.variant !== 'Standard' ? ' · ' + item.card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + (item.placed ? '+' + formatIncomeRate(item.rate) + '/s' : 'No free slot') + '</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">' + preview.placedCount + ' of ' + allCards.length + ' new cards fit in currently available display slots.</p>'; }
+            if (summary) { summary.classList.remove('hidden'); summary.innerHTML = '<b class="text-sm">Factory pack summary</b><p class="text-xs text-slate-500 mb-2">' + packResults.map(x => x.name).join(' · ') + '</p><p class="text-xs font-black text-purple-700 mb-2">Combined sell value: $' + formatCurrency(totalSellValue) + '</p><p class="text-xs text-emerald-700 font-bold mb-1">Potential +' + formatIncomeRate(preview.addedRate) + '/s if placed in available display slots</p><p class="text-[10px] text-slate-500 mb-2">Currently earning +' + formatIncomeRate(calculateTotalIncomePerSecond()) + '/s. Unplaced cards do not generate passive income.</p><div class="flex flex-wrap gap-2 mb-3">' + Object.entries(counts).map(([r,n]) => '<span class="rounded-lg bg-purple-50 px-2 py-1 text-xs font-bold">' + r + ': ' + n + '</span>').join('') + '</div><b class="text-xs">Best pulls · estimated case contribution</b>' + top.map(item => '<div class="flex justify-between gap-3 text-xs py-1 border-t border-slate-100"><span class="truncate">' + item.card.name + ' · ' + item.card.rarity + (item.card.variant !== 'Standard' ? ' · ' + item.card.variant : '') + '</span><b class="whitespace-nowrap text-emerald-700">' + (item.placed ? '+' + formatIncomeRate(item.rate) + '/s' : 'No free slot') + '</b></div>').join('') + '<p class="text-[10px] text-slate-500 mt-2">' + preview.placedCount + ' of ' + allCards.length + ' new cards fit in currently available display slots.</p>'; }
             if (done) { done.classList.remove('hidden'); done.innerText = 'Close Summary'; } if (revealAll) revealAll.classList.add('hidden'); if (modal) modal.classList.remove('hidden');
         }
 
