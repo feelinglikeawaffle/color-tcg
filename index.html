@@ -831,6 +831,7 @@
         let normalPackIndex = 0;
         PACKS.filter(pack => !pack.secret).forEach(pack => {
             const tier = normalPackIndex++;
+            pack.unlockPacks = tier === 0 ? 0 : Math.round(8 * tier + 2.8 * tier * tier);
             pack.rarityFloor = NORMAL_PACK_RARITY_FLOORS[tier] || 'Mythic';
             pack.bonusCards = 1 + Math.floor(tier / 5);
             pack.incomeMultiplier = 1 + (tier * 0.12);
@@ -1160,7 +1161,9 @@
             const research = gameState.research || {};
             const yieldBonus = 1 + ((research.yieldCore || 0) * 0.15);
             const codexBonus = 1 + ((research.codexLens || 0) * 0.10);
-            return baseIncome * calculateCodexMultiplier() * yieldBonus * codexBonus;
+            const ascensionBonus = 1 + ((gameState.progression?.upgrades?.yield || 0) * 0.08);
+            const rawIncome = baseIncome * calculateCodexMultiplier() * yieldBonus * codexBonus * ascensionBonus;
+            return rawIncome <= 250 ? rawIncome : Math.min(250000, 250 + Math.pow(rawIncome - 250, 0.68));
         }
 
         function formatCurrency(num) {
@@ -1352,6 +1355,7 @@
 
             grid.innerHTML = PACKS.map(pack => {
                 const unlocked = isSecretPackUnlocked(pack);
+                if (!pack.secret && gameState.packsOpened < (pack.unlockPacks || 0)) return '<div class="glass-panel p-5 rounded-3xl space-y-3 opacity-60 border-dashed border-2 border-purple-200"><div class="flex justify-between"><b class="text-slate-500">' + pack.name + '</b><i class="fa-solid fa-lock text-slate-400"></i></div><p class="text-xs text-slate-400">Unlock after opening ' + pack.unlockPacks.toLocaleString() + ' packs. Current run: ' + gameState.packsOpened.toLocaleString() + '.</p><div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-purple-300" style="width:' + Math.min(100, gameState.packsOpened / Math.max(1, pack.unlockPacks) * 100) + '%"></div></div></div>';
                 if (pack.secret && !unlocked) {
                     return `
                         <div class="glass-panel p-5 rounded-3xl space-y-3 opacity-60 border-dashed border-2 border-purple-200">
@@ -1410,13 +1414,13 @@
                 [5, 10, 25].forEach(quantity => {
                     const bulkBtn = document.getElementById(`pack-bulk-btn-${pack.id}-${quantity}`);
                     if (bulkBtn) {
-                        const canBuyBulk = !pack.secret && !pendingSecretPackPurchase && gameState.currency >= pack.price * quantity;
+                        const canBuyBulk = !pack.secret && gameState.packsOpened >= (pack.unlockPacks || 0) && !pendingSecretPackPurchase && gameState.currency >= pack.price * quantity;
                         bulkBtn.disabled = !canBuyBulk;
                         bulkBtn.className = 'px-2 py-1 rounded-lg text-[9px] font-black ' + (canBuyBulk ? 'bg-slate-100 text-purple-700 hover:bg-purple-100' : 'bg-slate-100 text-slate-300 cursor-not-allowed');
                     }
                 });
                 if (btn) {
-                    const canAfford = gameState.currency >= pack.price && !pendingSecretPackPurchase;
+                    const canAfford = gameState.currency >= pack.price && !pendingSecretPackPurchase && (pack.secret ? isSecretPackUnlocked(pack) : gameState.packsOpened >= (pack.unlockPacks || 0));
                     if (canAfford) {
                         btn.removeAttribute('disabled');
                         btn.className = 'px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-200';
@@ -1651,14 +1655,14 @@ const AUTOMATION_UPGRADES = [
 {id:"value",name:"Premium Calibration",desc:"Higher sale prices."}
 ];
 function autoState(id){gameState.automation.machines[id]=gameState.automation.machines[id]||{level:0,upgrades:{}};const s=gameState.automation.machines[id];s.upgrades=s.upgrades||{};return s;}
-function autoMachineCost(m){return m.baseCost*Math.pow(2.65,autoState(m.id).level);}
+function autoMachineCost(m){return m.baseCost*Math.pow(2.65,autoState(m.id).level)*(1-(gameState.progression?.upgrades?.factory||0)*.04);}
 function autoUpgradeCost(m,u){return m.baseCost*.45*Math.pow(1.82,autoState(m.id).upgrades[u.id]||0);}
 function autoCapacity(){const l=autoState("bulkLoader"),b=autoState("packBuyer"),o=autoState("autoOpener");return 3+l.level*5+(l.upgrades.throughput||0)*3+(l.upgrades.safety||0)*2+(l.upgrades.speed||0)+(l.upgrades.efficiency||0)*2+(l.upgrades.value||0)+(b.upgrades.safety||0)*2+(o.upgrades.safety||0)*2;}
 function autoCycle(m){return Math.max(.65,m.cycle*Math.pow(.88,autoState(m.id).upgrades.speed||0));}
 function setAutomationPack(id){if(PACKS.some(p=>p.id===id&&!p.secret)){gameState.automation.selectedPackId=id;saveGameData();renderAutomation();}}
 function buyAutomationMachine(id){const m=AUTOMATION_MACHINES.find(x=>x.id===id);if(!m)return;const s=autoState(id),cost=autoMachineCost(m);if(s.level||gameState.packsOpened<m.unlock||gameState.currency<cost)return;gameState.currency-=cost;s.level=1;updateEconomyUI();saveGameData();renderAutomation();}
 function buyAutomationUpgrade(id,key){const m=AUTOMATION_MACHINES.find(x=>x.id===id),u=AUTOMATION_UPGRADES.find(x=>x.id===key);if(!m||!u)return;const s=autoState(id),cost=autoUpgradeCost(m,u),lv=s.upgrades[key]||0;if(!s.level||lv>=25||gameState.currency<cost)return;gameState.currency-=cost;s.upgrades[key]=lv+1;updateEconomyUI();saveGameData();renderAutomation();}
-function autoSaleMultiplier(m){const u=autoState(m.id).upgrades,market=autoState("marketExchange"),bonus=market.level?0.05+(market.upgrades.value||0)*.08+(market.upgrades.efficiency||0)*.025+(market.upgrades.speed||0)*.01+(market.upgrades.throughput||0)*.02+(market.upgrades.safety||0)*.01:0;return(1+(u.efficiency||0)*.04+(u.value||0)*.12)*(1+bonus);}
+function autoSaleMultiplier(m){const u=autoState(m.id).upgrades,market=autoState("marketExchange"),bonus=market.level?0.05+(market.upgrades.value||0)*.08+(market.upgrades.efficiency||0)*.025+(market.upgrades.speed||0)*.01+(market.upgrades.throughput||0)*.02+(market.upgrades.safety||0)*.01:0;return(1+(u.efficiency||0)*.04+(u.value||0)*.12)*(1+bonus)*(1+(gameState.progression?.upgrades?.market||0)*.05);}
 function runAutomation(now){
 const a=gameState.automation,q=a.queue;let changed=false;const buyer=AUTOMATION_MACHINES[0],opener=AUTOMATION_MACHINES[1],bs=autoState(buyer.id),os=autoState(opener.id);
 const due=m=>!a.lastRun[m.id]||now-a.lastRun[m.id]>=autoCycle(m)*1000,mark=m=>{a.lastRun[m.id]=now;};
@@ -1983,6 +1987,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
             if (pendingSecretPackPurchase) return;
             const pack = PACKS.find(p => p.id === packId);
             if (!pack) return;
+            if (!pack.secret && gameState.packsOpened < (pack.unlockPacks || 0)) return;
             const quantity = pack.secret ? 1 : Math.max(1, Math.min(25, parseInt(requestedQuantity, 10) || 1));
             const totalCost = pack.price * quantity;
             if (gameState.currency < totalCost) return;
