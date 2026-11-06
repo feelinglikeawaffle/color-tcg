@@ -518,6 +518,10 @@
                     <h3 class="font-bold text-slate-700 text-sm mb-3">Discovered Unique Colors</h3>
                     <div id="codex-grid" class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2"></div>
                 </div>
+                <div class="pt-4 border-t border-purple-50 space-y-2">
+                    <div><h3 class="font-bold text-slate-700 text-sm">Your Collection · Quick Display</h3><p class="text-[10px] text-slate-500">See estimated display-case income and place cards without leaving the Codex.</p></div>
+                    <div id="codex-cards-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"></div>
+                </div>
             </div>
         </section>
 
@@ -1012,7 +1016,7 @@
             const now = Date.now();
             const offlineSec = Math.max(0, (now - (gameState.lastTickTimestamp || now)) / 1000);
             if (offlineSec > 10) {
-                const income = calculateGalleryIncome();
+                const income = calculateTotalIncomePerSecond();
                 const offlineEarned = income * offlineSec;
                 if (offlineEarned > 0.05) {
                     gameState.currency += offlineEarned;
@@ -1192,11 +1196,45 @@
             return totalBonus;
         }
 
-        // Legacy card production is retired. Passive earnings now come only from upgraded display cases.
-        function calculateIncomeBreakdown() { return { baseIncome: 0, totalIncome: calculateGalleryIncome(), globalMultiplier: 1, cardMultiplier: 1 }; }
-        function calculateTotalIncomePerSecond() { return calculateGalleryIncome(); }
-        function effectiveCardIncome(card) { return 0; }
-        function formatIncomeRate(value) { return '$' + Math.max(0, Number(value) || 0).toFixed(2); }
+        // Original income equations, restricted to cards placed in display cases.
+        function calculateIncomeBreakdown() {
+            let baseIncome = 0;
+            (gameState.displayCases || []).forEach(box => {
+                if (!(Number(box.level) > 0)) return;
+                const cards = (box.cardIds || []).map(id => gameState.inventory.find(card => card.id === id)).filter(Boolean);
+                const caseRate = Math.max(0, Number(box.baseRate) || 0) * Math.max(1, Number(box.level) || 1) * (1 + Math.max(0, cards.length - 1) * 0.12);
+                cards.forEach(card => baseIncome += Math.max(0, Number(card.incomePerSec) || 0) * caseRate);
+            });
+            const research = gameState.research || {};
+            const globalMultiplier = calculateCodexMultiplier() * (1 + ((research.yieldCore || 0) * 0.15)) * (1 + ((research.codexLens || 0) * 0.10)) * (1 + ((gameState.progression?.upgrades?.yield || 0) * 0.08));
+            const rawIncome = baseIncome * globalMultiplier;
+            const totalIncome = rawIncome <= 250 ? rawIncome : Math.min(250000, 250 + Math.pow(rawIncome - 250, 0.68));
+            return { baseIncome, totalIncome, globalMultiplier, cardMultiplier: rawIncome > 0 ? totalIncome / rawIncome : 1 };
+        }
+        function calculateTotalIncomePerSecond() { return calculateIncomeBreakdown().totalIncome; }
+        function effectiveCardIncome(card) {
+            if (!card || !isCardDisplayed(card.id)) return 0;
+            const box = (gameState.displayCases || []).find(item => (item.cardIds || []).includes(card.id));
+            if (!box) return 0;
+            const cards = (box.cardIds || []).map(id => gameState.inventory.find(item => item.id === id)).filter(Boolean);
+            const caseRate = Math.max(0, Number(box.baseRate) || 0) * Math.max(1, Number(box.level) || 1) * (1 + Math.max(0, cards.length - 1) * 0.12);
+            const breakdown = calculateIncomeBreakdown();
+            return Math.max(0, Number(card.incomePerSec) || 0) * caseRate * breakdown.globalMultiplier * breakdown.cardMultiplier;
+        }
+        function getDisplayCasePreview(card) {
+            if (isCardDisplayed(card.id)) {
+                const box = (gameState.displayCases || []).find(item => (item.cardIds || []).includes(card.id));
+                return { rate: effectiveCardIncome(card), box };
+            }
+            const choices = (gameState.displayCases || []).filter(box => Number(box.level) > 0 && (box.cardIds || []).length < Number(box.slots || 0));
+            if (!choices.length) return { rate: 0, box: null };
+            choices.sort((a,b) => (Number(b.baseRate)||0)*(Number(b.level)||1) - (Number(a.baseRate)||0)*(Number(a.level)||1));
+            const box = choices[0], nextCount = (box.cardIds || []).length + 1;
+            const caseRate = Math.max(0, Number(box.baseRate)||0) * Math.max(1, Number(box.level)||1) * (1 + Math.max(0,nextCount-1)*0.12);
+            const breakdown = calculateIncomeBreakdown();
+            return { rate: Math.max(0,Number(card.incomePerSec)||0) * caseRate * breakdown.globalMultiplier * breakdown.cardMultiplier, box };
+        }
+        function formatIncomeRate(value) { const n = Math.max(0, Number(value) || 0); const digits = n < 0.01 ? 6 : n < 1 ? 4 : 2; return '$' + n.toFixed(digits); }
 
         function formatCurrency(num) {
             if (typeof num !== 'number' || isNaN(num)) return '0.00';
@@ -1216,7 +1254,7 @@
             const deltaSec = (now - (gameState.lastTickTimestamp || now)) / 1000;
             gameState.lastTickTimestamp = now;
 
-            const income = calculateGalleryIncome();
+            const income = calculateTotalIncomePerSecond();
             if (income > 0) {
                 const earned = income * deltaSec;
                 gameState.currency += earned;
@@ -1236,13 +1274,17 @@
             const invCount = document.getElementById('inventory-count');
 
             if (curr) curr.innerText = `$${formatCurrency(gameState.currency)}`;
-            if (inc) { const rate = calculateGalleryIncome(); inc.innerHTML = `+${formatIncomeRate(rate)}<span class="text-xs font-sans text-slate-400 font-normal">/s gallery</span>`; inc.title = 'Passive income from cards in display cases only.'; }
-            const caseIncome = document.getElementById('case-income'); if (caseIncome) caseIncome.textContent = formatIncomeRate(calculateGalleryIncome()) + '/s';
+            if (inc) { const rate = calculateTotalIncomePerSecond(); inc.innerHTML = `+${formatIncomeRate(rate)}<span class="text-xs font-sans text-slate-400 font-normal">/s display cases</span>`; inc.title = 'Displayed cards with Codex, research, and progression multipliers.'; }
+            const caseIncome = document.getElementById('case-income'); if (caseIncome) caseIncome.textContent = formatIncomeRate(calculateTotalIncomePerSecond()) + '/s';
             if (codex) codex.innerText = `${calculateCodexMultiplier().toFixed(2)}x`;
             if (invCount) invCount.innerText = gameState.inventory.length;
         }
 
-        function effectiveSaleValue(card){const raw=Math.max(0,Number(card.sellValue)||0);return raw<=10000?raw:10000+Math.pow(raw-10000,0.55);}
+        // 50x the former base sale price, boosted by the same global multipliers as income.
+        function effectiveSaleValue(card) {
+            const raw = Math.max(0, Number(card.sellValue) || (Number(card.incomePerSec) || 0) * 100);
+            return raw * 50 * calculateIncomeBreakdown().globalMultiplier;
+        }
 
         function isCardDisplayed(cardId) { return (gameState.displayCases || []).some(box => (box.cardIds || []).includes(cardId)); }
         function cardCollectorValue(card) {
@@ -1264,10 +1306,10 @@
             if (!grid || !eligible) return;
             grid.innerHTML = (gameState.displayCases || []).map(box => {
                 const unlocked = box.level > 0, cards = (box.cardIds || []).map(id => gameState.inventory.find(card => card.id === id)).filter(Boolean);
-                const income = cards.reduce((s, card) => s + cardCollectorValue(card) * box.baseRate * box.level * (1 + Math.max(0,cards.length-1)*0.12),0);
+                const income = cards.reduce((s, card) => s + effectiveCardIncome(card), 0);
                 return `<article class="rounded-2xl border border-purple-100 bg-white/80 p-4 space-y-3">
                     <div class="flex justify-between gap-2"><div><h3 class="font-black text-slate-800">${box.name}</h3><p class="text-[10px] text-slate-400">${unlocked?'Level '+box.level:'Locked display case'}</p></div><div class="text-right"><div class="text-xs font-black text-emerald-600">${formatIncomeRate(income)}/s</div><div class="text-[10px] text-slate-400">${cards.length}/${box.slots} slots</div></div></div>
-                    <div class="grid grid-cols-2 gap-2 min-h-20">${Array.from({length:box.slots||1},(_,i)=>{const card=cards[i];return card?`<div class="rounded-xl p-2 text-xs border border-purple-100" style="background:linear-gradient(135deg,${card.hex}22,white)"><div class="w-full h-8 rounded-lg mb-1" style="background:${card.hex}"></div><b class="block truncate">${card.name}</b><button onclick="removeFromDisplayCase('${box.id}','${card.id}')" class="text-[10px] text-rose-600 font-bold">Remove</button></div>`:'<div class="rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-[10px] text-slate-300">Empty slot</div>'}).join('')}</div>
+                    <div class="grid grid-cols-2 gap-2 min-h-20">${Array.from({length:box.slots||1},(_,i)=>{const card=cards[i];return card?`<div class="rounded-xl p-2 text-xs border border-purple-100" style="background:linear-gradient(135deg,${card.hex}22,white)"><div class="w-full h-8 rounded-lg mb-1" style="background:${card.hex}"></div><b class="block truncate">${card.name}</b><span class="block text-[10px] text-emerald-600 font-bold">${formatIncomeRate(effectiveCardIncome(card))}/s</span><button onclick="removeFromDisplayCase('${box.id}','${card.id}')" class="text-[10px] text-rose-600 font-bold">Remove</button></div>`:'<div class="rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-[10px] text-slate-300">Empty slot</div>'}).join('')}</div>
                     <button onclick="upgradeDisplayCase('${box.id}')" class="w-full rounded-xl py-2 text-xs font-black ${unlocked?'bg-purple-500 text-white':'bg-slate-900 text-white'}">${unlocked?'Upgrade · $'+formatCurrency(Math.floor(box.upgradeCost*Math.pow(1.85,box.level-1))):'Unlock · $'+formatCurrency(box.upgradeCost)}</button>
                 </article>`;
             }).join('');
@@ -1284,11 +1326,12 @@
             box.upgradeCost=Math.floor(box.upgradeCost*1.85);saveGameData();renderDisplayCases();updateEconomyUI();
         }
         function placeInDisplayCasePrompt(cardId) {
-            const boxes=gameState.displayCases.filter(box=>box.level>0&&(box.cardIds||[]).length<box.slots);
-            if(!boxes.length){alert('Unlock or upgrade a display case with an empty slot first.');return;}
-            const choice=boxes.map((b,i)=>(i+1)+'. '+b.name+' ('+b.cardIds.length+'/'+b.slots+')').join('\n');
-            const n=Number(prompt('Choose a display case:\n'+choice));const box=boxes[n-1];if(!box)return;
-            box.cardIds.push(cardId);saveGameData();renderDisplayCases();renderInventory();
+            if (isCardDisplayed(cardId)) return;
+            const boxes = gameState.displayCases.filter(box => box.level > 0 && (box.cardIds || []).length < box.slots);
+            if (!boxes.length) { alert('Unlock or upgrade a display case with an empty slot first.'); return; }
+            boxes.sort((a,b) => (Number(b.baseRate)||0)*(Number(b.level)||1) - (Number(a.baseRate)||0)*(Number(a.level)||1));
+            boxes[0].cardIds.push(cardId);
+            saveGameData(); renderDisplayCases(); renderInventory(); renderCodex(); updateEconomyUI();
         }
         function removeFromDisplayCase(boxId,cardId) {
             const box=gameState.displayCases.find(x=>x.id===boxId);if(!box)return;
@@ -1338,7 +1381,12 @@
             }
 
             const traitBadges = (card.traits || []).map(name => '<span class="bg-amber-100 text-amber-800 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-amber-200">' + name + ' · ' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x</span>').join('');
-            const effectiveIncome = effectiveCardIncome(card);
+            const displayed = isCardDisplayed(card.id);
+            const preview = getDisplayCasePreview(card);
+            const incomeLabel = displayed ? '+' + formatIncomeRate(preview.rate) + '/s in case' : (preview.box ? 'Preview ' + formatIncomeRate(preview.rate) + '/s' : 'No open case slot');
+            const caseAction = displayed
+                ? '<button onclick="event.stopPropagation();removeFromDisplayCase(\'' + preview.box.id + '\',\'' + card.id + '\')" class="mt-2 w-full rounded-lg bg-rose-50 text-rose-600 text-[9px] font-black py-1.5">Remove from case</button>'
+                : (preview.box ? '<button onclick="event.stopPropagation();placeInDisplayCasePrompt(\'' + card.id + '\')" class="mt-2 w-full rounded-lg bg-purple-600 text-white text-[9px] font-black py-1.5">＋ Add to display case</button>' : '<div class="mt-2 text-[9px] text-slate-400 text-center">Unlock a case slot to display</div>');
             const traitVisualClasses = (card.traits || []).map(name => 'trait-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-')).join(' ');
             const isGradient = card.hex && card.hex.includes('gradient');
             const bgStyle = isGradient ? `background: ${card.hex};` : `background-color: ${card.hex};`;
@@ -1356,8 +1404,9 @@
                             ${traitBadges ? '<div class="flex flex-wrap gap-1">' + traitBadges + '</div>' : ''}
                             <div class="flex items-center justify-between text-[10px]">
                                 <span class="px-2 py-0.5 rounded-md font-bold ${rarityInfo.bg}">${card.rarity}</span>
-                                <span class="font-mono text-emerald-600 font-bold" title="Includes global bonuses and income diminishing returns">+${formatIncomeRate(effectiveIncome)}/s</span>
+                                <span class="font-mono text-emerald-600 font-bold" title="Estimated income after display-case and global multipliers">${incomeLabel}</span>
                             </div>
+                            ${caseAction}
                         </div>
                     </div>
                 </div>
@@ -1564,6 +1613,8 @@
                     <span class="text-[8px] font-mono text-slate-500 font-semibold">${hex}</span>
                 </div>
             `).join('');
+            const codexCards = document.getElementById('codex-cards-grid');
+            if (codexCards) codexCards.innerHTML = gameState.inventory.map(card => renderCardHTML(card, true)).join('') || '<p class="text-xs text-slate-400 col-span-full">Your collection is empty.</p>';
         }
 
         function renderStats() {
@@ -2241,7 +2292,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
         function batchSellCommons() {
             let earned = 0;
             gameState.inventory = gameState.inventory.filter(card => {
-                if (card.rarity === 'Common') {
+                if (card.rarity === 'Common' && !isCardDisplayed(card.id)) {
                     earned += effectiveSaleValue(card);
                     return false;
                 }
@@ -2267,7 +2318,7 @@ function renderProgression(){const p=gameState.progression;const put=(id,v)=>{co
                 const matchesSearch = card.name.toLowerCase().includes(search) || card.hex.toLowerCase().includes(search);
                 const matchesRarity = rarityFilter === 'ALL' || card.rarity === rarityFilter;
                 const matchesVariant = variantFilter === 'ALL' || card.variant === variantFilter;
-                if (matchesSearch && matchesRarity && matchesVariant) {
+                if (matchesSearch && matchesRarity && matchesVariant && !isCardDisplayed(card.id)) {
                     earned += effectiveSaleValue(card);
                     return false;
                 }
