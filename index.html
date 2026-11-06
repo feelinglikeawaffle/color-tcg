@@ -1416,7 +1416,15 @@
 
             if (card.variant !== 'Standard') {
                 const mult = VARIANTS[card.variant] ? VARIANTS[card.variant].multiplier : 1;
-                variantBadge = `<span class="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-md uppercase tracking-wider">${card.variant} (${mult}x)</span>`;
+                const finishSymbol = {
+                    'Shiny': '✧', 'Cosmic Sparkle': '✦', 'Neon Pulse': '⟡', 'Golden Foil': '✹',
+                    'Liquid Mercury': '◉', 'Diamond Shimmer': '◈', 'Cyberpunk Matrix': '⌘', 'Void Singularity': '⬟',
+                    'Obsidian Gloss': '◆', 'Galactic Supernova': '✺', 'Starlight Dream': '✷', 'Chrono Distortion': '⧖',
+                    'Infinite Prism Spark': '❖', 'Godray Aurora': '☼', 'Quantum Glitch': '⌬', 'Hyper Plasma': '⟢',
+                    'Cosmic Void-Shine': '✶', 'Supernova Flare': '✴', 'Temporal Rift': '⧫', 'Astral Nebula': '✵',
+                    'Dimensional Matrix': '⬢', 'Celestial Aether': '❂', 'Omnipotent Aura': '⊹', 'Big Bang Essence': '✷'
+                }[card.variant] || '◇';
+                variantBadge = `<span class="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-md uppercase tracking-wider">${finishSymbol} ${card.variant} (${mult}x)</span>`;
             }
 
             const traitBadges = (card.traits || []).map(name => '<span class="bg-amber-100 text-amber-800 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-amber-200">' + name + ' · ' + formatCurrency(CARD_TRAITS[name]?.multiplier || 1) + 'x</span>').join('');
